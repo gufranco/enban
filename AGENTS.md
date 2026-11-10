@@ -1,0 +1,46 @@
+# enban
+
+Guidance for anyone, human or agent, changing enban. What enban is and how to use it lives in [README.md](README.md).
+
+[FAMILY.md](FAMILY.md) holds everything enban shares with the rest of the kodougu family, and it is the same in every member. This file holds only what is exclusive to enban, under the same headings as the agent guide of every member. Read both before changing anything; a rule that would serve the other members goes into `FAMILY.md` instead of here.
+
+## Layout
+
+| Path | Holds |
+|:-----|:------|
+| [`bin/enban`](bin/enban) | The entry point: usage and command routing |
+| [`lib/`](lib) | The modules. [`lib/state.sh`](lib/state.sh) declares every global; [`lib/app.sh`](lib/app.sh) runs the full-screen loop and [`lib/frame.sh`](lib/frame.sh) draws each frame |
+| [`man/enban.1`](man/enban.1) | The man page |
+| [`completions/`](completions) | bash, zsh and fish completions |
+| [`test/`](test) | The `bats` suite, its helpers, the pseudo-terminal driver in [`test/app.bats`](test/app.bats) and the Linux container script |
+| [`scripts/`](scripts) | Coverage, the coverage gate, the Linux coverage run and the name check, which `make` runs |
+| [`.github/scripts/`](.github/scripts) | The toolset helper and the release version stamp, which only CI and the release run |
+
+## Names
+
+- Globals carry `DISK_`, and function-scoped variables a per-function `disk_` prefix, the same names as the disk tools kiyome, kakikomi and nisemono, so the shared helpers move between them unchanged.
+- App globals carry `DISK_APP_`, such as `DISK_APP_TAB` and `DISK_APP_KEY`.
+- Settings come from `ENBAN_<NAME>`, such as `ENBAN_THEME`; test switches are `ENBAN_TEST_SHELLS`, `ENBAN_TEST_RECORD` and `ENBAN_TEST_GUM`.
+
+## Behaviour
+
+- enban is the family's first full-screen member: a bare `enban` on a terminal opens the app, never a menu.
+- The app restores the screen, cursor and echo on `q`, Ctrl+D and an interrupt, and warns when echo is still off afterwards.
+
+## Domain rules
+
+- Keys are read with `dd` one byte at a time and decoded from hex, because a command substitution strips the newline Enter sends.
+- Ctrl+D arrives as byte `04` inside a terminal, never as an empty read, so both mean the end of the session.
+- After Escape the app waits a tenth of a second for the rest of an arrow sequence.
+- GNU `stty` on macOS reports a false failure on `stty echo icanon`; the app checks `stty -a` instead of trusting the exit status.
+- Tests drive the app through `script`, and send keys only once the first frame is on screen, because keys typed before the terminal leaves line mode can be lost.
+
+## Release
+
+- `ENBAN_VERSION` lives in [`lib/core.sh`](lib/core.sh).
+- The tap's `Formula/enban.rb` waits for the first job to ship.
+
+## Gaps against FAMILY.md
+
+- The README is in English only; the Japanese, Simplified Chinese and Hong Kong Traditional Chinese READMEs are not written yet (as of 2026-11-10).
+- No release or Homebrew formula yet, since no disc job has shipped (as of 2026-11-10).

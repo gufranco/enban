@@ -1,0 +1,71 @@
+.TH ENBAN 1 "2026-11-10" "enban" "User Commands"
+.SH NAME
+enban \- write, read, build and verify CD, DVD and Blu-ray discs
+.SH SYNOPSIS
+.B enban
+.RB [ \-\-theme
+.IR name ]
+.br
+.B enban doctor
+.br
+.B enban version
+.br
+.B enban help
+.SH DESCRIPTION
+.B enban
+opens a full-screen app on a terminal. It draws in the terminal's alternate
+screen, reads keys itself and gives the screen back when it ends, on
+.B q
+or on an interrupt. Digits switch tabs, and the left and right arrows move
+between them. Without a terminal the app never opens.
+.SH COMMANDS
+.TP
+.B doctor
+List the tools enban needs and whether each is installed. Exits non-zero only
+when a required tool is missing.
+.TP
+.B version
+Print the version and the platform.
+.TP
+.B help
+Print the usage page.
+.SH OPTIONS
+.TP
+.BI \-\-theme " name"
+Colours of the terminal interface:
+.BR kodougu ,
+.BR catppuccin\-mocha ,
+.BR catppuccin\-latte ,
+.BR dracula ,
+.BR nord ,
+.BR gruvbox ,
+.B tokyo\-night
+or
+.BR mono .
+The default is
+.BR kodougu .
+.SH ENVIRONMENT
+.TP
+.B ENBAN_THEME
+The theme when
+.B \-\-theme
+is not given.
+.TP
+.B KODOUGU_THEME
+The theme of every kodougu tool, when neither
+.B \-\-theme
+nor
+.B ENBAN_THEME
+is set.
+.TP
+.B KODOUGU_ACCENT
+A colour such as #CBA6F7 that replaces the accent of the theme.
+.TP
+.B NO_COLOR
+Turns colour off in every theme.
+.SH EXIT STATUS
+0 on success, 1 on any failure or refusal.
+.SH SEE ALSO
+.BR drutil (1),
+.BR hdiutil (1),
+.BR xorriso (1)

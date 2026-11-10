@@ -1,0 +1,127 @@
+#!/bin/sh
+[ -n "${ZSH_VERSION:-}" ] && emulate sh
+
+for disk_inherited in $(env | sed -n 's/^\(DISK_[A-Za-z0-9_]*\)=.*/\1/p'); do
+  unset "${disk_inherited}"
+done
+
+disk_self="$0"
+case "${disk_self}" in
+*/*) ;;
+*) disk_self="$(command -v -- "${disk_self}")" ;;
+esac
+DISK_LIB="$(cd "${disk_self%/*}/../lib" && pwd)" || exit 1
+
+DISK_PROG=enban
+# shellcheck source=SCRIPTDIR/../lib/core.sh
+. "${DISK_LIB}/core.sh"
+# shellcheck source=SCRIPTDIR/../lib/ui.sh
+. "${DISK_LIB}/ui.sh"
+# shellcheck source=SCRIPTDIR/../lib/cli.sh
+. "${DISK_LIB}/cli.sh"
+# shellcheck source=SCRIPTDIR/../lib/app.sh
+. "${DISK_LIB}/app.sh"
+# shellcheck source=SCRIPTDIR/../lib/frame.sh
+. "${DISK_LIB}/frame.sh"
+
+disk_usage() {
+  if disk_ui_out; then
+    disk_usage_text | disk_ui_markdown | disk_gum format --theme "${DISK_UI_HELP}"
+    return 0
+  fi
+  disk_usage_text
+}
+
+disk_usage_text() {
+  cat <<'USAGE'
+enban - write, read, build and verify CD, DVD and Blu-ray discs
+
+usage:
+  enban                               open the full-screen app on a terminal
+  enban doctor                        check the tools enban needs
+  enban version                       print the version
+  enban help                          print this page
+
+options:
+  --theme NAME        colours of the terminal interface, see notes
+
+notes:
+  The app draws in the terminal's alternate screen and gives the screen back
+  when it ends, on q or on an interrupt. Digits switch tabs, the left and
+  right arrows move between them, and q quits.
+
+  --theme, else ENBAN_THEME, else KODOUGU_THEME picks the colours: kodougu,
+  catppuccin-mocha, catppuccin-latte, dracula, nord, gruvbox, tokyo-night or
+  mono. KODOUGU_ACCENT=#RRGGBB replaces only the accent, and NO_COLOR turns
+  colour off.
+
+examples:
+  enban
+  enban --theme nord
+  enban doctor
+USAGE
+}
+
+disk_main() {
+  disk_mn_count=$#
+  while [ "${disk_mn_count}" -gt 0 ]; do
+    disk_mn_arg="$1"
+    shift
+    disk_mn_count=$((disk_mn_count - 1))
+    case "${disk_mn_arg}" in
+    --theme=*)
+      DISK_THEME="${disk_mn_arg#--theme=}"
+      continue
+      ;;
+    --theme)
+      [ "${disk_mn_count}" -gt 0 ] || disk_main_stop "option '--theme' needs a value"
+      DISK_THEME="$1"
+      shift
+      disk_mn_count=$((disk_mn_count - 1))
+      continue
+      ;;
+    *) ;;
+    esac
+    set -- "$@" "${disk_mn_arg}"
+  done
+  disk_ui_setup || disk_main_fail "${DISK_UI_PROBLEM}"
+  disk_route "$@"
+}
+
+disk_main_stop() {
+  disk_cli_hint "$1"
+  exit 1
+}
+
+disk_main_fail() {
+  disk_error "$1"
+  exit 1
+}
+
+disk_route() {
+  case "${1:-}" in
+  help | -h | --help) disk_usage ;;
+  version | -V | --version) disk_cli_version ;;
+  doctor) disk_doctor ;;
+  '') disk_open ;;
+  -*)
+    disk_cli_hint "unknown option '$1'"
+    return 1
+    ;;
+  *)
+    disk_cli_hint "unknown command '$1'"
+    return 1
+    ;;
+  esac
+}
+
+disk_open() {
+  if [ -t 0 ] && [ -t 1 ]; then
+    disk_app_run
+    return 0
+  fi
+  disk_cli_hint "the app needs a terminal"
+  return 1
+}
+
+disk_main "$@"
