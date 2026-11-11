@@ -46,6 +46,7 @@ complete -c enban -l load-sectors -r -d 'sectors the firmware loads with no emul
 complete -c enban -l boot-info-table -d 'write the disc layout into the boot image copy'
 complete -c enban -l dvd-video -d 'lay out VIDEO_TS for a DVD player'
 complete -c enban -l bdmv -d 'write BDMV as UDF 2.50 for a Blu-ray player'
+complete -c enban -l udf-version -x -a '1.02 1.50 2.00 2.01 2.50 2.60' -d 'the UDF revision build writes'
 complete -c enban -l full -d 'erase every sector'
 complete -c enban -l sectors -r -d 'how many sectors discovery writes'
 complete -c enban -l csv -r -F -d 'where discovery saves its read rate'

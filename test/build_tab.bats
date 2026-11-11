@@ -524,3 +524,18 @@ answers() {
   shown="$(last_frame)"
   [[ "${shown}" == *"> Blu-ray    [x]"* ]]
 }
+
+@test "Enter on UDF steps through every revision and back to the default" {
+  # Arrange
+  local keys='3\033[B\033[B\033[B\033[B\033[B\033[B\033[B\033[B\033[B\033[B\033[B\n\n\n\n\n\n\nq'
+
+  # Act
+  run on_terminal "${keys}"
+
+  # Assert
+  local shown final
+  shown="$(screen)"
+  final="$(last_frame)"
+  [[ "${shown}" == *"> UDF        1.02"*"> UDF        1.50"*"> UDF        2.00"*"> UDF        2.01"*"> UDF        2.50"*"> UDF        2.60"* ]]
+  [[ "${final}" == *"> UDF        the tool default"* ]]
+}

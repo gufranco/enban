@@ -1021,6 +1021,133 @@ udf_revision() {
   [[ "${attached}" == "0" ]]
 }
 
+@test "enban build --udf-version 1.50 keeps ISO9660 beside UDF 1.50 on macOS" {
+  # Arrange
+  [[ "${ENBAN_TEST_OS}" == "Darwin" ]] || skip "Linux writes UDF 1.02 only"
+  local version=1.50
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --udf-version "${version}" </dev/null
+
+  # Assert
+  local revision label
+  revision="$(udf_revision "${OUT}")"
+  label="$(volume_id "${OUT}")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${revision}" == "0150" ]]
+  [[ "${label}" == "FAMILY_2009" ]]
+  [[ "${lines[2]}" == "File systems  ISO9660, Joliet, UDF 1.50" ]]
+}
+
+@test "enban build --udf-version 2.01 writes UDF alone on macOS" {
+  # Arrange
+  [[ "${ENBAN_TEST_OS}" == "Darwin" ]] || skip "Linux writes UDF 1.02 only"
+  local wanted
+  wanted="$(sized_files "${SRC}")"
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --udf-version 2.01 </dev/null
+
+  # Assert
+  local revision listed
+  revision="$(udf_revision "${OUT}")"
+  listed="$(image_files "${OUT}")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${revision}" == "0201" ]]
+  [[ "${listed}" == "${wanted}" ]]
+  [[ "${lines[2]}" == "File systems  UDF 2.01" ]]
+}
+
+@test "enban build --udf-version 1.02 builds through genisoimage on Linux" {
+  # Arrange
+  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS builds through hdiutil"
+  local version=1.02
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --udf-version "${version}" </dev/null
+
+  # Assert
+  local revision
+  revision="$(udf_revision "${OUT}")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${revision}" == "0102" ]]
+  [[ "${lines[2]}" == "File systems  ISO9660, Joliet, UDF 1.02" ]]
+}
+
+@test "enban build on Linux refuses a UDF revision past 1.02" {
+  # Arrange
+  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS writes every revision"
+  local version=2.01
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --udf-version "${version}" </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: --udf-version 2.01 needs macOS, since genisoimage, which builds UDF on Linux, writes 1.02 only." ]]
+}
+
+@test "enban build refuses a UDF revision it does not know" {
+  # Arrange
+  local version=3.00
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --udf-version "${version}" </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: --udf-version takes 1.02, 1.50, 2.00, 2.01, 2.50 or 2.60, got: 3.00" ]]
+}
+
+@test "enban build --udf-version needs udf in --fs" {
+  # Arrange
+  local version=1.02
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --fs iso9660 --udf-version "${version}" </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: --udf-version needs udf in --fs." ]]
+}
+
+@test "enban build keeps DVD Video on UDF 1.02" {
+  # Arrange
+  video_ts "${SRC}"
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --dvd-video --udf-version 2.01 </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: --dvd-video uses UDF 1.02, the revision a DVD player reads." ]]
+}
+
+@test "enban build keeps BDMV on UDF 2.50" {
+  # Arrange
+  bdmv_tree "${SRC}"
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --bdmv --udf-version 2.01 </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: --bdmv uses UDF 2.50, the revision a Blu-ray player reads." ]]
+}
+
+@test "enban build --udf-version 2.60 takes a label and no other field on macOS" {
+  # Arrange
+  [[ "${ENBAN_TEST_OS}" == "Darwin" ]] || skip "Linux writes UDF 1.02 only"
+  local version=2.60
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --udf-version "${version}" --preparer Gustavo </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: --udf-version 2.60 writes UDF 2.60 alone, which holds a label and nothing more, so leave out --preparer." ]]
+}
+
 quoted() {
   local text="$1"
   printf "'%s'" "${text//\'/\'\\\'\'}"

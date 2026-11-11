@@ -76,3 +76,5 @@ Guidance for anyone, human or agent, changing enban. What enban is and how to us
 - The README is in English only; the Japanese, Simplified Chinese and Hong Kong Traditional Chinese READMEs are not written yet (as of 2026-11-10).
 - v1.0.0 ships the app frame, its tabs and its keys, but no disc job, so it has no Homebrew formula yet (as of 2026-11-11).
 - `enban info` stops on macOS: the drive is read through `drutil`, and no `drutil -xml` output from a real drive has been captured to build the parser and its stand-in from (as of 2026-11-11).
+- Every disc command runs on Linux only: `info`, `write` for data and audio, `read`, `verify`, `erase`, `checksum --drive`, `sector --drive`, `queue`, `discovery`, `close`, `speed`, `region` and `booktype`, and the app's drive panes, whose tests skip on macOS. macOS needs a drive backend for each (as of 2026-11-11).
+- `build --bdmv` and `build --udf-version` 2.00 and later run on macOS only, through `newfs_udf`, since no Linux tool writes UDF 2.50 into an image: mkudffs refuses 2.50 for a plain image and udfclient's `newfs_udf` writes 2.01 only. enban needs its own UDF writer, shared by both platforms (as of 2026-11-11).

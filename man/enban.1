@@ -45,6 +45,8 @@ enban \- write, read, build and verify CD, DVD and Blu-ray discs
 .IR file ]
 .RB [ \-\-dvd\-video ]
 .RB [ \-\-bdmv ]
+.RB [ \-\-udf\-version
+.IR v ]
 .br
 .B enban erase
 .BI \-\-drive " drive"
@@ -475,6 +477,12 @@ Write a BDMV folder at the root as UDF 2.50 alone, which a Blu-ray player
 needs, through newfs_udf on a mounted image. macOS only, since no Linux tool
 writes UDF 2.50 into an image. It takes a label and none of the other build
 fields.
+.TP
+.BI \-\-udf\-version " v"
+The UDF revision build writes: 1.02, 1.50, 2.00, 2.01, 2.50 or 2.60. macOS
+writes 1.02 and 1.50 beside ISO9660 through hdiutil, and the later revisions
+as UDF alone through newfs_udf, with a label and none of the other build
+fields. Linux writes 1.02 only, since genisoimage builds its UDF.
 .TP
 .B \-\-boot\-info\-table
 Write the disc layout into the stored copy of the boot image, as

@@ -23,13 +23,13 @@ disk_build_bdmv_check() {
     disk_error "--bdmv needs a BDMV folder at the root of the disc."
     return 1
   fi
-  disk_build_bdmv_alone
+  disk_build_alone_fields --bdmv
 }
 
-disk_build_bdmv_alone() {
+disk_build_alone_fields() {
   for disk_xc_pair in "--fs:${DISK_BUILD_FS#iso9660,joliet,udf}" "--dvd-video:${DISK_BUILD_DVD#n}" "--boot:${DISK_BUILD_BOOT}" "--publisher:${DISK_BUILD_PUBLISHER}" "--preparer:${DISK_BUILD_PREPARER}" "--application:${DISK_BUILD_APPLICATION}" "--system-id:${DISK_BUILD_SYSTEM}" "--volume-set:${DISK_BUILD_VOLSET}" "--date:${DISK_BUILD_DATE}" "--iso-level:${DISK_BUILD_LEVEL}"; do
     [ -z "${disk_xc_pair#*:}" ] && continue
-    disk_error "--bdmv writes UDF 2.50 alone, which holds a label and nothing more, so leave out ${disk_xc_pair%%:*}."
+    disk_error "$1 writes UDF ${DISK_BUILD_UDF_REV} alone, which holds a label and nothing more, so leave out ${disk_xc_pair%%:*}."
     return 1
   done
 }
@@ -56,7 +56,7 @@ disk_build_bdmv_blank() {
   disk_xf_dev="$(hdiutil attach -imagekey diskimage-class=CRawDiskImage -nomount "$1" 2>/dev/null | awk 'NR == 1 { print $1 }')"
   [ -n "${disk_xf_dev}" ] || return 1
   disk_xf_status=0
-  newfs_udf -r 2.50 -b 2048 -v "${DISK_BUILD_VOLUME}" "${disk_xf_dev}" >/dev/null 2>&1 || disk_xf_status=1
+  newfs_udf -r "${DISK_BUILD_UDF_REV}" -b 2048 -v "${DISK_BUILD_VOLUME}" "${disk_xf_dev}" >/dev/null 2>&1 || disk_xf_status=1
   disk_build_bdmv_detach "${disk_xf_dev}" || disk_xf_status=1
   return "${disk_xf_status}"
 }

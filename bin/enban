@@ -41,6 +41,8 @@ DISK_PROG=enban
 . "${DISK_LIB}/build_video.sh"
 # shellcheck source=SCRIPTDIR/../lib/build_bdmv.sh
 . "${DISK_LIB}/build_bdmv.sh"
+# shellcheck source=SCRIPTDIR/../lib/build_udf.sh
+. "${DISK_LIB}/build_udf.sh"
 # shellcheck source=SCRIPTDIR/../lib/erase.sh
 . "${DISK_LIB}/erase.sh"
 # shellcheck source=SCRIPTDIR/../lib/checksum.sh
@@ -174,6 +176,8 @@ options:
   --dvd-video         build lays out VIDEO_TS for a DVD player, with UDF
   --bdmv              build writes a BDMV folder as UDF 2.50 for a Blu-ray
                       player; macOS only
+  --udf-version V     the UDF revision build writes, 1.02 to 2.60; 2.00 and
+                      later on macOS only, as UDF alone
   --full              erase every sector instead of the start of the disc
   --sectors N         how many sectors discovery writes; all free by default
   --csv FILE          where discovery saves its read rate
@@ -354,6 +358,7 @@ disk_option_value() {
   --emulation) DISK_BUILD_EMULATION="$2" ;;
   --platform) DISK_BUILD_PLATFORM="$2" ;;
   --load-sectors) DISK_BUILD_LOAD="$2" ;;
+  --udf-version) DISK_BUILD_UDF_VERSION="$2" ;;
   *) DISK_DRIVE="$2" ;;
   esac
   disk_option_seen "$1"
@@ -370,7 +375,7 @@ disk_option_seen() {
     [ -z "${DISK_VERIFY_OPTION}" ] || [ "${DISK_VERIFY_OPTION}" = "$1" ] || DISK_VERIFY_CLASH=y
     DISK_VERIFY_OPTION="$1"
     ;;
-  --fs | --label | --publisher | --preparer | --application | --system-id | --volume-set | --date | --iso-level | --boot | --dvd-video | --bdmv) DISK_BUILD_OPTION="${DISK_BUILD_OPTION:-$1}" ;;
+  --fs | --label | --publisher | --preparer | --application | --system-id | --volume-set | --date | --iso-level | --boot | --dvd-video | --bdmv | --udf-version) DISK_BUILD_OPTION="${DISK_BUILD_OPTION:-$1}" ;;
   --emulation | --platform | --load-sectors | --boot-info-table)
     DISK_BUILD_OPTION="${DISK_BUILD_OPTION:-$1}"
     DISK_BOOT_OPTION="${DISK_BOOT_OPTION:-$1}"
@@ -392,7 +397,7 @@ disk_option_seen() {
 }
 
 disk_options() {
-  DISK_VALUE_OPTIONS="--drive --speed --copies --mode --retries --publisher --preparer --application --system-id --volume-set --date --iso-level --boot --emulation --platform --load-sectors --fs --label --sectors --csv --lba --title --performer --pregap --set"
+  DISK_VALUE_OPTIONS="--drive --speed --copies --mode --retries --publisher --preparer --application --system-id --volume-set --date --iso-level --boot --emulation --platform --load-sectors --udf-version --fs --label --sectors --csv --lba --title --performer --pregap --set"
   disk_op_room="$1"
   shift
   disk_op_left="$#"

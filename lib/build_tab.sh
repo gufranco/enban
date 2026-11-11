@@ -8,7 +8,7 @@ disk_build_tab_key() {
   disk_bk_count="$(disk_build_tab_count)"
   case "$1" in
   up) [ "${DISK_APP_B_FOCUS}" -le 0 ] || DISK_APP_B_FOCUS=$((DISK_APP_B_FOCUS - 1)) ;;
-  down) [ "${DISK_APP_B_FOCUS}" -ge $((disk_bk_count + 10)) ] || DISK_APP_B_FOCUS=$((DISK_APP_B_FOCUS + 1)) ;;
+  down) [ "${DISK_APP_B_FOCUS}" -ge $((disk_bk_count + 11)) ] || DISK_APP_B_FOCUS=$((DISK_APP_B_FOCUS + 1)) ;;
   a) disk_build_tab_add file ;;
   f) disk_build_tab_add folder ;;
   x) disk_build_tab_remove "${disk_bk_count}" ;;
@@ -121,6 +121,7 @@ disk_build_tab_edit() {
   8) DISK_APP_B_PLATFORM="$(disk_build_tab_next_platform "${DISK_APP_B_PLATFORM}")" ;;
   9) DISK_APP_B_DVD="$(disk_job_flip "${DISK_APP_B_DVD}")" ;;
   10) DISK_APP_B_BDMV="$(disk_job_flip "${DISK_APP_B_BDMV}")" ;;
+  11) DISK_APP_B_UDF="$(disk_build_tab_next_udf "${DISK_APP_B_UDF}")" ;;
   *) return 0 ;;
   esac
   disk_build_tab_refresh
@@ -148,6 +149,18 @@ disk_build_tab_next_emulation() {
   none) printf 'floppy\n' ;;
   floppy) printf 'hard-disk\n' ;;
   *) printf 'none\n' ;;
+  esac
+}
+
+disk_build_tab_next_udf() {
+  case "$1" in
+  '') printf '1.02\n' ;;
+  1.02) printf '1.50\n' ;;
+  1.50) printf '2.00\n' ;;
+  2.00) printf '2.01\n' ;;
+  2.01) printf '2.50\n' ;;
+  2.50) printf '2.60\n' ;;
+  *) printf '\n' ;;
   esac
 }
 
@@ -212,6 +225,7 @@ disk_build_tab_start() {
   DISK_BUILD_PLATFORM="${DISK_APP_B_PLATFORM}"
   DISK_BUILD_DVD="${DISK_APP_B_DVD}"
   DISK_BUILD_BDMV="${DISK_APP_B_BDMV}"
+  DISK_BUILD_UDF_VERSION="${DISK_APP_B_UDF}"
   case "${DISK_APP_B_TARGET}" in
   disc) disk_build_tab_to_disc ;;
   *) disk_build_tab_to_image ;;
