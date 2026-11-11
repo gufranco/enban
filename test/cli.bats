@@ -366,3 +366,18 @@ options_everywhere() {
   # Assert
   [[ "${status}" -eq 0 ]]
 }
+
+@test "enban help, man page and completions list sector and --lba" {
+  # Arrange
+  local command=sector
+
+  # Act
+  run command_everywhere "${command}"
+
+  # Assert
+  local options_status
+  options_status=0
+  options_everywhere lba || options_status=$?
+  [[ "${status}" -eq 0 ]]
+  [[ "${options_status}" -eq 0 ]]
+}

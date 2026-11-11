@@ -63,7 +63,7 @@ written() {
   local shown
   shown="$(last_frame)"
   [[ "${shown}" == *"> Close"* ]]
-  [[ "${shown}" == *"Close arrives with the raw SCSI tools."* ]]
+  [[ "${shown}" == *"Close needs raw drive commands that wait for a test on a real drive."* ]]
 }
 
 @test "the focus stops at both ends of the tool list" {
@@ -324,4 +324,101 @@ written() {
   local shown
   shown="$(last_frame)"
   [[ "${shown}" == *"> Erase disc"* ]]
+}
+
+sector_image() {
+  dd if=/dev/zero of="${IMAGE}" bs=2048 count=20 2>/dev/null
+  printf '\001CD001\001' | dd of="${IMAGE}" bs=1 seek=32768 conv=notrunc 2>/dev/null
+  printf 'FAMILY' | dd of="${IMAGE}" bs=1 seek=32808 conv=notrunc 2>/dev/null
+}
+
+sector_keys() {
+  local moves
+  moves="$(printf '\\033[B%.0s' 1 2 3 4 5 6)"
+  printf '7%s\\n%s' "${moves}" "$1"
+}
+
+@test "the Sector viewer asks for an image when no drive is chosen" {
+  # Arrange
+  sector_image
+  answers "${IMAGE}"
+  local keys
+  keys="$(sector_keys q)"
+
+  # Act
+  run on_terminal "${keys}"
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"Sector viewer   LBA 0 of ${IMAGE}"* ]]
+  [[ "${shown}" == *"0000    00 00 00 00"* ]]
+}
+
+@test "the Sector viewer steps through sectors and pages and decodes LBA 16" {
+  # Arrange
+  sector_image
+  answers "${IMAGE}" 16
+  local keys
+  keys="$(sector_keys '\033[C\033[Dg\033[B\033[B\033[Aq')"
+
+  # Act
+  run on_terminal "${keys}"
+
+  # Assert
+  local shown final
+  shown="$(screen)"
+  final="$(last_frame)"
+  [[ "${shown}" == *"LBA 1 of ${IMAGE}"* ]]
+  [[ "${final}" == *"LBA 16 of ${IMAGE}"*"0100    "*"Volume       FAMILY"* ]]
+}
+
+@test "the Sector viewer says when the sector is past the end and Escape goes back" {
+  # Arrange
+  sector_image
+  answers "${IMAGE}" 999
+  local keys
+  keys="$(sector_keys 'g')"
+
+  # Act
+  run on_terminal_in_steps "${keys}" 'past the end' '\033[Zq'
+
+  # Assert
+  local shown final
+  shown="$(screen)"
+  final="$(last_frame)"
+  [[ "${shown}" == *"Sector 999 is past the end of ${IMAGE}."* ]]
+  [[ "${final}" == *"> Sector viewer"* ]]
+}
+
+@test "the Sector viewer stays on the list without an image and refuses a word for an LBA" {
+  # Arrange
+  sector_image
+  answers "" "${IMAGE}" first
+  local keys
+  keys="$(sector_keys '\ngq')"
+
+  # Act
+  run on_terminal "${keys}"
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"The LBA must be a whole number."* ]]
+}
+
+@test "the Sector viewer reads the disc in the drive" {
+  # Arrange
+  linux_only
+  written 0011 "DVD-R sequential recording"
+  local keys
+  keys="$(sector_keys q)"
+
+  # Act
+  run on_terminal "${keys}" --drive "stdio:${DISC}"
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"Sector viewer   LBA 0 of stdio:${DISC}"* ]]
 }

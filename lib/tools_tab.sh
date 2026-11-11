@@ -11,7 +11,7 @@ disk_tools_list() {
     "Read speed|set or reset|scsi" \
     "Tray|eject the disc|tray" \
     "Capabilities|what this drive reads and writes|caps" \
-    "Sector viewer|hex of any LBA, user data or raw 2352|scsi" \
+    "Sector viewer|hex of any LBA, user data|sector" \
     "Region|read or change the DVD region|scsi" \
     "Speed memory|remembered speed per media ID|settings" \
     "Create CUE|audio tracks, pregaps, CD-TEXT|cue" \
@@ -32,6 +32,7 @@ disk_tools_tab_key() {
   case "${DISK_APP_T_OPEN}" in
   erase) disk_tools_tab_erase_key "$1" ;;
   caps) disk_tools_tab_caps_key "$1" ;;
+  sector) disk_tools_tab_sector_key "$1" ;;
   *) disk_tools_tab_list_key "$1" ;;
   esac
 }
@@ -52,7 +53,8 @@ disk_tools_tab_open() {
   erase | caps) DISK_APP_T_OPEN="${disk_to_action}" ;;
   tray) disk_tools_tab_eject ;;
   checksum) disk_tools_tab_checksum ;;
-  scsi) DISK_APP_STATUS="${disk_to_name} arrives with the raw SCSI tools." ;;
+  sector) disk_tools_tab_sector_open ;;
+  scsi) DISK_APP_STATUS="${disk_to_name} needs raw drive commands that wait for a test on a real drive." ;;
   cue) DISK_APP_STATUS="${disk_to_name} arrives with audio CD and CUE support." ;;
   settings) DISK_APP_STATUS="${disk_to_name} arrives with the log and settings." ;;
   *) DISK_APP_STATUS="${disk_to_name} arrives in a coming release." ;;
@@ -73,6 +75,64 @@ disk_tools_tab_caps_key() {
   enter | esc) DISK_APP_T_OPEN="" ;;
   *) return 0 ;;
   esac
+}
+
+disk_tools_tab_sector_open() {
+  DISK_APP_T_IMAGE=""
+  if [ -n "${DISK_APP_DRIVE_NOTE}" ]; then
+    disk_app_ask "Image to view, as no drive is chosen" "path to an image"
+    [ -n "${DISK_APP_ANSWER}" ] || return 0
+    DISK_APP_T_IMAGE="${DISK_APP_ANSWER}"
+  fi
+  DISK_APP_T_LBA=0
+  DISK_APP_T_PAGE=0
+  DISK_APP_T_OPEN=sector
+}
+
+disk_tools_tab_sector_key() {
+  case "$1" in
+  left) [ "${DISK_APP_T_LBA}" -le 0 ] || DISK_APP_T_LBA=$((DISK_APP_T_LBA - 1)) ;;
+  right) DISK_APP_T_LBA=$((DISK_APP_T_LBA + 1)) ;;
+  up) [ "${DISK_APP_T_PAGE}" -le 0 ] || DISK_APP_T_PAGE=$((DISK_APP_T_PAGE - 1)) ;;
+  down) [ "${DISK_APP_T_PAGE}" -ge 7 ] || DISK_APP_T_PAGE=$((DISK_APP_T_PAGE + 1)) ;;
+  g) disk_tools_tab_sector_go ;;
+  esc) DISK_APP_T_OPEN="" ;;
+  *) return 0 ;;
+  esac
+}
+
+disk_tools_tab_sector_go() {
+  disk_app_ask "LBA to show" "${DISK_APP_T_LBA}"
+  case "${DISK_APP_ANSWER}" in
+  '' | *[!0-9]*) DISK_APP_STATUS="The LBA must be a whole number." ;;
+  *)
+    DISK_APP_T_LBA="${DISK_APP_ANSWER}"
+    DISK_APP_T_PAGE=0
+    ;;
+  esac
+}
+
+disk_frame_tools_sector() {
+  DISK_SECTOR_IMAGE="${DISK_APP_T_IMAGE}"
+  DISK_SECTOR_LBA="${DISK_APP_T_LBA}"
+  disk_fx_shown="$(disk_sector_run 2>&1)" || :
+  disk_fx_first="$(printf '%s\n' "${disk_fx_shown}" | sed -n '1p')"
+  case "${disk_fx_first}" in
+  LBA*) : ;;
+  *)
+    disk_fx_reason="$(disk_tools_sentence "${disk_fx_first#enban: }")"
+    printf '%s\n' "Sector viewer" "" "${disk_fx_reason}" "" "left/right sector   g go to LBA   esc back"
+    return 0
+    ;;
+  esac
+  printf 'Sector viewer   %s\n\n' "${disk_fx_first}"
+  printf '%s\n' "${disk_fx_shown}" | sed -n "2p;$((DISK_APP_T_PAGE * 16 + 3)),$((DISK_APP_T_PAGE * 16 + 18))p"
+  printf '%s\n' "${disk_fx_shown}" | sed -n '/^Decoded$/,$p'
+  printf '\n%s\n' "left/right sector   up/down page   g go to LBA   esc back"
+}
+
+disk_tools_sentence() {
+  printf '%s\n' "$1" | awk '{ print toupper(substr($0, 1, 1)) substr($0, 2) }'
 }
 
 disk_tools_tab_erase() {
@@ -121,6 +181,7 @@ disk_frame_tools() {
   case "${DISK_APP_T_OPEN}" in
   erase) disk_frame_tools_erase ;;
   caps) disk_frame_tools_caps ;;
+  sector) disk_frame_tools_sector ;;
   *) disk_frame_tools_list ;;
   esac
 }

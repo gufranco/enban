@@ -12,6 +12,7 @@ _enban() {
     'checksum:print the MD5, SHA-1 and SHA-256 of an image or disc'
     'queue:write the images a queue file lists'
     'discovery:fill a blank disc with test data and read it back'
+    'sector:show one sector as hex and text'
     'doctor:check the tools enban needs'
     'version:print the version'
     'help:print usage'
@@ -35,6 +36,7 @@ _enban() {
     '--full[erase every sector]' \
     '--sectors[how many sectors discovery writes]:sectors:' \
     '--csv[where discovery saves its read rate]:file:_files' \
+    '--lba[the sector sector shows]:lba:' \
     '*:image:_files' \
     '--theme[colours of the terminal interface]:theme:(kodougu catppuccin-mocha catppuccin-latte dracula nord gruvbox tokyo-night mono)'
 }

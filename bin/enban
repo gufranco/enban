@@ -41,6 +41,8 @@ DISK_PROG=enban
 . "${DISK_LIB}/queue.sh"
 # shellcheck source=SCRIPTDIR/../lib/discovery.sh
 . "${DISK_LIB}/discovery.sh"
+# shellcheck source=SCRIPTDIR/../lib/sector.sh
+. "${DISK_LIB}/sector.sh"
 # shellcheck source=SCRIPTDIR/../lib/settings.sh
 . "${DISK_LIB}/settings.sh"
 # shellcheck source=SCRIPTDIR/../lib/settings_tab.sh
@@ -94,6 +96,8 @@ usage:
   enban checksum --drive DRIVE        the same for the disc in the drive
   enban queue FILE                    write the images a queue file lists
   enban discovery --drive DRIVE       fill a blank disc with test data, read it
+  enban sector IMAGE [--lba N]        show one sector as hex and text
+  enban sector --drive DRIVE          the same for the disc in the drive
   enban doctor                        check the tools enban needs
   enban version                       print the version
   enban help                          print this page
@@ -111,6 +115,7 @@ options:
   --full              erase every sector instead of the start of the disc
   --sectors N         how many sectors discovery writes; all free by default
   --csv FILE          where discovery saves its read rate
+  --lba N             the sector sector shows; 0 by default
   --theme NAME        colours of the terminal interface, see notes
 
 notes:
@@ -139,7 +144,8 @@ notes:
   discovery writes a known pattern to a blank disc after you type the drive's
   name, reads it back in a hundred stretches, compares every sector and saves
   the read rate of each stretch as CSV, under the data folder unless --csv
-  names a file.
+  names a file. sector shows the 2048 bytes of one sector and decodes a
+  primary volume descriptor.
 
   The app draws in the terminal's alternate screen and gives the screen back
   when it ends, on q or on an interrupt. Tab and the digits switch tabs, the
@@ -185,6 +191,7 @@ examples:
   enban checksum --drive /dev/sr0
   enban queue family.queue
   enban discovery --drive /dev/sr0 --speed 8
+  enban sector debian.iso --lba 16
   enban doctor
 USAGE
 }
@@ -214,6 +221,7 @@ disk_option_value() {
   --fs) DISK_BUILD_FS="$2" ;;
   --sectors) DISK_DISCOVERY_SECTORS="$2" ;;
   --csv) DISK_DISCOVERY_CSV="$2" ;;
+  --lba) DISK_SECTOR_LBA="$2" ;;
   --label) DISK_BUILD_LABEL="$2" ;;
   *) DISK_DRIVE="$2" ;;
   esac
@@ -234,13 +242,14 @@ disk_option_seen() {
   --fs | --label) DISK_BUILD_OPTION="${DISK_BUILD_OPTION:-$1}" ;;
   --full) DISK_ERASE_OPTION="$1" ;;
   --sectors | --csv) DISK_DISCOVERY_OPTION="${DISK_DISCOVERY_OPTION:-$1}" ;;
+  --lba) DISK_SECTOR_OPTION="$1" ;;
   *) ;;
   esac
   return 0
 }
 
 disk_options() {
-  DISK_VALUE_OPTIONS="--drive --speed --fs --label --sectors --csv"
+  DISK_VALUE_OPTIONS="--drive --speed --fs --label --sectors --csv --lba"
   disk_op_room="$1"
   shift
   disk_op_left="$#"
@@ -284,6 +293,7 @@ disk_only_for() {
   disk_option_owner "$1" "${DISK_BUILD_OPTION}" build build || return 1
   disk_option_owner "$1" "${DISK_ERASE_OPTION}" erase erase || return 1
   disk_option_owner "$1" "${DISK_DISCOVERY_OPTION}" discovery discovery || return 1
+  disk_option_owner "$1" "${DISK_SECTOR_OPTION}" sector sector || return 1
   disk_option_owner "$1" "${DISK_VERIFY_OPTION}" "write read queue" "write, read and queue"
 }
 
@@ -380,14 +390,7 @@ disk_erase() {
 disk_checksum() {
   disk_options 1 "$@" || return 1
   disk_only_for checksum || return 1
-  if [ -n "${DISK_OPERAND}" ] && [ -n "${DISK_DRIVE}" ]; then
-    disk_cli_hint "checksum takes an image or --drive, not both"
-    return 1
-  fi
-  if [ -z "${DISK_OPERAND}${DISK_DRIVE}" ]; then
-    disk_cli_hint "checksum needs an image or --drive"
-    return 1
-  fi
+  disk_one_source checksum || return 1
   DISK_CHECKSUM_IMAGE="${DISK_OPERAND}"
   disk_checksum_run
 }
@@ -418,6 +421,30 @@ disk_discovery() {
   *) disk_speed_ok || return 1 ;;
   esac
   disk_discovery_run
+}
+
+disk_sector() {
+  disk_options 1 "$@" || return 1
+  disk_only_for sector || return 1
+  disk_one_source sector || return 1
+  case "${DISK_SECTOR_LBA}" in
+  '' | *[!0-9]*)
+    disk_error "--lba must be a whole number, got: ${DISK_SECTOR_LBA}"
+    return 1
+    ;;
+  *) DISK_SECTOR_IMAGE="${DISK_OPERAND}" ;;
+  esac
+  disk_sector_run
+}
+
+disk_one_source() {
+  if [ -n "${DISK_OPERAND}" ] && [ -n "${DISK_DRIVE}" ]; then
+    disk_cli_hint "$1 takes an image or --drive, not both"
+    return 1
+  fi
+  [ -n "${DISK_OPERAND}${DISK_DRIVE}" ] && return 0
+  disk_cli_hint "$1 needs an image or --drive"
+  return 1
 }
 
 disk_speed_ok() {
@@ -512,6 +539,10 @@ disk_route() {
   discovery)
     shift
     disk_discovery "$@"
+    ;;
+  sector)
+    shift
+    disk_sector "$@"
     ;;
   '') disk_open ;;
   -*) disk_app_start "$@" ;;

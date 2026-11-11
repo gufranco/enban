@@ -50,6 +50,16 @@ enban \- write, read, build and verify CD, DVD and Blu-ray discs
 .I file
 .RB [ \-\-no\-verify ]
 .br
+.B enban sector
+.I image
+.RB [ \-\-lba
+.IR n ]
+.br
+.B enban sector
+.BI \-\-drive " drive"
+.RB [ \-\-lba
+.IR n ]
+.br
 .B enban discovery
 .BI \-\-drive " drive"
 .RB [ \-\-sectors
@@ -210,6 +220,13 @@ says fewer, after the drive's name is typed. Then read it back in a hundred
 stretches, compare every sector, and save the read rate of each stretch as CSV.
 It names the first sector that reads back wrong or cannot be read.
 .TP
+.B sector
+Show the 2048 bytes of one sector of
+.I image
+or of the disc in the drive as hex and text, LBA 0 unless
+.B \-\-lba
+names another, and decode a primary volume descriptor.
+.TP
 .B doctor
 List the tools enban needs and whether each is installed. Exits non-zero only
 when a required tool is missing.
@@ -261,6 +278,9 @@ Erase every sector of the disc instead of only its start.
 .TP
 .BI \-\-sectors " n"
 How many sectors discovery writes; all free sectors by default.
+.TP
+.BI \-\-lba " n"
+The sector that sector shows; 0 by default.
 .TP
 .BI \-\-csv " file"
 Where discovery saves the read rate; a new file under
