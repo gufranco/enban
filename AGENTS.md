@@ -38,9 +38,9 @@ Guidance for anyone, human or agent, changing enban. What enban is and how to us
 ## Release
 
 - `ENBAN_VERSION` lives in [`lib/core.sh`](lib/core.sh).
-- The tap's `Formula/enban.rb` waits for the first job to ship.
+- Every release asks the tap to bump `Formula/enban.rb`, and that bump fails until the formula exists. The formula waits for the first disc job to ship.
 
 ## Gaps against FAMILY.md
 
 - The README is in English only; the Japanese, Simplified Chinese and Hong Kong Traditional Chinese READMEs are not written yet (as of 2026-11-10).
-- No release or Homebrew formula yet, since no disc job has shipped (as of 2026-11-10).
+- v1.0.0 ships the app frame, its tabs and its keys, but no disc job, so it has no Homebrew formula yet (as of 2026-11-11).
