@@ -8,7 +8,7 @@ disk_write_image() {
     disk_error "no image at $1."
     return 1
   fi
-  disk_wi_bytes="$(wc -c <"$1" | tr -d '[:space:]')"
+  disk_wi_bytes="$(disk_file_bytes "$1")"
   if [ "${disk_wi_bytes}" -eq 0 ] || [ $((disk_wi_bytes % 2048)) -ne 0 ]; then
     disk_error "$1 is not a disc image: its size is not a whole number of 2048-byte sectors."
     return 1

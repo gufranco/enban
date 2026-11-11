@@ -12,7 +12,7 @@ disk_layer_check() {
     disk_error "stopped: ${DISK_LAYER_IMAGE} is not an ISO image."
     return 1
   fi
-  disk_kc_bytes="$(wc -c <"${DISK_LAYER_IMAGE}" | tr -d '[:space:]')"
+  disk_kc_bytes="$(disk_file_bytes "${DISK_LAYER_IMAGE}")"
   DISK_LAYER_TOTAL=$((disk_kc_bytes / 2048))
   [ "${DISK_LAYER_TOTAL}" -gt $((DISK_LAYER_ZERO * 2)) ] || return 0
   disk_error "stopped: ${DISK_LAYER_IMAGE} is ${DISK_LAYER_TOTAL} sectors, more than a dual-layer DVD holds."

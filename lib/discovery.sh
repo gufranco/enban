@@ -74,7 +74,7 @@ disk_discovery_chunk() {
   disk_dk_seconds="$(awk '/copied, / { sub(/.*copied, /, ""); sub(/ s.*/, ""); print }' "${disk_dk_dir}/stat")"
   disk_dk_rate="$(disk_discovery_rate "$3" "${disk_dk_seconds}")"
   printf '%s,%s,%s,%s\n' "$2" "$3" "${disk_dk_seconds}" "${disk_dk_rate}" >>"${DISK_DISCOVERY_CSV}"
-  disk_dk_bytes="$(wc -c <"${disk_dk_dir}/got" | tr -d '[:space:]')"
+  disk_dk_bytes="$(disk_file_bytes "${disk_dk_dir}/got")"
   disk_dk_got=$((disk_dk_bytes / 2048))
   if cmp -s "${disk_dk_dir}/got" "${disk_dk_dir}/want"; then
     DISK_DISCOVERY_GOOD=$((DISK_DISCOVERY_GOOD + $3))

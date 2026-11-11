@@ -57,3 +57,7 @@ disk_json_string() {
     { out = out (NR > 1 ? "\\n" : "") escape($0) }
     END { printf "\"%s\"", out }'
 }
+
+disk_file_bytes() {
+  stat -c %s "$1" 2>/dev/null || stat -f %z "$1"
+}

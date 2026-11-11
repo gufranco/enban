@@ -157,7 +157,7 @@ disk_build_names() {
 
 disk_build_done() {
   disk_bd_files="$(disk_build_count)"
-  disk_bd_bytes="$(wc -c <"${DISK_BUILD_OUT}" | tr -d '[:space:]')"
+  disk_bd_bytes="$(disk_file_bytes "${DISK_BUILD_OUT}")"
   disk_bd_names="$(disk_build_names)"
   printf 'Files         %s\nSectors       %s\n' "${disk_bd_files}" $((disk_bd_bytes / 2048))
   printf 'File systems  %s\n' "${disk_bd_names}"

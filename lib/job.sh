@@ -105,7 +105,7 @@ disk_job_image() {
     DISK_APP_STATUS="No image at $1."
     return 1
   fi
-  disk_ji_bytes="$(wc -c <"$1" | tr -d '[:space:]')"
+  disk_ji_bytes="$(disk_file_bytes "$1")"
   if [ "${disk_ji_bytes}" -eq 0 ] || [ $((disk_ji_bytes % 2048)) -ne 0 ]; then
     DISK_APP_STATUS="$1 is not a disc image: its size is not whole 2048-byte sectors."
     return 1

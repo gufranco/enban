@@ -37,7 +37,7 @@ disk_sector_read() {
   else
     dd if="${DISK_SECTOR_FROM}" of="$1" bs="${disk_sr_size}" skip="${DISK_SECTOR_LBA}" count=1 2>/dev/null || : >"$1"
   fi
-  disk_sr_bytes="$(wc -c <"$1" | tr -d '[:space:]')"
+  disk_sr_bytes="$(disk_file_bytes "$1")"
   [ "${disk_sr_bytes}" -eq "${disk_sr_size}" ] && return 0
   disk_error "sector ${DISK_SECTOR_LBA} is past the end of ${DISK_SECTOR_NAME}."
   return 1

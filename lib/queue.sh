@@ -24,7 +24,7 @@ disk_queue_problem() {
     printf 'no image at %s.\n' "$1"
     return 0
   fi
-  disk_qp_bytes="$(wc -c <"$1" | tr -d '[:space:]')"
+  disk_qp_bytes="$(disk_file_bytes "$1")"
   if [ "${disk_qp_bytes}" -eq 0 ] || [ $((disk_qp_bytes % 2048)) -ne 0 ]; then
     printf '%s is not a disc image: its size is not a whole number of 2048-byte sectors.\n' "$1"
     return 0
