@@ -43,7 +43,7 @@ disk_app_pill() {
 disk_app_size() {
   disk_az_size="$(stty size 2>/dev/null)" || disk_az_size=""
   case "${disk_az_size}" in
-  [0-9]*' '[0-9]*)
+  [1-9]*' '[1-9]*)
     DISK_APP_ROWS="${disk_az_size% *}"
     DISK_APP_COLS="${disk_az_size#* }"
     ;;

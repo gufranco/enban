@@ -90,6 +90,7 @@ teardown() {
 
 @test "the arrows move the focus down the list of jobs" {
   # Arrange
+  disk_test_shim stty "case \"\$1\" in size) printf '24 60\\n' ;; *) exec \"\${REAL}\" \"\$@\" ;; esac"
   local keys='\033[B\033[Bq'
 
   # Act
@@ -118,6 +119,7 @@ teardown() {
 
 @test "enter opens the tab of the focused job" {
   # Arrange
+  disk_test_shim stty "case \"\$1\" in size) printf '24 60\\n' ;; *) exec \"\${REAL}\" \"\$@\" ;; esac"
   local keys='\033[B\033[B\nq'
 
   # Act
@@ -327,6 +329,18 @@ teardown() {
 
   # Act
   run disk_test_call eval "${call}" </dev/null
+
+  # Assert
+  [[ "${output}" == "24 80" ]]
+}
+
+@test "a terminal that reports a size of zero gets 80 columns" {
+  # Arrange
+  disk_test_shim stty "case \"\$1\" in size) printf '0 0\\n' ;; esac"
+  local call='disk_app_size; printf "%s %s\n" "${DISK_APP_ROWS}" "${DISK_APP_COLS}"'
+
+  # Act
+  run disk_test_call eval "${call}"
 
   # Assert
   [[ "${output}" == "24 80" ]]
