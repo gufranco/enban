@@ -55,6 +55,8 @@ DISK_PROG=enban
 . "${DISK_LIB}/convert.sh"
 # shellcheck source=SCRIPTDIR/../lib/label.sh
 . "${DISK_LIB}/label.sh"
+# shellcheck source=SCRIPTDIR/../lib/udf.sh
+. "${DISK_LIB}/udf.sh"
 # shellcheck source=SCRIPTDIR/../lib/layer.sh
 . "${DISK_LIB}/layer.sh"
 # shellcheck source=SCRIPTDIR/../lib/mount.sh
@@ -196,7 +198,9 @@ notes:
   booktype ask for the drive's name first.
 
   label rewrites the ISO 9660 label, in capitals, digits and underscores,
-  and the Joliet label, up to 16 characters, in place; a UDF label stays.
+  the Joliet label, up to 16 characters, and the UDF labels in place, with
+  each UDF descriptor's checksums recomputed. It first keeps the original as
+  IMAGE.bak, or the first free IMAGE.bak.N, and puts it back if a step fails.
   layerbreak picks the first DVD-Video cell start past the middle that fits
   layer 0, else the middle. mount uses hdiutil on macOS and udisksctl on
   Linux. write remembers the speed of each write made at a chosen speed, per

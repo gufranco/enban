@@ -96,15 +96,49 @@ disk_label_udf() {
   return 1
 }
 
+disk_label_backup() {
+  DISK_LABEL_BACKUP="${DISK_LABEL_IMAGE}.bak"
+  disk_lb_count=1
+  while [ -e "${DISK_LABEL_BACKUP}" ]; do
+    if [ "${disk_lb_count}" -ge 100 ]; then
+      disk_error "stopped: ${DISK_LABEL_IMAGE}.bak to .bak.99 all exist, so there is no room for a backup. nothing was changed."
+      return 1
+    fi
+    DISK_LABEL_BACKUP="${DISK_LABEL_IMAGE}.bak.${disk_lb_count}"
+    disk_lb_count=$((disk_lb_count + 1))
+  done
+  cp -c "${DISK_LABEL_IMAGE}" "${DISK_LABEL_BACKUP}" 2>/dev/null && return 0
+  cp "${DISK_LABEL_IMAGE}" "${DISK_LABEL_BACKUP}" 2>/dev/null && return 0
+  rm -f "${DISK_LABEL_BACKUP}"
+  disk_error "unable to back up ${DISK_LABEL_IMAGE} to ${DISK_LABEL_BACKUP}, so nothing was changed."
+  return 1
+}
+
 disk_label_run() {
   disk_label_check || return 1
+  disk_label_backup || return 1
   disk_label_walk
   disk_yr_primary="$(disk_label_primary | sed 's/ *$//')"
   disk_yr_line="Done. ${DISK_LABEL_IMAGE} is labelled ${disk_yr_primary}"
   disk_yr_joliet="$(printf '%.16s' "${DISK_LABEL_NAME}")"
-  [ "${DISK_LABEL_JOLIET}" = n ] || disk_yr_line="${disk_yr_line}, and ${disk_yr_joliet} on Joliet"
-  if disk_label_udf; then
-    disk_warning "${DISK_LABEL_IMAGE} also has UDF, and its UDF label is unchanged."
-  fi
-  disk_raw_done "${disk_yr_line}."
+  [ "${DISK_LABEL_JOLIET}" = n ] || disk_yr_line="${disk_yr_line}, ${disk_yr_joliet} on Joliet"
+  disk_label_udf_too || return 1
+  [ "${DISK_LABEL_UDF}" = n ] || disk_yr_line="${disk_yr_line}, ${DISK_LABEL_NAME} on UDF"
+  disk_raw_done "${disk_yr_line}. The original is kept as ${DISK_LABEL_BACKUP}."
+}
+
+disk_label_udf_too() {
+  DISK_LABEL_UDF=n
+  disk_label_udf || return 0
+  disk_lt_status=0
+  disk_udf_label || disk_lt_status="$?"
+  case "${disk_lt_status}" in
+  0) DISK_LABEL_UDF=y ;;
+  1) disk_warning "${DISK_LABEL_IMAGE} has UDF with no anchor at sector 256, so its UDF label is unchanged." ;;
+  *)
+    mv -f "${DISK_LABEL_BACKUP}" "${DISK_LABEL_IMAGE}"
+    disk_error "the UDF checksums of ${DISK_LABEL_IMAGE} could not be computed, so the image is restored as it was."
+    return 1
+    ;;
+  esac
 }

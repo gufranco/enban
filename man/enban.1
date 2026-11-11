@@ -315,8 +315,14 @@ An image that is already an ISO is refused.
 .TP
 .B label
 Rewrite the volume label of an ISO image in place: the ISO 9660 label in
-capitals, digits and underscores, and the Joliet label, up to 16 characters.
-A UDF label is left as it was, with a warning.
+capitals, digits and underscores, the Joliet label, up to 16 characters, and
+the UDF volume and logical volume names in both descriptor sequences and the
+file set descriptor, with each descriptor's checksums recomputed.
+The original is first copied to
+.IR image .bak,
+or the first free
+.IR image .bak. n ,
+and put back if a step fails.
 .TP
 .B layerbreak
 Print the layer break of a dual-layer DVD image: the first DVD-Video cell
