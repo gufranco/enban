@@ -53,6 +53,16 @@ DISK_PROG=enban
 . "${DISK_LIB}/audio.sh"
 # shellcheck source=SCRIPTDIR/../lib/convert.sh
 . "${DISK_LIB}/convert.sh"
+# shellcheck source=SCRIPTDIR/../lib/label.sh
+. "${DISK_LIB}/label.sh"
+# shellcheck source=SCRIPTDIR/../lib/layer.sh
+. "${DISK_LIB}/layer.sh"
+# shellcheck source=SCRIPTDIR/../lib/mount.sh
+. "${DISK_LIB}/mount.sh"
+# shellcheck source=SCRIPTDIR/../lib/speeds.sh
+. "${DISK_LIB}/speeds.sh"
+# shellcheck source=SCRIPTDIR/../lib/image_cli.sh
+. "${DISK_LIB}/image_cli.sh"
 # shellcheck source=SCRIPTDIR/../lib/settings.sh
 . "${DISK_LIB}/settings.sh"
 # shellcheck source=SCRIPTDIR/../lib/settings_tab.sh
@@ -75,6 +85,8 @@ DISK_PROG=enban
 . "${DISK_LIB}/tools_tab.sh"
 # shellcheck source=SCRIPTDIR/../lib/drive_tools.sh
 . "${DISK_LIB}/drive_tools.sh"
+# shellcheck source=SCRIPTDIR/../lib/image_tab.sh
+. "${DISK_LIB}/image_tab.sh"
 # shellcheck source=SCRIPTDIR/../lib/queue_tab.sh
 . "${DISK_LIB}/queue_tab.sh"
 # shellcheck source=SCRIPTDIR/../lib/queue_view.sh
@@ -116,6 +128,11 @@ usage:
   enban region --drive DRIVE          show the DVD region, or --set N
   enban booktype --drive DRIVE [TYPE] show or set the book type of a DVD+R
   enban convert IMAGE ISO             turn a BIN/CUE, NRG, MDF or CDI into ISO
+  enban label IMAGE NAME              change the volume label of an ISO image
+  enban layerbreak IMAGE              find the layer break of a DVD image
+  enban mount IMAGE                   attach an image read-only
+  enban unmount FOLDER                detach the image mounted at FOLDER
+  enban speeds                        list the write speeds enban remembers
   enban doctor                        check the tools enban needs
   enban version                       print the version
   enban help                          print this page
@@ -178,6 +195,14 @@ notes:
   for BIN/CUE and iat for NRG, MDF, CDI and IMG. close, region --set and
   booktype ask for the drive's name first.
 
+  label rewrites the ISO 9660 label, in capitals, digits and underscores,
+  and the Joliet label, up to 16 characters, in place; a UDF label stays.
+  layerbreak picks the first DVD-Video cell start past the middle that fits
+  layer 0, else the middle. mount uses hdiutil on macOS and udisksctl on
+  Linux. write remembers the speed of each write made at a chosen speed, per
+  disc ID and drive, in ENBAN_DATA/speeds.tsv, and uses it when no speed is
+  set.
+
   The app draws in the terminal's alternate screen and gives the screen back
   when it ends, on q or on an interrupt. Tab and the digits switch tabs, the
   arrows move between the jobs on Home and Enter opens one, ? shows the keys,
@@ -226,6 +251,8 @@ examples:
   enban cue album.cue 01.wav 02.wav --title "Trip 2024"
   enban region --drive /dev/sr0
   enban convert disc.cue disc.iso
+  enban label family.iso "Family 2009"
+  enban mount family.iso
   enban doctor
 USAGE
 }
@@ -679,7 +706,7 @@ disk_route() {
     shift
     disk_cue "$@"
     ;;
-  close | speed | region | booktype | convert)
+  close | speed | region | booktype | convert | label | layerbreak | mount | unmount | speeds)
     disk_mn_command="$1"
     shift
     "disk_${disk_mn_command}" "$@"

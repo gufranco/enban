@@ -90,11 +90,13 @@ disk_write_run() {
 disk_write_check() {
   disk_write_image "${DISK_WRITE_IMAGE}" || return 1
   disk_drive_read "${DISK_DRIVE}" write || return 1
-  disk_write_fits "${DISK_WRITE_IMAGE}"
+  disk_write_fits "${DISK_WRITE_IMAGE}" || return 1
+  disk_speeds_recall
 }
 
 disk_write_go() {
   disk_write_burn || return 1
+  disk_speeds_keep
   if [ "${DISK_WRITE_VERIFY}" = y ]; then
     disk_write_verify || return 1
   fi

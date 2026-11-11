@@ -413,3 +413,19 @@ options_everywhere() {
   [[ "${status}" -eq 0 ]]
   [[ "${status_all}" -eq 0 ]]
 }
+
+@test "enban help, man page and completions list the image tools and speeds" {
+  # Arrange
+  local first=label
+
+  # Act
+  run command_everywhere "${first}"
+
+  # Assert
+  local each status_all=0
+  for each in layerbreak mount unmount speeds; do
+    command_everywhere "${each}" || status_all=1
+  done
+  [[ "${status}" -eq 0 ]]
+  [[ "${status_all}" -eq 0 ]]
+}

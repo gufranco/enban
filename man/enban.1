@@ -92,6 +92,20 @@ enban \- write, read, build and verify CD, DVD and Blu-ray discs
 .B enban convert
 .I image iso
 .br
+.B enban label
+.I image name
+.br
+.B enban layerbreak
+.I image
+.br
+.B enban mount
+.I image
+.br
+.B enban unmount
+.I folder
+.br
+.B enban speeds
+.br
 .B enban discovery
 .BI \-\-drive " drive"
 .RB [ \-\-sectors
@@ -298,6 +312,32 @@ Turn a BIN/CUE image into an ISO through
 or an NRG, MDF, CDI or IMG image through
 .BR iat .
 An image that is already an ISO is refused.
+.TP
+.B label
+Rewrite the volume label of an ISO image in place: the ISO 9660 label in
+capitals, digits and underscores, and the Joliet label, up to 16 characters.
+A UDF label is left as it was, with a warning.
+.TP
+.B layerbreak
+Print the layer break of a dual-layer DVD image: the first DVD-Video cell
+start past the middle that still fits on layer 0, else the middle. An image
+that fits one layer needs none.
+.TP
+.B mount
+Attach an image read-only through
+.B hdiutil
+on macOS or
+.B udisksctl
+on Linux and print where it is mounted.
+.TP
+.B unmount
+Detach the image mounted at the folder.
+.TP
+.B speeds
+List the write speeds enban remembers. A write at a chosen speed keeps it
+per disc ID and drive in
+.IR ENBAN_DATA /speeds.tsv,
+and a later write with no speed set uses it.
 .TP
 .B doctor
 List the tools enban needs and whether each is installed. Exits non-zero only

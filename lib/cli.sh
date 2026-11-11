@@ -132,6 +132,7 @@ disk_doctor_platform() {
     disk_doctor_optional dvd+rw-booktype "dvd+rw-tools package, needed for the book type"
     disk_doctor_optional bchunk "bchunk package, needed to convert BIN/CUE images"
     disk_doctor_optional iat "iat package, needed to convert NRG, MDF, CDI and IMG images"
+    disk_doctor_optional udisksctl "udisks2 package, needed to mount images"
     ;;
   esac
   return "${disk_dp_status}"

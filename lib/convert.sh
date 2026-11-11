@@ -12,8 +12,7 @@ disk_convert_check() {
     disk_error "stopped: ${DISK_CONVERT_OUT} already exists."
     return 1
   fi
-  disk_cc_magic="$(dd if="${DISK_CONVERT_IN}" bs=1 skip=32769 count=5 2>/dev/null)"
-  if [ "${disk_cc_magic}" = CD001 ]; then
+  if disk_iso_is "${DISK_CONVERT_IN}"; then
     disk_error "stopped: ${DISK_CONVERT_IN} is already an ISO image, so it needs no conversion."
     return 1
   fi

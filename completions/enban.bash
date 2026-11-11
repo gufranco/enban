@@ -17,11 +17,11 @@ _enban() {
     COMPREPLY=($(compgen -W "--drive --json --speed --verify --no-verify --eject --no-eject --fs --label --full --sectors --csv --lba --title --performer --pregap --raw --finalize --set --theme" -- "${cur}"))
     return
   fi
-  if [[ "${COMP_WORDS[1]}" =~ ^(write|read|verify|build|checksum|queue|sector|cue|convert)$ && "${COMP_CWORD}" -gt 1 ]]; then
+  if [[ "${COMP_WORDS[1]}" =~ ^(write|read|verify|build|checksum|queue|sector|cue|convert|label|layerbreak|mount|unmount)$ && "${COMP_CWORD}" -gt 1 ]]; then
     COMPREPLY=($(compgen -f -- "${cur}"))
     return
   fi
-  COMPREPLY=($(compgen -W "info write read verify build erase checksum queue discovery sector cue close speed region booktype convert doctor version help" -- "${cur}"))
+  COMPREPLY=($(compgen -W "info write read verify build erase checksum queue discovery sector cue close speed region booktype convert label layerbreak mount unmount speeds doctor version help" -- "${cur}"))
 }
 
 complete -F _enban enban

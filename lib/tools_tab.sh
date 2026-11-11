@@ -13,13 +13,13 @@ disk_tools_list() {
     "Capabilities|what this drive reads and writes|caps" \
     "Sector viewer|hex of any LBA, user data|sector" \
     "Region|read or change the DVD region|region" \
-    "Speed memory|remembered speed per media ID|settings" \
+    "Speed memory|remembered speed per media ID|speeds" \
     "Create CUE|audio tracks, pregaps, CD-TEXT|cue" \
     "Convert|BIN/CUE, NRG, MDS, CDI, CCD to ISO|convert" \
-    "Volume label|change an ISO's label in place|later" \
+    "Volume label|change an ISO's label in place|label" \
     "Checksum|MD5, SHA-1 and SHA-256|checksum" \
-    "Layer break|show the IFO layer break of DVD Video|later" \
-    "Mount|attach an image read-only|later"
+    "Layer break|show the IFO layer break of DVD Video|layer" \
+    "Mount|attach an image read-only|mount"
 }
 
 disk_tools_field() {
@@ -32,7 +32,7 @@ disk_tools_tab_key() {
   disk_job_key convert "$1" && return 0
   case "${DISK_APP_T_OPEN}" in
   erase) disk_tools_tab_erase_key "$1" ;;
-  caps) disk_tools_tab_caps_key "$1" ;;
+  caps | speeds) disk_tools_tab_caps_key "$1" ;;
   sector) disk_tools_tab_sector_key "$1" ;;
   *) disk_tools_tab_list_key "$1" ;;
   esac
@@ -49,15 +49,12 @@ disk_tools_tab_list_key() {
 
 disk_tools_tab_open() {
   disk_to_action="$(disk_tools_field "${DISK_APP_T_FOCUS}" 3)"
-  disk_to_name="$(disk_tools_field "${DISK_APP_T_FOCUS}" 1)"
   case "${disk_to_action}" in
-  erase | caps) DISK_APP_T_OPEN="${disk_to_action}" ;;
+  erase | caps | speeds) DISK_APP_T_OPEN="${disk_to_action}" ;;
   tray) disk_tools_tab_eject ;;
   checksum) disk_tools_tab_checksum ;;
   sector) disk_tools_tab_sector_open ;;
-  close | booktype | speed | region | cue | convert) "disk_tools_tab_${disk_to_action}" ;;
-  settings) DISK_APP_STATUS="${disk_to_name} arrives with the log and settings." ;;
-  *) DISK_APP_STATUS="${disk_to_name} arrives in a coming release." ;;
+  *) "disk_tools_tab_${disk_to_action}" ;;
   esac
 }
 
@@ -189,6 +186,7 @@ disk_frame_tools() {
   case "${DISK_APP_T_OPEN}" in
   erase) disk_frame_tools_erase ;;
   caps) disk_frame_tools_caps ;;
+  speeds) disk_frame_tools_speeds ;;
   sector) disk_frame_tools_sector ;;
   *) disk_frame_tools_list ;;
   esac

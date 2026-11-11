@@ -52,21 +52,6 @@ written() {
   [[ "${shown}" == *"Drive"*"> Erase disc"*"Close"*"Capabilities"*"Image"*"Checksum"*"Mount"* ]]
 }
 
-@test "a tool still to come says which part of enban brings it" {
-  # Arrange
-  local keys
-  keys="7$(printf '\\033[B%.0s' {1..13})\\nq"
-
-  # Act
-  run on_terminal "${keys}"
-
-  # Assert
-  local shown
-  shown="$(last_frame)"
-  [[ "${shown}" == *"> Layer break"* ]]
-  [[ "${shown}" == *"Layer break arrives in a coming release."* ]]
-}
-
 @test "the focus stops at both ends of the tool list" {
   # Arrange
   local keys
@@ -720,4 +705,94 @@ iso_session() {
   local shown
   shown="$(last_frame)"
   [[ "${shown}" == *"Cancelled while converting. No ISO was written."* ]]
+}
+
+@test "Volume label relabels an ISO image" {
+  # Arrange
+  mkdir -p "${WORK}/files"
+  printf 'hello\n' >"${WORK}/files/a.txt"
+  disk_test_run enban build "${WORK}/files" "${WORK}/label.iso" --fs iso9660 </dev/null >/dev/null
+  answers "${WORK}/label.iso" "holiday"
+  local keys
+  keys="$(tool_keys 11 'q')"
+
+  # Act
+  run on_terminal "${keys}"
+
+  # Assert
+  local shown label
+  shown="$(last_frame)"
+  label="$(dd if="${WORK}/label.iso" bs=1 skip=$((16 * 2048 + 40)) count=7 2>/dev/null)"
+  [[ "${shown}" == *"Done. ${WORK}/label.iso is labelled HOLIDAY."* ]]
+  [[ "${label}" == "HOLIDAY" ]]
+}
+
+@test "Layer break says an image that fits one layer needs none" {
+  # Arrange
+  printf 'CD001' >"${WORK}/magic"
+  head -c 65536 /dev/zero >"${WORK}/small.iso"
+  dd if="${WORK}/magic" of="${WORK}/small.iso" bs=1 seek=32769 conv=notrunc 2>/dev/null
+  answers "${WORK}/small.iso"
+  local keys
+  keys="$(tool_keys 13 'q')"
+
+  # Act
+  run on_terminal "${keys}"
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"fits on one layer, so it needs no layer break."* ]]
+}
+
+@test "Mount says why an image did not mount and unmounts a folder" {
+  # Arrange
+  head -c 65536 /dev/zero >"${WORK}/blank.img"
+  mkdir -p "${WORK}/empty"
+  [[ "${ENBAN_TEST_OS}" == "Darwin" ]] || disk_test_shim udisksctl "exec sh $(printf '%q' "${ENBAN_TESTS_DIR}/udisksctl.sh") $(printf '%q' "${WORK}") \"\$@\""
+  answers "${WORK}/blank.img" "${WORK}/empty"
+  local keys
+  keys="$(tool_keys 14 '')"
+
+  # Act
+  run on_terminal_in_steps "${keys}" 'Unable to mount' '\nq'
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"Unable to unmount ${WORK}/empty. close what uses it and try again."* ]]
+}
+
+@test "Speed memory lists the remembered speeds and Enter goes back" {
+  # Arrange
+  export ENBAN_DATA="${WORK}/data"
+  mkdir -p "${ENBAN_DATA}"
+  printf 'ASUS SDRW-08U9M-U\tMCC 03RG20\t8\n' >"${ENBAN_DATA}/speeds.tsv"
+  local keys
+  keys="$(tool_keys 8 '')"
+
+  # Act
+  run on_terminal_in_steps "${keys}" 'MCC 03RG20' '\nq'
+
+  # Assert
+  local shown final
+  shown="$(screen)"
+  final="$(last_frame)"
+  [[ "${shown}" == *"Speed memory"*"ASUS SDRW-08U9M-U"*"MCC 03RG20"*"8x"* ]]
+  [[ "${final}" == *"> Speed memory"* ]]
+}
+
+@test "Speed memory says when nothing is remembered" {
+  # Arrange
+  export ENBAN_DATA="${WORK}/data"
+  local keys
+  keys="$(tool_keys 8 'q')"
+
+  # Act
+  run on_terminal "${keys}"
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"No speeds remembered yet."* ]]
 }

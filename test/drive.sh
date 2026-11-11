@@ -40,6 +40,7 @@ case " $* " in
   corrupt="$(value corrupt)"
   slow="$(value slow)"
   file="$(disc_file "$@")"
+  printf 'burn=%s\n' "$*" >>"${state}"
   [ "${slow}" != 1 ] || sleep 30
   if [ "${fail_write}" = 1 ]; then
     printf 'xorriso : FAILURE : -as cdrecord: Job could not be performed properly.\n' >&2
@@ -102,8 +103,14 @@ case " $* " in
     rm -f "${out}"
     exit "${status}"
   }
-  awk -v name="${name}" -v code="${code}" -v blocks="${blocks}" '
+  product="$(value product)"
+  if [ "${product}" = file ]; then
+    product="$(disc_file "$@")"
+    product="${product##*/}"
+  fi
+  awk -v name="${name}" -v code="${code}" -v blocks="${blocks}" -v product="${product}" '
     /^Media current: stdio file/ { printf "Media current: %s (%sh)\n", name, code; next }
+    /^Media summary: / && product != "" { print; printf "Media product: %s , Mitsubishi Kagaku Media Co.\n", product; next }
     /^Media blocks : / { printf "Media blocks : %d readable , %d writable , %d overall\n", $4, blocks - $4, blocks; next }
     { print }' "${out}"
   rm -f "${out}"
