@@ -177,12 +177,129 @@ prefix_of() {
 
 @test "enban read refuses an option that only write takes" {
   # Arrange
-  local option=--speed
+  local option=--copies
 
   # Act
-  run disk_test_run enban read --drive "${DRIVE}" "${OUT}" "${option}" 8 </dev/null
+  run disk_test_run enban read --drive "${DRIVE}" "${OUT}" "${option}" 2 </dev/null
 
   # Assert
   [[ "${status}" -eq 1 ]]
-  [[ "${output}" == "enban: option '--speed' works only with write and discovery. run 'enban help' for usage." ]]
+  [[ "${output}" == "enban: option '--copies' works only with write. run 'enban help' for usage." ]]
+}
+
+failing_reads() {
+  printf '%s\n' "$1" >"${WORK}/fails"
+  disk_test_shim dd "case \" \$* \" in
+*\" if=${DISC} \"*\" conv=noerror,sync \"*) \"\${REAL}\" \"\$@\"; printf 'dd: error reading %s: Input/output error\\\\n' '${DISC}' '${DISC}' >&2; exit 0 ;;
+*\" if=${DISC} of=${OUT} \"*)
+  left=\"\$(cat '${WORK}/fails')\"
+  if [ \"\${left}\" -gt 0 ]; then printf '%s\\\\n' \"\$((left - 1))\" >'${WORK}/fails'; exit 1; fi
+  ;;
+esac
+exec \"\${REAL}\" \"\$@\""
+}
+
+@test "enban read prints the MD5 of the image beside its SHA-256" {
+  # Arrange
+  linux_only
+  written_dvd
+
+  # Act
+  run disk_test_run enban read --drive "${DRIVE}" "${OUT}" </dev/null
+
+  # Assert
+  local md5
+  md5="$(md5sum "${OUT}")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${output}" == *"MD5      ${md5%% *}"* ]]
+}
+
+@test "enban read --cue writes a CUE sheet beside the image" {
+  # Arrange
+  linux_only
+  written_dvd
+
+  # Act
+  run disk_test_run enban read --drive "${DRIVE}" "${OUT}" --cue </dev/null
+
+  # Assert
+  local cue
+  cue="$(cat "${WORK}/copy.cue")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${cue}" == "$(printf 'FILE "copy.iso" BINARY\n  TRACK 01 MODE1/2048\n    INDEX 01 00:00:00')" ]]
+}
+
+@test "enban read --retries reads again after a failed read" {
+  # Arrange
+  linux_only
+  written_dvd
+  failing_reads 2
+
+  # Act
+  run disk_test_run enban read --drive "${DRIVE}" "${OUT}" --retries 2 </dev/null
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+  [[ "${output}" == *"Reading ${DRIVE} again, try 3 of 3."* ]]
+  [[ "${output}" == *"Done. ${DRIVE} is read into ${OUT} and verified." ]]
+}
+
+@test "enban read stops once its retries run out" {
+  # Arrange
+  linux_only
+  written_dvd
+  failing_reads 5
+
+  # Act
+  run disk_test_run enban read --drive "${DRIVE}" "${OUT}" --retries 1 </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == *"enban: unable to read ${DRIVE} into ${OUT}." ]]
+}
+
+@test "enban read --ignore-errors keeps going and counts the unreadable sectors" {
+  # Arrange
+  linux_only
+  written_dvd
+  failing_reads 9
+
+  # Act
+  run disk_test_run enban read --drive "${DRIVE}" "${OUT}" --ignore-errors </dev/null
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+  [[ "${output}" == *"enban: warning: 2 sectors of ${DRIVE} could not be read and are zeros in ${OUT}."* ]]
+  [[ "${output}" == *"Done. ${DRIVE} is read into ${OUT}." ]]
+}
+
+@test "enban read sets the drive's read speed first" {
+  # Arrange
+  linux_only
+  written_dvd
+  disk_test_raw
+
+  # Act
+  run disk_test_run enban read --drive "${DRIVE}" "${OUT}" --speed 4 </dev/null
+
+  # Assert
+  local sent
+  sent="$(sed -n '1p' "${WORK}/sg_raw.log")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${sent}" == "${DISC} bb 00 15 a4 ff ff 00 00 00 00 00 00" ]]
+}
+
+@test "enban read --retries takes 0 to 99 and --cue only works with read" {
+  # Arrange
+  local retries=abc
+
+  # Act
+  run disk_test_run enban read --drive "${DRIVE}" "${OUT}" --retries "${retries}" </dev/null
+
+  # Assert
+  local other
+  other="$(disk_test_run enban write "${OUT}" --drive "${DRIVE}" --cue </dev/null 2>&1 || true)"
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: --retries must be a whole number from 0 to 99, got: abc" ]]
+  [[ "${other}" == "enban: option '--cue' works only with read. run 'enban help' for usage." ]]
 }

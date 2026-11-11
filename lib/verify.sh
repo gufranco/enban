@@ -58,7 +58,9 @@ disk_verify_report() {
   disk_vr_lost=$((DISK_VERIFY_SECTORS - DISK_VERIFY_READ))
   printf 'Readable     %s of %s sectors\n' "${DISK_VERIFY_READ}" "${DISK_VERIFY_SECTORS}"
   printf 'Miscompares  %s\nUnreadable   %s\n' "${DISK_VERIFY_MISS}" "${disk_vr_lost}"
-  if [ "${DISK_VERIFY_MISS}" -gt 0 ]; then
+  if [ "${DISK_VERIFY_MISS}" -gt 0 ] && [ "${DISK_VERIFY_IGNORE}" = y ]; then
+    disk_warning "the disc in ${DISK_DRIVE} differs from ${DISK_VERIFY_IMAGE}, first at sector ${DISK_VERIFY_FIRST}, ignored as asked."
+  elif [ "${DISK_VERIFY_MISS}" -gt 0 ]; then
     disk_error "the disc in ${DISK_DRIVE} differs from ${DISK_VERIFY_IMAGE}, first at sector ${DISK_VERIFY_FIRST}."
     return 1
   fi
@@ -72,6 +74,7 @@ disk_verify_report() {
 disk_verify_done() {
   disk_vd_line="Done. every sector of ${DISK_DRIVE} can be read."
   [ -z "${DISK_VERIFY_IMAGE}" ] || disk_vd_line="Done. ${DISK_DRIVE} matches ${DISK_VERIFY_IMAGE} byte for byte."
+  [ "${DISK_VERIFY_MISS}" -eq 0 ] || disk_vd_line="Done. every sector of ${DISK_DRIVE} can be read, and ${DISK_VERIFY_MISS} differ from ${DISK_VERIFY_IMAGE}."
   if disk_ui_out; then
     disk_ui_done "${disk_vd_line}"
     return 0
@@ -79,8 +82,19 @@ disk_verify_done() {
   printf '%s\n' "${disk_vd_line}"
 }
 
+disk_verify_attempts() {
+  disk_verify_scan || return 1
+  disk_va_try=0
+  while [ "${DISK_VERIFY_READ}" -lt "${DISK_VERIFY_SECTORS}" ] && [ "${disk_va_try}" -lt "${DISK_READ_RETRIES}" ]; do
+    disk_va_try=$((disk_va_try + 1))
+    disk_say "Verifying ${DISK_DRIVE} again, try $((disk_va_try + 1)) of $((DISK_READ_RETRIES + 1))."
+    disk_verify_scan || return 1
+  done
+}
+
 disk_verify_run() {
   disk_verify_check || return 1
-  disk_verify_scan || return 1
+  disk_read_speed || return 1
+  disk_verify_attempts || return 1
   disk_verify_report
 }

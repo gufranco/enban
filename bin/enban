@@ -165,6 +165,10 @@ options:
   --mode dao|tao      write's mode: disc at once by default, or track at once
   --no-finalize       write leaves the disc open for another session
   --opc               write calibrates the laser power first, on data discs
+  --retries N         read and verify try a failed read N more times; 0
+  --ignore-errors     read keeps going past unreadable sectors, as zeros
+  --cue               read writes a CUE sheet beside the image
+  --ignore-miscompares verify reports a sector that differs without failing
   --set N             the region, 1 to 8, that region sets
   --theme NAME        colours of the terminal interface, see notes
 
@@ -288,6 +292,9 @@ disk_option_flag() {
   --delete-image) DISK_WRITE_DELETE=y ;;
   --no-finalize) DISK_WRITE_FINALIZE=n ;;
   --opc) DISK_WRITE_OPC=y ;;
+  --ignore-errors) DISK_READ_IGNORE=y ;;
+  --cue) DISK_READ_CUE=y ;;
+  --ignore-miscompares) DISK_VERIFY_IGNORE=y ;;
   *) return 1 ;;
   esac
   disk_option_seen "$1"
@@ -298,6 +305,7 @@ disk_option_value() {
   --speed) DISK_WRITE_SPEED="$2" ;;
   --copies) DISK_WRITE_COPIES="$2" ;;
   --mode) DISK_WRITE_MODE="$2" ;;
+  --retries) DISK_READ_RETRIES="$2" ;;
   --fs) DISK_BUILD_FS="$2" ;;
   --sectors) DISK_DISCOVERY_SECTORS="$2" ;;
   --csv) DISK_DISCOVERY_CSV="$2" ;;
@@ -329,6 +337,9 @@ disk_option_seen() {
   --lba | --raw) DISK_SECTOR_OPTION="${DISK_SECTOR_OPTION:-$1}" ;;
   --finalize) DISK_RAW_OPTION="$1:close" ;;
   --test) DISK_TEST_OPTION="$1" ;;
+  --ignore-errors | --cue) DISK_READ_OPTION="${DISK_READ_OPTION:-$1}" ;;
+  --retries) DISK_RETRY_OPTION="$1" ;;
+  --ignore-miscompares) DISK_MISCOMPARE_OPTION="$1" ;;
   --copies | --delete-image | --mode | --no-finalize | --opc) DISK_COPIES_OPTION="${DISK_COPIES_OPTION:-$1}" ;;
   --set) DISK_RAW_OPTION="$1:region" ;;
   --title | --performer | --pregap) DISK_CUE_OPTION="${DISK_CUE_OPTION:-$1}" ;;
@@ -338,7 +349,7 @@ disk_option_seen() {
 }
 
 disk_options() {
-  DISK_VALUE_OPTIONS="--drive --speed --copies --mode --fs --label --sectors --csv --lba --title --performer --pregap --set"
+  DISK_VALUE_OPTIONS="--drive --speed --copies --mode --retries --fs --label --sectors --csv --lba --title --performer --pregap --set"
   disk_op_room="$1"
   shift
   disk_op_left="$#"
@@ -378,7 +389,10 @@ disk_only_for() {
   disk_option_pair "${DISK_VERIFY_CLASH}" verify || return 1
   disk_option_pair "${DISK_EJECT_CLASH}" eject || return 1
   disk_option_owner "$1" "${disk_of_json}" info info || return 1
-  disk_option_owner "$1" "${DISK_SPEED_OPTION}" "write discovery" "write and discovery" || return 1
+  disk_option_owner "$1" "${DISK_SPEED_OPTION}" "write read verify discovery" "write, read, verify and discovery" || return 1
+  disk_option_owner "$1" "${DISK_READ_OPTION}" read read || return 1
+  disk_option_owner "$1" "${DISK_RETRY_OPTION}" "read verify" "read and verify" || return 1
+  disk_option_owner "$1" "${DISK_MISCOMPARE_OPTION}" verify verify || return 1
   disk_option_owner "$1" "${DISK_TEST_OPTION}" "write discovery" "write and discovery" || return 1
   disk_option_owner "$1" "${DISK_COPIES_OPTION}" write write || return 1
   disk_option_owner "$1" "${DISK_WRITE_OPTION}" write write || return 1
@@ -450,6 +464,7 @@ disk_read() {
     return 1
   fi
   DISK_READ_OUT="${DISK_OPERAND}"
+  disk_read_retries_ok || return 1
   disk_read_run
 }
 
@@ -461,6 +476,7 @@ disk_verify() {
     return 1
   fi
   DISK_VERIFY_IMAGE="${DISK_OPERAND}"
+  disk_read_retries_ok || return 1
   disk_verify_run
 }
 

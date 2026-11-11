@@ -184,3 +184,70 @@ change_sector() {
   [[ "${status}" -eq 1 ]]
   [[ "${output}" == "enban: option '--no-verify' works only with write, read and queue. run 'enban help' for usage." ]]
 }
+
+@test "enban verify --ignore-miscompares reports a sector that differs and passes" {
+  # Arrange
+  linux_only
+  written_dvd
+  change_sector 9
+
+  # Act
+  run disk_test_run enban verify --drive "${DRIVE}" "${IMAGE}" --ignore-miscompares </dev/null
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+  [[ "${output}" == *"enban: warning: the disc in ${DRIVE} differs from ${IMAGE}, first at sector 9, ignored as asked."* ]]
+  [[ "${output}" == *"Done. every sector of ${DRIVE} can be read, and 1 differ from ${IMAGE}." ]]
+}
+
+@test "enban verify --retries reads the disc again after a short read" {
+  # Arrange
+  linux_only
+  written_dvd
+  printf '1\n' >"${WORK}/short"
+  disk_test_shim dd "case \" \$* \" in
+*\" if=${DISC} \"*)
+  if [ \"\$(cat '${WORK}/short')\" -gt 0 ]; then
+    printf '0\\\\n' >'${WORK}/short'
+    set -- \"\$@\" count=10
+  fi
+  ;;
+esac
+exec \"\${REAL}\" \"\$@\""
+
+  # Act
+  run disk_test_run enban verify --drive "${DRIVE}" --retries 1 </dev/null
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+  [[ "${output}" == *"Verifying ${DRIVE} again, try 2 of 2."* ]]
+  [[ "${output}" == *"Done. every sector of ${DRIVE} can be read." ]]
+}
+
+@test "enban verify sets the drive's read speed first" {
+  # Arrange
+  linux_only
+  written_dvd
+  disk_test_raw
+
+  # Act
+  run disk_test_run enban verify --drive "${DRIVE}" --speed max </dev/null
+
+  # Assert
+  local sent
+  sent="$(sed -n '1p' "${WORK}/sg_raw.log")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${sent}" == "${DISC} bb 00 ff ff ff ff 00 00 00 00 00 00" ]]
+}
+
+@test "--ignore-miscompares works only with verify" {
+  # Arrange
+  local option=--ignore-miscompares
+
+  # Act
+  run disk_test_run enban read --drive "${DRIVE}" "${WORK}/out.iso" "${option}" </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: option '--ignore-miscompares' works only with verify. run 'enban help' for usage." ]]
+}

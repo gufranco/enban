@@ -18,13 +18,55 @@ disk_read_check() {
   fi
 }
 
+disk_read_retries_ok() {
+  case "${DISK_READ_RETRIES}" in
+  [0-9] | [1-9][0-9]) return 0 ;;
+  *)
+    disk_error "--retries must be a whole number from 0 to 99, got: ${DISK_READ_RETRIES}"
+    return 1
+    ;;
+  esac
+}
+
+disk_read_speed() {
+  [ -n "${DISK_SPEED_OPTION}" ] || return 0
+  DISK_SPEED_WANTED="${DISK_WRITE_SPEED}"
+  disk_speed_run
+}
+
+disk_read_once() {
+  rm -f "${DISK_READ_OUT}"
+  dd if="${DISK_DRIVE#stdio:}" of="${DISK_READ_OUT}" bs=2048 count="${DISK_DRIVE_READABLE}" 2>/dev/null
+}
+
 disk_read_copy() {
-  disk_rc_source="${DISK_DRIVE#stdio:}"
-  if dd if="${disk_rc_source}" of="${DISK_READ_OUT}" bs=2048 count="${DISK_DRIVE_READABLE}" 2>/dev/null; then
-    return 0
-  fi
-  disk_error "unable to read ${DISK_DRIVE} into ${DISK_READ_OUT}."
-  return 1
+  disk_ry_try=0
+  while ! disk_read_once; do
+    disk_ry_try=$((disk_ry_try + 1))
+    if [ "${disk_ry_try}" -gt "${DISK_READ_RETRIES}" ]; then
+      [ "${DISK_READ_IGNORE}" = n ] || {
+        disk_read_salvage
+        return
+      }
+      disk_error "unable to read ${DISK_DRIVE} into ${DISK_READ_OUT}."
+      return 1
+    fi
+    disk_say "Reading ${DISK_DRIVE} again, try $((disk_ry_try + 1)) of $((DISK_READ_RETRIES + 1))."
+  done
+}
+
+disk_read_salvage() {
+  disk_rz_errors="$(mktemp "${TMPDIR:-/tmp}/enban-salvage.XXXXXX")" || return 1
+  dd if="${DISK_DRIVE#stdio:}" of="${DISK_READ_OUT}" bs=2048 count="${DISK_DRIVE_READABLE}" conv=noerror,sync 2>"${disk_rz_errors}"
+  DISK_READ_BAD="$(grep -c 'error reading' "${disk_rz_errors}")"
+  rm -f "${disk_rz_errors}"
+  disk_warning "${DISK_READ_BAD} sectors of ${DISK_DRIVE} could not be read and are zeros in ${DISK_READ_OUT}."
+}
+
+disk_read_cue() {
+  [ "${DISK_READ_CUE}" = y ] || return 0
+  disk_rq_name="${DISK_READ_OUT##*/}"
+  printf 'FILE "%s" BINARY\n  TRACK 01 MODE1/2048\n    INDEX 01 00:00:00\n' "${disk_rq_name}" >"${DISK_READ_OUT%.*}.cue"
 }
 
 disk_read_verify() {
@@ -37,11 +79,12 @@ disk_read_verify() {
 }
 
 disk_read_done() {
-  disk_rd_digest="$(sha256sum "${DISK_READ_OUT}")"
+  disk_rd_digest="$(disk_checksum_digest sha256 <"${DISK_READ_OUT}")"
+  disk_rd_md5="$(disk_checksum_digest md5 <"${DISK_READ_OUT}")"
   disk_rd_text="read into ${DISK_READ_OUT}"
-  [ "${DISK_READ_VERIFY}" != y ] || disk_rd_text="${disk_rd_text} and verified"
+  [ "${DISK_READ_VERIFY}" != y ] || [ "${DISK_READ_BAD}" -gt 0 ] || disk_rd_text="${disk_rd_text} and verified"
   disk_rd_line="Done. ${DISK_DRIVE} is ${disk_rd_text}."
-  printf 'Sectors  %s\nSHA-256  %s\n' "${DISK_DRIVE_READABLE}" "${disk_rd_digest%% *}"
+  printf 'Sectors  %s\nMD5      %s\nSHA-256  %s\n' "${DISK_DRIVE_READABLE}" "${disk_rd_md5}" "${disk_rd_digest}"
   if disk_ui_out; then
     disk_ui_done "${disk_rd_line}"
     return 0
@@ -51,8 +94,10 @@ disk_read_done() {
 
 disk_read_run() {
   disk_read_check || return 1
+  disk_read_speed || return 1
   disk_read_copy || return 1
-  if [ "${DISK_READ_VERIFY}" = y ]; then
+  disk_read_cue
+  if [ "${DISK_READ_VERIFY}" = y ] && [ "${DISK_READ_BAD}" -eq 0 ]; then
     disk_read_verify || return 1
   fi
   disk_read_done

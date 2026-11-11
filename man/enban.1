@@ -442,6 +442,22 @@ because libburn turns buffer underrun protection on whenever the drive has it,
 and overburning is not offered, since neither xorriso nor cdrskin writes past
 the disc's capacity.
 .TP
+.BI \-\-retries " n"
+Read or verify the disc up to
+.I n
+more times when a read fails or ends short; 0 by default.
+.TP
+.B \-\-ignore\-errors
+Let read go on past sectors it cannot read, writing zeros in their place and
+counting them; the copy is not compared with the disc then.
+.TP
+.B \-\-cue
+Write a CUE sheet beside the image read, naming it as one MODE1/2048 track.
+.TP
+.B \-\-ignore\-miscompares
+Let verify report sectors that differ from the image as a warning instead of a
+failure.
+.TP
 .B \-\-test
 Run the burn of write or discovery as a test, with the laser off: the drive goes
 through every step and nothing is written, so nothing is verified or read back.
