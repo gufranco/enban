@@ -102,7 +102,6 @@ minimal_path() {
 
 @test "enban doctor warns about cdrdao on Linux without failing on it" {
   # Arrange
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS reads the drive through drutil"
   local farm
   farm="$(disk_test_farm cdrdao)"
 

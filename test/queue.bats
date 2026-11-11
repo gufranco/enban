@@ -21,10 +21,6 @@ teardown() {
   rm -rf "${WORK}"
 }
 
-linux_only() {
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS reads the drive through drutil"
-}
-
 swapping_drive() {
   disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160
   disk_test_drive_flag swap
@@ -38,7 +34,6 @@ burned() {
 
 @test "the queue writes two images in order, one blank disc each" {
   # Arrange
-  linux_only
   swapping_drive
   printf '%s\t%s\n' "${ONE}" "stdio:${DISC}" "${TWO}" "stdio:${DISC}" >"${QUEUE}"
 
@@ -56,7 +51,6 @@ burned() {
 
 @test "the queue writes each copy on its own disc" {
   # Arrange
-  linux_only
   swapping_drive
   printf '%s stdio:%s 8 2\n' "${ONE}" "${DISC}" >"${QUEUE}"
 
@@ -72,7 +66,6 @@ burned() {
 
 @test "the queue writes to two drives at once" {
   # Arrange
-  linux_only
   swapping_drive
   printf '%s\t%s\n' "${ONE}" "stdio:${DISC}" "${TWO}" "stdio:${OTHER}" >"${QUEUE}"
 
@@ -88,7 +81,6 @@ burned() {
 
 @test "the queue gives up on a row when no blank disc arrives in time" {
   # Arrange
-  linux_only
   disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160
   printf '%s\t%s\n' "${ONE}" "stdio:${DISC}" "${TWO}" "stdio:${DISC}" >"${QUEUE}"
 
@@ -105,7 +97,6 @@ burned() {
 
 @test "the queue keeps going after a row that fails" {
   # Arrange
-  linux_only
   disk_test_drive 0011 "DVD-R sequential recording" 45 22160
   disk_test_drive_flag swap
   printf '%s\t%s\n' "${TWO}" "stdio:${DISC}" "${ONE}" "stdio:${DISC}" >"${QUEUE}"
@@ -121,7 +112,6 @@ burned() {
 
 @test "the queue writes nothing without each drive's name" {
   # Arrange
-  linux_only
   swapping_drive
   printf '%s\t%s\n' "${ONE}" "stdio:${DISC}" >"${QUEUE}"
 
@@ -222,7 +212,6 @@ burned() {
 
 @test "the queue draws its result with gum" {
   # Arrange
-  linux_only
   swapping_drive
   printf '%s\t%s\n' "${ONE}" "stdio:${DISC}" >"${QUEUE}"
   export ENBAN_TEST_GUM=1 ENBAN_TEST_GUM_LOG="${WORK}/gum.log"

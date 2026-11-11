@@ -24,10 +24,6 @@ teardown() {
   rm -rf "${WORK}"
 }
 
-linux_only() {
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS reads the drive through drutil"
-}
-
 answers() {
   printf '%s\n' "$@" >"${ENBAN_TEST_GUM_ANSWERS}"
 }
@@ -41,7 +37,6 @@ written_dvd() {
 
 @test "the Read tab copies the disc into the chosen file and shows the result" {
   # Arrange
-  linux_only
   written_dvd
   answers "${OUT}"
 
@@ -59,7 +54,6 @@ written_dvd() {
 
 @test "the Read tab shows why a read failed" {
   # Arrange
-  linux_only
   disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160 11080
   answers "${OUT}"
 
@@ -74,7 +68,6 @@ written_dvd() {
 
 @test "the Read tab cancels a read on c" {
   # Arrange
-  linux_only
   written_dvd
   disk_test_shim dd "case \" \$* \" in *\" of=\"*) sleep 30 ;; esac; exec \"\${REAL}\" \"\$@\""
   answers "${OUT}"

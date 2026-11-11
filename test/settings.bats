@@ -23,10 +23,6 @@ teardown() {
   rm -rf "${WORK}"
 }
 
-linux_only() {
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS reads the drive through drutil"
-}
-
 settings() {
   printf '%s\n' "$@" >"${ENBAN_CONFIG}/settings"
 }
@@ -117,7 +113,6 @@ kinds() {
   # Arrange
   settings "queue_wait=1"
   printf '%s\t%s\n' "${IMAGE}" "${DRIVE}" >"${WORK}/jobs.queue"
-  linux_only
   disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160
   local search_path
   search_path="$(disk_test_path)"
@@ -133,7 +128,6 @@ kinds() {
 
 @test "the settings file turns the verify and the eject of write off" {
   # Arrange
-  linux_only
   settings "write_verify=no" "write_eject=no"
   disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160
 
@@ -147,7 +141,6 @@ kinds() {
 
 @test "--verify and --eject turn back on what the settings file turned off" {
   # Arrange
-  linux_only
   settings "write_verify=no" "write_eject=no"
   disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160
 
@@ -161,7 +154,6 @@ kinds() {
 
 @test "the settings file turns the verify of read off on its own" {
   # Arrange
-  linux_only
   settings "read_verify=no" "write_verify=yes" "write_eject=yes"
   disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160
   local search_path

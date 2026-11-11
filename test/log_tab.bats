@@ -48,7 +48,6 @@ build_keys() {
 
 @test "the log names the drive and the disc it found" {
   # Arrange
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS reads the drive through drutil"
   disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160
   : >"${WORK}/disc.iso"
 
@@ -65,7 +64,6 @@ build_keys() {
   # Arrange
   local drive="stdio:${WORK}/missing/disc.iso"
   local wanted="ERROR Unable to read the drive ${drive}."
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || wanted="WARN  Reading a drive is not supported on macOS yet."
 
   # Act
   run on_terminal '8q' --drive "${drive}"

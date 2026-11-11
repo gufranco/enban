@@ -17,17 +17,17 @@ teardown() {
   rm -rf "${WORK}"
 }
 
-linux_only() {
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS reads the drive through drutil"
-}
-
 burner() {
-  disk_test_shim cdrskin "printf '%s\\n' \"\$*\" >>'${WORK}/cdrskin.log'; [ ! -e '${WORK}/burn.fail' ] || { printf 'cdrskin: FATAL : Cannot open cue file\\n' >&2; exit 1; }"
+  local name=cdrskin fatal='cdrskin: FATAL : '
+  if [[ "${ENBAN_TEST_OS}" != "Linux" ]]; then
+    name=cdrecord
+    fatal='cdrecord: '
+  fi
+  disk_test_shim "${name}" "printf '%s\\n' \"\$*\" >>'${WORK}/burner.log'; [ ! -e '${WORK}/burn.fail' ] || { printf '${fatal}Cannot open cue file\\n' >&2; exit 1; }"
 }
 
 @test "enban write burns a CUE sheet as an audio CD after the drive's name" {
   # Arrange
-  linux_only
   disk_test_drive 0009 "CD-R" 359847 7056
   burner
 
@@ -36,7 +36,7 @@ burner() {
 
   # Assert
   local sent
-  sent="$(cat "${WORK}/cdrskin.log")"
+  sent="$(cat "${WORK}/burner.log")"
   [[ "${status}" -eq 0 ]]
   [[ "${sent}" == "-v dev=${DRIVE} -dao speed=16 -eject cuefile=${CUE}" ]]
   [[ "${output}" == *"Done. ${DRIVE} is written as an audio CD and ejected." ]]
@@ -44,7 +44,6 @@ burner() {
 
 @test "enban write leaves an audio CD in the drive with --no-eject" {
   # Arrange
-  linux_only
   disk_test_drive 000a "CD-RW" 359847 7056
   burner
 
@@ -53,7 +52,7 @@ burner() {
 
   # Assert
   local sent
-  sent="$(cat "${WORK}/cdrskin.log")"
+  sent="$(cat "${WORK}/burner.log")"
   [[ "${status}" -eq 0 ]]
   [[ "${sent}" == "-v dev=${DRIVE} -dao cuefile=${CUE}" ]]
   [[ "${output}" == *"Done. ${DRIVE} is written as an audio CD." ]]
@@ -61,7 +60,6 @@ burner() {
 
 @test "enban write burns an audio CD only to a blank CD" {
   # Arrange
-  linux_only
   disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160
   burner
 
@@ -75,7 +73,6 @@ burner() {
 
 @test "enban write says why the audio burn failed" {
   # Arrange
-  linux_only
   disk_test_drive 0009 "CD-R" 359847 7056
   burner
   : >"${WORK}/burn.fail"
@@ -90,7 +87,6 @@ burner() {
 
 @test "enban write burns nothing without the drive's name" {
   # Arrange
-  linux_only
   disk_test_drive 0009 "CD-R" 359847 7056
   burner
 
@@ -100,7 +96,7 @@ burner() {
   # Assert
   [[ "${status}" -eq 1 ]]
   [[ "${output}" == *"enban: stopped: nothing was written." ]]
-  [[ ! -e "${WORK}/cdrskin.log" ]]
+  [[ ! -e "${WORK}/burner.log" ]]
 }
 
 @test "enban write says when the CUE sheet is missing" {
@@ -117,7 +113,6 @@ burner() {
 
 @test "enban write burns an audio CD only to a blank disc" {
   # Arrange
-  linux_only
   local search_path
   disk_test_drive 0009 "CD-R" 359847 7056
   dd if=/dev/urandom of="${WORK}/image.iso" bs=2048 count=512 2>/dev/null
@@ -135,7 +130,6 @@ burner() {
 
 @test "enban write --test burns an audio CD as a test" {
   # Arrange
-  linux_only
   disk_test_drive 0009 "CD-R" 359847 7056
   burner
 
@@ -144,7 +138,7 @@ burner() {
 
   # Assert
   local sent
-  sent="$(cat "${WORK}/cdrskin.log")"
+  sent="$(cat "${WORK}/burner.log")"
   [[ "${status}" -eq 0 ]]
   [[ "${sent}" == "-v dev=${DRIVE} -dao -dummy cuefile=${CUE}" ]]
   [[ "${output}" == *"Done. the test write to ${DRIVE} ran to the end, and nothing was written." ]]
@@ -152,7 +146,6 @@ burner() {
 
 @test "enban write burns an audio CD track at once and leaves it open" {
   # Arrange
-  linux_only
   disk_test_drive 0009 "CD-R" 359847 7056
   burner
 
@@ -161,7 +154,7 @@ burner() {
 
   # Assert
   local sent
-  sent="$(cat "${WORK}/cdrskin.log")"
+  sent="$(cat "${WORK}/burner.log")"
   [[ "${status}" -eq 0 ]]
   [[ "${sent}" == "-v dev=${DRIVE} -tao -multi cuefile=${CUE}" ]]
 }
@@ -175,5 +168,5 @@ burner() {
 
   # Assert
   [[ "${status}" -eq 1 ]]
-  [[ "${output}" == "enban: --opc applies to data discs; cdrskin calibrates an audio CD on its own." ]]
+  [[ "${output}" == "enban: --opc applies to data discs; the burner calibrates an audio CD on its own." ]]
 }

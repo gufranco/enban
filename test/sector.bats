@@ -68,7 +68,6 @@ put() {
 
 @test "enban sector reads a sector of the disc in the drive" {
   # Arrange
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS reads the drive through drutil"
   local search_path
   disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160
   : >"${WORK}/disc.iso"

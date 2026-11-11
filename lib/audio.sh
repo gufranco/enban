@@ -5,7 +5,7 @@
 
 disk_audio_opc() {
   [ "${DISK_WRITE_OPC}" = y ] || return 0
-  disk_error "--opc applies to data discs; cdrskin calibrates an audio CD on its own."
+  disk_error "--opc applies to data discs; the burner calibrates an audio CD on its own."
   return 1
 }
 
@@ -28,6 +28,14 @@ disk_audio_check() {
   return 1
 }
 
+disk_audio_tool() {
+  disk_at_os="$(disk_os)"
+  case "${disk_at_os}" in
+  Darwin) printf 'cdrecord\n' ;;
+  *) printf 'cdrskin\n' ;;
+  esac
+}
+
 disk_audio_burn() {
   disk_ab_log="$(mktemp "${TMPDIR:-/tmp}/enban-audio.XXXXXX")" || return 1
   set -- -v "dev=${DISK_DRIVE}" "-${DISK_WRITE_MODE}"
@@ -36,11 +44,12 @@ disk_audio_burn() {
   [ "${DISK_WRITE_EJECT}" = n ] || set -- "$@" -eject
   [ "${DISK_WRITE_TEST}" = n ] || set -- "$@" -dummy
   disk_ab_status=0
-  cdrskin "$@" "cuefile=${DISK_WRITE_IMAGE}" >"${disk_ab_log}" 2>&1 || disk_ab_status=1
-  disk_ab_reason="$(sed -n 's/^cdrskin: FATAL : //p' "${disk_ab_log}" | sed -n '1p')"
+  disk_ab_tool="$(disk_audio_tool)"
+  "${disk_ab_tool}" "$@" "cuefile=${DISK_WRITE_IMAGE}" >"${disk_ab_log}" 2>&1 || disk_ab_status=1
+  disk_ab_reason="$(sed -n -e 's/^cdrskin: FATAL : //p' -e 's/^cdrecord: //p' "${disk_ab_log}" | sed -n '1p')"
   rm -f "${disk_ab_log}"
   [ "${disk_ab_status}" -eq 0 ] && return 0
-  disk_error "the audio burn to ${DISK_DRIVE} failed: ${disk_ab_reason:-cdrskin stopped.}"
+  disk_error "the audio burn to ${DISK_DRIVE} failed: ${disk_ab_reason:-${disk_ab_tool} stopped.}"
   return 1
 }
 

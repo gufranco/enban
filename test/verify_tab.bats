@@ -23,10 +23,6 @@ teardown() {
   rm -rf "${WORK}"
 }
 
-linux_only() {
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS reads the drive through drutil"
-}
-
 answers() {
   printf '%s\n' "$@" >"${ENBAN_TEST_GUM_ANSWERS}"
 }
@@ -40,7 +36,6 @@ written_dvd() {
 
 @test "the Verify tab compares the disc with the chosen image and shows the result" {
   # Arrange
-  linux_only
   written_dvd
   answers "${IMAGE}"
 
@@ -56,7 +51,6 @@ written_dvd() {
 
 @test "the Verify tab names the first sector that differs" {
   # Arrange
-  linux_only
   written_dvd
   printf 'XX' | dd of="${DISC}" bs=1 seek=$((20 * 2048)) conv=notrunc 2>/dev/null
   answers "${IMAGE}"
@@ -72,7 +66,6 @@ written_dvd() {
 
 @test "the Verify tab checks every sector when the image comparison is off" {
   # Arrange
-  linux_only
   written_dvd
 
   # Act
@@ -86,7 +79,6 @@ written_dvd() {
 
 @test "the Verify tab cancels a verify on c" {
   # Arrange
-  linux_only
   written_dvd
   disk_test_shim dd "case \" \$* \" in *\" if=\"*) sleep 37 ;; esac; exec \"\${REAL}\" \"\$@\""
 

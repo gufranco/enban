@@ -17,10 +17,6 @@ teardown() {
   rm -rf "${WORK}"
 }
 
-linux_only() {
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS reads the drive through drutil"
-}
-
 drive_with() {
   local search_path
   disk_test_drive "$1" "$2" 2298496 22160
@@ -39,7 +35,6 @@ sent() {
 
 @test "enban close closes the session after the drive's name" {
   # Arrange
-  linux_only
   drive_with 0011 "DVD-R sequential recording" written
 
   # Act
@@ -55,7 +50,6 @@ sent() {
 
 @test "enban close --finalize closes the whole disc" {
   # Arrange
-  linux_only
   drive_with 0011 "DVD-R sequential recording" written
 
   # Act
@@ -71,7 +65,6 @@ sent() {
 
 @test "enban close sends nothing without the drive's name" {
   # Arrange
-  linux_only
   drive_with 0011 "DVD-R sequential recording" written
 
   # Act
@@ -85,7 +78,6 @@ sent() {
 
 @test "enban close refuses a disc that is not appendable" {
   # Arrange
-  linux_only
   drive_with 0011 "DVD-R sequential recording"
 
   # Act
@@ -98,7 +90,6 @@ sent() {
 
 @test "enban close says what the drive answered when it refuses" {
   # Arrange
-  linux_only
   drive_with 0011 "DVD-R sequential recording" written
   disk_test_drive_flag raw_fail
 
@@ -112,7 +103,6 @@ sent() {
 
 @test "enban speed sets the read speed in kB/s for the disc's kind" {
   # Arrange
-  linux_only
   drive_with 0011 "DVD-R sequential recording" written
 
   # Act
@@ -128,7 +118,6 @@ sent() {
 
 @test "enban speed counts a CD's 1x as 177 kB/s and max as the drive's fastest" {
   # Arrange
-  linux_only
   drive_with 0009 "CD-R" written
 
   # Act
@@ -157,7 +146,6 @@ sent() {
 
 @test "enban region shows the drive's region and the changes left" {
   # Arrange
-  linux_only
   drive_with 0011 "DVD-R sequential recording"
   printf 'rpc=%s\n' '\0000\0006\0000\0000\0124\0375\0001\0000' >>"${WORK}/drive.state"
 
@@ -177,7 +165,6 @@ sent() {
 
 @test "enban region says when no region is set" {
   # Arrange
-  linux_only
   drive_with 0011 "DVD-R sequential recording"
   printf 'rpc=%s\n' '\0000\0006\0000\0000\0005\0377\0000\0000' >>"${WORK}/drive.state"
 
@@ -191,7 +178,6 @@ sent() {
 
 @test "enban region --set spends a change after the drive's name" {
   # Arrange
-  linux_only
   drive_with 0011 "DVD-R sequential recording"
   printf 'rpc=%s\n' '\0000\0006\0000\0000\0124\0375\0001\0000' >>"${WORK}/drive.state"
 
@@ -209,7 +195,6 @@ sent() {
 
 @test "enban region --set refuses when no changes are left" {
   # Arrange
-  linux_only
   drive_with 0011 "DVD-R sequential recording"
   printf 'rpc=%s\n' '\0000\0006\0000\0000\0200\0375\0001\0000' >>"${WORK}/drive.state"
 
@@ -235,7 +220,6 @@ sent() {
 
 @test "enban sector --raw reads 2352 bytes with READ CD" {
   # Arrange
-  linux_only
   drive_with 0009 "CD-R" written
 
   # Act
@@ -278,7 +262,6 @@ sent() {
 
 @test "the raw drive commands need sg_raw" {
   # Arrange
-  linux_only
   disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160
   local farm
   farm="$(disk_test_farm sg_raw)"
@@ -321,7 +304,6 @@ sent() {
 
 @test "enban speed counts a Blu-ray's 1x as 4496 kB/s" {
   # Arrange
-  linux_only
   drive_with 0041 "BD-R sequential recording" written
 
   # Act

@@ -24,10 +24,6 @@ teardown() {
   rm -rf "${WORK}"
 }
 
-linux_only() {
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS reads the drive through drutil"
-}
-
 answers() {
   printf '%s\n' "$@" >"${ENBAN_TEST_GUM_ANSWERS}"
 }
@@ -108,7 +104,6 @@ written() {
 
 @test "the erase panel erases a rewritable disc after the drive's name" {
   # Arrange
-  linux_only
   written 0013 "DVD-RW restricted overwrite"
   answers disc.iso
 
@@ -123,7 +118,6 @@ written() {
 
 @test "the erase panel touches nothing without the drive's name" {
   # Arrange
-  linux_only
   written 0013 "DVD-RW restricted overwrite"
   cp "${DISC}" "${WORK}/before.iso"
   answers wrong
@@ -140,7 +134,6 @@ written() {
 
 @test "the erase panel shows why a disc cannot be erased" {
   # Arrange
-  linux_only
   written 0011 "DVD-R sequential recording"
   answers disc.iso
 
@@ -155,7 +148,6 @@ written() {
 
 @test "c cancels an erase" {
   # Arrange
-  linux_only
   written 0013 "DVD-RW restricted overwrite"
   disk_test_drive_flag slow
   answers disc.iso
@@ -188,7 +180,6 @@ written() {
 
 @test "Tray ejects the disc" {
   # Arrange
-  linux_only
   written 0011 "DVD-R sequential recording"
 
   # Act
@@ -202,7 +193,6 @@ written() {
 
 @test "Tray says when the tray did not open" {
   # Arrange
-  linux_only
   written 0011 "DVD-R sequential recording"
   disk_test_drive_flag fail_eject
 
@@ -231,7 +221,6 @@ written() {
 
 @test "Capabilities lists the kinds of disc the drive handles" {
   # Arrange
-  linux_only
   written 0011 "DVD-R sequential recording"
   disk_test_drive_profiles 0011 0009 000a 0011 001a
 
@@ -395,7 +384,6 @@ sector_keys() {
 
 @test "the Sector viewer reads the disc in the drive" {
   # Arrange
-  linux_only
   written 0011 "DVD-R sequential recording"
   local keys
   keys="$(sector_keys q)"
@@ -430,7 +418,6 @@ iso_session() {
 
 @test "Close closes the session after the drive's name" {
   # Arrange
-  linux_only
   iso_session 0011 "DVD-R sequential recording"
   answers session disc.iso
   local keys
@@ -449,7 +436,6 @@ iso_session() {
 
 @test "Close finalizes the disc and stops at the first refusal" {
   # Arrange
-  linux_only
   iso_session 0011 "DVD-R sequential recording"
   answers disc disc.iso session wrong
   local keys
@@ -484,7 +470,6 @@ iso_session() {
 
 @test "Close says the disc has no session to close" {
   # Arrange
-  linux_only
   disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160
   disk_test_raw
   answers session
@@ -502,7 +487,6 @@ iso_session() {
 
 @test "Read speed sets the speed and refuses words" {
   # Arrange
-  linux_only
   iso_session 0011 "DVD-R sequential recording"
   answers 4 fast
   local keys
@@ -520,7 +504,6 @@ iso_session() {
 
 @test "Region shows the region, then changes it after the drive's name" {
   # Arrange
-  linux_only
   disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160
   disk_test_raw
   printf 'rpc=%s\n' '\0000\0006\0000\0000\0124\0375\0001\0000' >>"${WORK}/drive.state"
@@ -544,7 +527,6 @@ iso_session() {
 
 @test "Book type changes a DVD+R and refuses an unknown type" {
   # Arrange
-  linux_only
   disk_test_drive 001b "DVD+R" 2298496 22160
   disk_test_shim id "case \"\$1\" in -u) printf '0\\n' ;; *) exec \"\${REAL}\" \"\$@\" ;; esac"
   disk_test_shim dvd+rw-booktype "printf '%s\\n' \"\$*\" >>'${WORK}/booktype.log'"
@@ -580,7 +562,6 @@ iso_session() {
 
 @test "Book type says it applies only to DVD+R and DVD+RW" {
   # Arrange
-  linux_only
   disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160
   disk_test_shim id "case \"\$1\" in -u) printf '0\\n' ;; *) exec \"\${REAL}\" \"\$@\" ;; esac"
   disk_test_shim dvd+rw-booktype "exit 0"
@@ -599,7 +580,6 @@ iso_session() {
 
 @test "Region says when the drive refuses" {
   # Arrange
-  linux_only
   disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160
   disk_test_raw
   disk_test_drive_flag raw_fail
@@ -639,7 +619,6 @@ iso_session() {
 
 @test "Convert turns an image into an ISO as a job" {
   # Arrange
-  linux_only
   local search_path
   mkdir -p "${WORK}/files"
   printf 'hi\n' >"${WORK}/files/a.txt"

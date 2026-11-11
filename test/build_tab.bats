@@ -25,6 +25,17 @@ teardown() {
   rm -rf "${WORK}"
 }
 
+disc_files() {
+  if [[ "${ENBAN_TEST_OS}" == "Darwin" ]]; then
+    mkdir -p "${WORK}/mnt"
+    hdiutil attach -readonly -nobrowse -mountpoint "${WORK}/mnt" "$1" >/dev/null || return 1
+    (cd "${WORK}/mnt" && find . -type f | sed 's|^\.||')
+    hdiutil detach "${WORK}/mnt" >/dev/null 2>&1 || hdiutil detach -force "${WORK}/mnt" >/dev/null
+    return 0
+  fi
+  xorriso -indev "$1" -find / -type f 2>/dev/null
+}
+
 answers() {
   printf '%s\n' "$@" >"${ENBAN_TEST_GUM_ANSWERS}"
 }
@@ -283,7 +294,6 @@ answers() {
 
 @test "the Build pane says a layout that is too large for the disc" {
   # Arrange
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS reads the drive through drutil"
   disk_test_drive 0011 "DVD-R sequential recording" 1 22160
   : >"${WORK}/disc.iso"
   answers "${SRC}"
@@ -349,7 +359,6 @@ answers() {
 
 @test "b to the disc writes nothing without the typed drive name" {
   # Arrange
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS reads the drive through drutil"
   disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160 11080
   : >"${WORK}/disc.iso"
   answers "${SRC}" "wrong"
@@ -367,7 +376,6 @@ answers() {
 
 @test "b to the disc builds the layout and burns it after the typed drive name" {
   # Arrange
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS reads the drive through drutil"
   disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160 11080
   : >"${WORK}/disc.iso"
   answers "${SRC}" disc.iso
@@ -378,14 +386,13 @@ answers() {
   # Assert
   local shown listed
   shown="$(last_frame)"
-  listed="$(xorriso -indev "${WORK}/disc.iso" -find / -type f 2>/dev/null)"
+  listed="$(disc_files "${WORK}/disc.iso")"
   [[ "${shown}" == *"Result"*"Done. stdio:${WORK}/disc.iso is written, verified and ejected."* ]]
   [[ "${listed}" == *"/photos/trip/kyoto-temple.jpg"* ]]
 }
 
 @test "the Target field shows the drive it writes to" {
   # Arrange
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS reads the drive through drutil"
   disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160 11080
   : >"${WORK}/disc.iso"
 

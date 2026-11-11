@@ -16,10 +16,6 @@ teardown() {
   rm -rf "${WORK}"
 }
 
-linux_only() {
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "xorriso reads the image back on Linux"
-}
-
 image_with() {
   disk_test_run enban build "${SRC}" "${IMAGE}" --label OLD --fs "$1" </dev/null >/dev/null
 }
@@ -93,7 +89,7 @@ joliet_label() {
 
 @test "enban label leaves UDF that udftools reads as the new label with sound checksums" {
   # Arrange
-  linux_only
+  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "udfinfo, the independent UDF checker, exists on Linux only"
   image_with iso9660,joliet,udf
 
   # Act
@@ -112,7 +108,7 @@ joliet_label() {
 
 @test "enban label keeps 30 characters of the UDF volume ID" {
   # Arrange
-  linux_only
+  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "udfinfo, the independent UDF checker, exists on Linux only"
   image_with iso9660,udf
 
   # Act
@@ -228,7 +224,6 @@ joliet_label() {
 
 @test "enban label is read back by xorriso as the new volume ID" {
   # Arrange
-  linux_only
   image_with iso9660,joliet
 
   # Act
@@ -244,7 +239,6 @@ joliet_label() {
 
 @test "enban label steps over the boot record of a bootable image" {
   # Arrange
-  linux_only
   local search_path
   head -c 2048 /dev/zero >"${SRC}/boot.img"
   search_path="$(disk_test_path)"

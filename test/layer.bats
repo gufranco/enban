@@ -14,10 +14,6 @@ teardown() {
   rm -rf "${WORK}"
 }
 
-linux_only() {
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS has no xorriso to list the image"
-}
-
 word() {
   printf '\\%03o\\%03o\\%03o\\%03o' $(($1 >> 24 & 255)) $(($1 >> 16 & 255)) $(($1 >> 8 & 255)) $(($1 & 255))
 }
@@ -63,7 +59,6 @@ ifo_sector() {
 
 @test "enban layerbreak picks the first cell start past the middle" {
   # Arrange
-  linux_only
   title_set VTS_01 2 100 1199000 1300000 1500000
   image_of 2400000
   local ifo expected
@@ -80,7 +75,6 @@ ifo_sector() {
 
 @test "enban layerbreak never puts more on layer 0 than it holds" {
   # Arrange
-  linux_only
   title_set VTS_01 2 100 2100000
   image_of 4000000
 
@@ -94,7 +88,6 @@ ifo_sector() {
 
 @test "enban layerbreak falls at the middle of an image with no DVD-Video" {
   # Arrange
-  linux_only
   printf 'data' >"${WORK}/files/a.dat"
   rmdir "${WORK}/files/VIDEO_TS"
   image_of 3000001
@@ -109,7 +102,6 @@ ifo_sector() {
 
 @test "enban layerbreak skips a title set with an empty cell table" {
   # Arrange
-  linux_only
   title_set VTS_01 2
   image_of 2400000
 

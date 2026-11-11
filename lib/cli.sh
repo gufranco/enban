@@ -120,23 +120,25 @@ disk_doctor_platform() {
   case "$(uname -s)" in
   Darwin)
     disk_doctor_tool drutil "talks to the optical drive" || disk_dp_status=1
-    disk_doctor_tool hdiutil "burns and builds images" || disk_dp_status=1
-    disk_doctor_optional xorriso "xorriso, needed only for bootable images and the fields hdiutil cannot write"
-    disk_doctor_optional mkisofs "cdrtools, needed only for DVD Video images"
+    disk_doctor_tool hdiutil "builds and mounts images" || disk_dp_status=1
+    disk_doctor_tool xorriso "builds images and reads the drive" || disk_dp_status=1
+    disk_doctor_tool shasum "prints the checksum of a disc read" || disk_dp_status=1
+    disk_doctor_optional cdrecord "cdrtools package, needed only for audio CDs"
+    disk_doctor_optional mkisofs "cdrtools package, needed only for DVD Video images"
     ;;
   *)
     disk_doctor_tool xorriso "builds images and reads the drive" || disk_dp_status=1
     disk_doctor_tool sha256sum "prints the checksum of a disc read" || disk_dp_status=1
-    disk_doctor_tool cdrskin "burns CD, DVD and Blu-ray" || disk_dp_status=1
-    disk_doctor_optional cdrdao "cdrdao package, needed only for raw CD reads and audio"
+    disk_doctor_optional cdrskin "cdrskin package, needed only for audio CDs"
     disk_doctor_optional genisoimage "genisoimage package, needed only for UDF images"
     disk_doctor_optional sg_raw "sg3-utils package, needed for close, speed, region and raw sectors"
-    disk_doctor_optional dvd+rw-booktype "dvd+rw-tools package, needed for the book type"
-    disk_doctor_optional bchunk "bchunk package, needed to convert BIN/CUE images"
-    disk_doctor_optional iat "iat package, needed to convert NRG, MDF, CDI and IMG images"
     disk_doctor_optional udisksctl "udisks2 package, needed to mount images"
     ;;
   esac
+  disk_doctor_optional cdrdao "cdrdao package, needed only for raw CD reads and audio"
+  disk_doctor_optional dvd+rw-booktype "dvd+rw-tools package, needed for the book type"
+  disk_doctor_optional bchunk "bchunk package, needed to convert BIN/CUE images"
+  disk_doctor_optional iat "iat package, needed to convert NRG, MDF, CDI and IMG images"
   return "${disk_dp_status}"
 }
 

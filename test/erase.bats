@@ -17,10 +17,6 @@ teardown() {
   rm -rf "${WORK}"
 }
 
-linux_only() {
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS reads the drive through drutil"
-}
-
 written() {
   local search_path
   disk_test_drive "$1" "$2" 2298496 22160
@@ -36,7 +32,6 @@ byte_at() {
 
 @test "enban erase blanks a rewritable disc after the drive's name is typed" {
   # Arrange
-  linux_only
   written 0013 "DVD-RW restricted overwrite"
   local name="${DISC##*/}"
   local wanted
@@ -62,7 +57,6 @@ byte_at() {
 
 @test "enban erase --full asks the drive for a full blank" {
   # Arrange
-  linux_only
   written 0013 "DVD-RW restricted overwrite"
   local name="${DISC##*/}"
 
@@ -79,7 +73,6 @@ byte_at() {
 
 @test "enban erase touches nothing when the typed name is wrong" {
   # Arrange
-  linux_only
   written 0013 "DVD-RW restricted overwrite"
   cp "${DISC}" "${WORK}/before.iso"
 
@@ -94,7 +87,6 @@ byte_at() {
 
 @test "enban erase refuses a disc that cannot be erased" {
   # Arrange
-  linux_only
   written 0011 "DVD-R sequential recording"
 
   # Act
@@ -107,7 +99,6 @@ byte_at() {
 
 @test "enban erase leaves a blank disc alone" {
   # Arrange
-  linux_only
   disk_test_drive 0013 "DVD-RW restricted overwrite" 2298496 22160
 
   # Act
@@ -120,7 +111,6 @@ byte_at() {
 
 @test "enban erase says why the drive failed" {
   # Arrange
-  linux_only
   written 0013 "DVD-RW restricted overwrite"
   disk_test_drive_flag fail_blank
   local name="${DISC##*/}"
@@ -135,7 +125,6 @@ byte_at() {
 
 @test "enban erase draws its result with gum" {
   # Arrange
-  linux_only
   written 0013 "DVD-RW restricted overwrite"
   export ENBAN_TEST_GUM=1 ENBAN_TEST_GUM_LOG="${WORK}/gum.log"
   local name="${DISC##*/}"

@@ -4,6 +4,7 @@ ENBAN_TESTS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(cd "${ENBAN_TESTS_DIR}/.." && pwd)"
 ENBAN_TEST_OS="$(uname -s)"
 export ENBAN_TESTS_DIR REPO_DIR ENBAN_TEST_OS
+BATS_TMPDIR=/tmp
 PATH="${ENBAN_TESTS_DIR}/bin:${PATH}"
 export PATH
 

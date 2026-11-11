@@ -23,10 +23,6 @@ teardown() {
   rm -rf "${WORK}"
 }
 
-linux_only() {
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS reads the drive through drutil"
-}
-
 answers() {
   printf '%s\n' "$@" >"${ENBAN_TEST_GUM_ANSWERS}"
 }
@@ -142,7 +138,6 @@ past_runs() {
 
 @test "t writes nothing without the drive's name" {
   # Arrange
-  linux_only
   disk_test_drive 0011 "DVD-R sequential recording" 64 22160
   answers wrong
 
@@ -159,7 +154,6 @@ past_runs() {
 
 @test "t tests the disc and shows the verdict" {
   # Arrange
-  linux_only
   disk_test_drive 0011 "DVD-R sequential recording" 64 22160
   answers disc.iso
 
@@ -176,7 +170,6 @@ past_runs() {
 
 @test "c cancels a discovery test" {
   # Arrange
-  linux_only
   disk_test_drive 0011 "DVD-R sequential recording" 64 22160
   disk_test_drive_flag slow
   answers disc.iso

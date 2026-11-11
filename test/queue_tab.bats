@@ -26,10 +26,6 @@ teardown() {
   rm -rf "${WORK}"
 }
 
-linux_only() {
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS reads the drive through drutil"
-}
-
 answers() {
   printf '%s\n' "$@" >"${ENBAN_TEST_GUM_ANSWERS}"
 }
@@ -195,7 +191,6 @@ answers() {
 
 @test "s writes the queue and shows each image done" {
   # Arrange
-  linux_only
   disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160
   disk_test_drive_flag swap
   answers "${ONE}" "${TWO}" disc.iso
@@ -212,7 +207,6 @@ answers() {
 
 @test "the queue table shows each image's state while it runs" {
   # Arrange
-  linux_only
   disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160
   disk_test_drive_flag slow
   answers "${ONE}" disc.iso

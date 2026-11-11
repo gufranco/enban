@@ -15,10 +15,6 @@ teardown() {
   rm -rf "${WORK}"
 }
 
-linux_only() {
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS reads the drive through drutil"
-}
-
 as_root() {
   disk_test_shim id "case \"\$1\" in -u) printf '0\\n' ;; *) exec \"\${REAL}\" \"\$@\" ;; esac"
 }
@@ -29,7 +25,6 @@ booktype_tool() {
 
 @test "enban booktype makes a DVD+R read as DVD-ROM after the drive's name" {
   # Arrange
-  linux_only
   disk_test_drive 001b "DVD+R" 2298496 22160
   as_root
   booktype_tool
@@ -47,7 +42,6 @@ booktype_tool() {
 
 @test "enban booktype shows the book type when none is asked for" {
   # Arrange
-  linux_only
   disk_test_drive 001a "DVD+RW" 2298496 22160
   as_root
   booktype_tool
@@ -65,7 +59,6 @@ booktype_tool() {
 
 @test "enban booktype changes nothing without the drive's name" {
   # Arrange
-  linux_only
   disk_test_drive 001b "DVD+R" 2298496 22160
   as_root
   booktype_tool
@@ -81,7 +74,6 @@ booktype_tool() {
 
 @test "enban booktype says why the tool failed" {
   # Arrange
-  linux_only
   disk_test_drive 002b "DVD+R/DL" 2298496 22160
   as_root
   booktype_tool
@@ -97,7 +89,6 @@ booktype_tool() {
 
 @test "enban booktype refuses a disc other than DVD+R or DVD+RW" {
   # Arrange
-  linux_only
   disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160
   as_root
   booktype_tool
@@ -112,7 +103,6 @@ booktype_tool() {
 
 @test "enban booktype needs root" {
   # Arrange
-  linux_only
   disk_test_drive 001b "DVD+R" 2298496 22160
   disk_test_shim id "printf '1000\\n'"
   booktype_tool
@@ -127,7 +117,6 @@ booktype_tool() {
 
 @test "enban booktype needs dvd+rw-booktype" {
   # Arrange
-  linux_only
   disk_test_drive 001b "DVD+R" 2298496 22160
   local farm
   farm="$(disk_test_farm dvd+rw-booktype)"
@@ -166,7 +155,6 @@ booktype_tool() {
 
 @test "enban booktype makes a disc read as DVD+R and draws its result with gum" {
   # Arrange
-  linux_only
   disk_test_drive 001a "DVD+RW" 2298496 22160
   as_root
   booktype_tool

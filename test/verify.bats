@@ -17,10 +17,6 @@ teardown() {
   rm -rf "${WORK}"
 }
 
-linux_only() {
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS reads the drive through drutil"
-}
-
 written_dvd() {
   local search_path
   disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160 11080
@@ -34,7 +30,6 @@ change_sector() {
 
 @test "enban verify finds a disc that matches its image" {
   # Arrange
-  linux_only
   written_dvd
 
   # Act
@@ -50,7 +45,6 @@ change_sector() {
 
 @test "enban verify names the first sector that differs from the image" {
   # Arrange
-  linux_only
   written_dvd
   change_sector 100
   change_sector 300
@@ -66,7 +60,6 @@ change_sector() {
 
 @test "enban verify without an image reads every sector of the disc, padding included" {
   # Arrange
-  linux_only
   written_dvd
 
   # Act
@@ -80,7 +73,6 @@ change_sector() {
 
 @test "enban verify names the first sector it cannot read" {
   # Arrange
-  linux_only
   written_dvd
   disk_test_shim dd "case \" \$* \" in *\" if=\"*) \"\${REAL}\" \"\$@\" count=200; exit 1 ;; *) exec \"\${REAL}\" \"\$@\" ;; esac"
 
@@ -96,7 +88,6 @@ change_sector() {
 
 @test "enban verify refuses a disc with no data" {
   # Arrange
-  linux_only
   disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160 11080
 
   # Act
@@ -109,7 +100,6 @@ change_sector() {
 
 @test "enban verify refuses an image larger than the data on the disc" {
   # Arrange
-  linux_only
   written_dvd
   dd if=/dev/urandom of="${IMAGE}" bs=2048 count=700 2>/dev/null
 
@@ -123,7 +113,6 @@ change_sector() {
 
 @test "enban verify refuses a file that is not a disc image" {
   # Arrange
-  linux_only
   written_dvd
   printf 'not an image\n' >"${IMAGE}"
 
@@ -137,7 +126,6 @@ change_sector() {
 
 @test "enban verify draws its result with gum" {
   # Arrange
-  linux_only
   written_dvd
   export ENBAN_TEST_GUM=1 ENBAN_TEST_GUM_LOG="${WORK}/gum.log"
 
@@ -187,7 +175,6 @@ change_sector() {
 
 @test "enban verify --ignore-miscompares reports a sector that differs and passes" {
   # Arrange
-  linux_only
   written_dvd
   change_sector 9
 
@@ -202,13 +189,12 @@ change_sector() {
 
 @test "enban verify --retries reads the disc again after a short read" {
   # Arrange
-  linux_only
   written_dvd
   printf '1\n' >"${WORK}/short"
   disk_test_shim dd "case \" \$* \" in
 *\" if=${DISC} \"*)
   if [ \"\$(cat '${WORK}/short')\" -gt 0 ]; then
-    printf '0\\\\n' >'${WORK}/short'
+    printf '0\\n' >'${WORK}/short'
     set -- \"\$@\" count=10
   fi
   ;;
@@ -226,7 +212,6 @@ exec \"\${REAL}\" \"\$@\""
 
 @test "enban verify sets the drive's read speed first" {
   # Arrange
-  linux_only
   written_dvd
   disk_test_raw
 

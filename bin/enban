@@ -205,7 +205,8 @@ options:
 
 notes:
   info, write, read, verify, erase and the app reach the drive through
-  xorriso on Linux. Reading a drive on macOS is not supported yet.
+  xorriso. On macOS a drive must be an image target, stdio:FILE, until
+  real drives are supported there.
 
   write burns only a blank disc, asks for the drive's name before it starts,
   then reads the disc back and compares it with the image. read copies the

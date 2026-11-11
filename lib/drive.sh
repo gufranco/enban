@@ -4,12 +4,13 @@
 . "${DISK_LIB:?}/state.sh"
 
 disk_drive_read() {
-  case "$(disk_os)" in
-  Darwin)
+  case "$(disk_os):$1" in
+  Darwin:stdio:*) : ;;
+  Darwin:*)
     disk_error "reading a drive is not supported on macOS yet, so ${2:-info} stops here."
     return 2
     ;;
-  *) ;;
+  *) : ;;
   esac
   if ! disk_dd_toc="$(xorriso -outdev "$1" -toc 2>/dev/null)" ||
     ! disk_dd_speeds="$(xorriso -outdev "$1" -list_speeds 2>/dev/null)"; then

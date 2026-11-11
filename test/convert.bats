@@ -15,10 +15,6 @@ teardown() {
   rm -rf "${WORK}"
 }
 
-linux_only() {
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "bchunk and iat are tested on Linux"
-}
-
 raw_bin() {
   local sector=0 bytes count
   bytes="$(wc -c <"$1")"
@@ -36,7 +32,6 @@ raw_bin() {
 
 @test "enban convert turns a BIN/CUE image into an ISO" {
   # Arrange
-  linux_only
   raw_bin "${DATA}" "${WORK}/disc.bin"
   printf 'FILE "disc.bin" BINARY\n  TRACK 01 MODE1/2352\n    INDEX 01 00:00:00\n' >"${WORK}/disc.cue"
 
@@ -51,7 +46,6 @@ raw_bin() {
 
 @test "enban convert turns another image into an ISO through iat" {
   # Arrange
-  linux_only
   local search_path
   mkdir -p "${WORK}/files"
   printf 'hello\n' >"${WORK}/files/a.txt"
@@ -71,7 +65,6 @@ raw_bin() {
 
 @test "enban convert says when the tool cannot convert the image" {
   # Arrange
-  linux_only
   printf 'nothing to see' >"${WORK}/disc.nrg"
 
   # Act
@@ -140,7 +133,6 @@ raw_bin() {
 
 @test "enban convert says when the image is already an ISO" {
   # Arrange
-  linux_only
   local search_path
   mkdir -p "${WORK}/files"
   printf 'hello\n' >"${WORK}/files/a.txt"
@@ -157,7 +149,6 @@ raw_bin() {
 
 @test "enban convert reads a BIN file named by its full path" {
   # Arrange
-  linux_only
   mkdir -p "${WORK}/bins"
   raw_bin "${DATA}" "${WORK}/bins/disc.bin"
   printf 'FILE "%s" BINARY\n  TRACK 01 MODE1/2352\n    INDEX 01 00:00:00\n' "${WORK}/bins/disc.bin" >"${WORK}/disc.cue"

@@ -17,10 +17,6 @@ teardown() {
   rm -rf "${WORK}"
 }
 
-linux_only() {
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS reads the drive through drutil"
-}
-
 blank_disc() {
   disk_test_drive 0011 "DVD-R sequential recording" "$1" 22160
 }
@@ -31,7 +27,6 @@ pattern_line() {
 
 @test "enban discovery fills every free sector and reads each one back" {
   # Arrange
-  linux_only
   blank_disc 128
 
   # Act
@@ -54,7 +49,6 @@ pattern_line() {
 
 @test "enban discovery saves the read rate of each stretch as CSV" {
   # Arrange
-  linux_only
   blank_disc 250
 
   # Act
@@ -74,7 +68,6 @@ pattern_line() {
 
 @test "enban discovery writes only the sectors asked for" {
   # Arrange
-  linux_only
   blank_disc 128
 
   # Act
@@ -88,7 +81,6 @@ pattern_line() {
 
 @test "enban discovery names the first sector that reads back wrong" {
   # Arrange
-  linux_only
   blank_disc 128
   disk_test_drive_flag corrupt
 
@@ -103,7 +95,6 @@ pattern_line() {
 
 @test "enban discovery names the first sector it cannot read" {
   # Arrange
-  linux_only
   blank_disc 128
   disk_test_shim dd "case \" \$* \" in *\" skip=0 \"*|*\" skip=2 \"*|*\" skip=4 \"*) exec \"\${REAL}\" \"\$@\" ;; *\" if=\"*) exit 1 ;; *) exec \"\${REAL}\" \"\$@\" ;; esac"
 
@@ -118,7 +109,6 @@ pattern_line() {
 
 @test "enban discovery keeps its runs under the data folder by default" {
   # Arrange
-  linux_only
   blank_disc 64
 
   # Act
@@ -137,7 +127,6 @@ pattern_line() {
 
 @test "enban discovery refuses a disc that is not blank" {
   # Arrange
-  linux_only
   blank_disc 128
   local search_path
   search_path="$(disk_test_path)"
@@ -154,7 +143,6 @@ pattern_line() {
 
 @test "enban discovery refuses more sectors than the disc has" {
   # Arrange
-  linux_only
   blank_disc 128
 
   # Act
@@ -167,7 +155,6 @@ pattern_line() {
 
 @test "enban discovery never overwrites a CSV" {
   # Arrange
-  linux_only
   blank_disc 128
   printf 'keep\n' >"${CSV}"
 
@@ -181,7 +168,6 @@ pattern_line() {
 
 @test "enban discovery writes nothing without the drive's name" {
   # Arrange
-  linux_only
   blank_disc 128
 
   # Act
@@ -197,7 +183,6 @@ pattern_line() {
 
 @test "enban discovery says why the write failed" {
   # Arrange
-  linux_only
   blank_disc 128
   disk_test_drive_flag fail_write
 
@@ -211,7 +196,6 @@ pattern_line() {
 
 @test "enban discovery draws its result with gum" {
   # Arrange
-  linux_only
   blank_disc 64
   export ENBAN_TEST_GUM=1 ENBAN_TEST_GUM_LOG="${WORK}/gum.log"
 
@@ -261,7 +245,6 @@ pattern_line() {
 
 @test "enban discovery --test writes nothing and reads nothing back" {
   # Arrange
-  linux_only
   blank_disc 128
 
   # Act

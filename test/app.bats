@@ -179,7 +179,6 @@ teardown() {
 
 @test "the disc pane describes the disc in the drive" {
   # Arrange
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS reads the drive through drutil"
   : >"${WORK}/disc.iso"
   disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160 11080
   local keys="q"
@@ -198,7 +197,6 @@ teardown() {
 
 @test "the disc pane says when the drive cannot be read" {
   # Arrange
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS reads the drive through drutil"
   local keys="q"
 
   # Act
@@ -412,10 +410,9 @@ teardown() {
 
 @test "a wide terminal shows the drive and its disc in the header" {
   # Arrange
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS reads the drive through drutil"
   : >"${WORK}/disc.iso"
   disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160 11080
-  disk_test_shim stty "case \"\$1\" in size) printf '40 140\\n' ;; *) exec \"\${REAL}\" \"\$@\" ;; esac"
+  disk_test_shim stty "case \"\$1\" in size) printf '40 240\\n' ;; *) exec \"\${REAL}\" \"\$@\" ;; esac"
   local keys="q"
 
   # Act

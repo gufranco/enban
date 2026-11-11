@@ -18,10 +18,6 @@ teardown() {
   rm -rf "${WORK}"
 }
 
-linux_only() {
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS reads the drive through drutil"
-}
-
 written_dvd() {
   local search_path
   disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160 11080
@@ -37,7 +33,6 @@ prefix_of() {
 
 @test "enban read copies the disc to an image and prints its SHA-256" {
   # Arrange
-  linux_only
   written_dvd
 
   # Act
@@ -55,7 +50,6 @@ prefix_of() {
 
 @test "enban read skips the second read with --no-verify" {
   # Arrange
-  linux_only
   written_dvd
 
   # Act
@@ -68,7 +62,6 @@ prefix_of() {
 
 @test "enban read refuses a disc with no data" {
   # Arrange
-  linux_only
   disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160 11080
 
   # Act
@@ -82,7 +75,6 @@ prefix_of() {
 
 @test "enban read never overwrites a file" {
   # Arrange
-  linux_only
   written_dvd
   printf 'keep\n' >"${OUT}"
 
@@ -99,7 +91,6 @@ prefix_of() {
 
 @test "enban read says when it cannot write the image" {
   # Arrange
-  linux_only
   written_dvd
   local out="${WORK}/missing/copy.iso"
 
@@ -113,7 +104,6 @@ prefix_of() {
 
 @test "enban read reports a copy that does not match the disc" {
   # Arrange
-  linux_only
   written_dvd
   disk_test_shim dd "case \" \$* \" in *\" of=\"*) \"\${REAL}\" \"\$@\" && printf X | \"\${REAL}\" of='${OUT}' bs=1 seek=100 conv=notrunc 2>/dev/null ;; *) exec \"\${REAL}\" \"\$@\" ;; esac"
 
@@ -127,7 +117,6 @@ prefix_of() {
 
 @test "enban read draws its result with gum" {
   # Arrange
-  linux_only
   written_dvd
   export ENBAN_TEST_GUM=1 ENBAN_TEST_GUM_LOG="${WORK}/gum.log"
 
@@ -190,10 +179,10 @@ prefix_of() {
 failing_reads() {
   printf '%s\n' "$1" >"${WORK}/fails"
   disk_test_shim dd "case \" \$* \" in
-*\" if=${DISC} \"*\" conv=noerror,sync \"*) \"\${REAL}\" \"\$@\"; printf 'dd: error reading %s: Input/output error\\\\n' '${DISC}' '${DISC}' >&2; exit 0 ;;
+*\" if=${DISC} \"*\" conv=noerror,sync \"*) \"\${REAL}\" \"\$@\"; printf 'dd: error reading %s: Input/output error\\n' '${DISC}' '${DISC}' >&2; exit 0 ;;
 *\" if=${DISC} of=${OUT} \"*)
   left=\"\$(cat '${WORK}/fails')\"
-  if [ \"\${left}\" -gt 0 ]; then printf '%s\\\\n' \"\$((left - 1))\" >'${WORK}/fails'; exit 1; fi
+  if [ \"\${left}\" -gt 0 ]; then printf '%s\\n' \"\$((left - 1))\" >'${WORK}/fails'; exit 1; fi
   ;;
 esac
 exec \"\${REAL}\" \"\$@\""
@@ -201,7 +190,6 @@ exec \"\${REAL}\" \"\$@\""
 
 @test "enban read prints the MD5 of the image beside its SHA-256" {
   # Arrange
-  linux_only
   written_dvd
 
   # Act
@@ -216,7 +204,6 @@ exec \"\${REAL}\" \"\$@\""
 
 @test "enban read --cue writes a CUE sheet beside the image" {
   # Arrange
-  linux_only
   written_dvd
 
   # Act
@@ -231,7 +218,6 @@ exec \"\${REAL}\" \"\$@\""
 
 @test "enban read --retries reads again after a failed read" {
   # Arrange
-  linux_only
   written_dvd
   failing_reads 2
 
@@ -246,7 +232,6 @@ exec \"\${REAL}\" \"\$@\""
 
 @test "enban read stops once its retries run out" {
   # Arrange
-  linux_only
   written_dvd
   failing_reads 5
 
@@ -260,7 +245,6 @@ exec \"\${REAL}\" \"\$@\""
 
 @test "enban read --ignore-errors keeps going and counts the unreadable sectors" {
   # Arrange
-  linux_only
   written_dvd
   failing_reads 9
 
@@ -275,7 +259,6 @@ exec \"\${REAL}\" \"\$@\""
 
 @test "enban read sets the drive's read speed first" {
   # Arrange
-  linux_only
   written_dvd
   disk_test_raw
 

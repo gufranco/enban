@@ -17,10 +17,6 @@ teardown() {
   rm -rf "${WORK}"
 }
 
-linux_only() {
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS reads the drive through drutil"
-}
-
 blank_dvd() {
   disk_test_drive 0011 "DVD-R sequential recording" "${1:-2298496}" 22160 11080
 }
@@ -41,7 +37,6 @@ image_on_disc() {
 
 @test "enban write burns the image, verifies it and ejects the disc" {
   # Arrange
-  linux_only
   blank_dvd
 
   # Act
@@ -55,7 +50,6 @@ image_on_disc() {
 
 @test "enban write asks for the drive's name before it writes" {
   # Arrange
-  linux_only
   blank_dvd
 
   # Act
@@ -67,7 +61,6 @@ image_on_disc() {
 
 @test "enban write writes nothing when the typed name is wrong" {
   # Arrange
-  linux_only
   blank_dvd
 
   # Act
@@ -81,7 +74,6 @@ image_on_disc() {
 
 @test "enban write refuses a disc that is not blank" {
   # Arrange
-  linux_only
   blank_dvd
   local search_path
   search_path="$(disk_test_path)"
@@ -102,7 +94,6 @@ image_on_disc() {
 
 @test "enban write refuses an image larger than the free space" {
   # Arrange
-  linux_only
   blank_dvd 512
 
   # Act
@@ -115,7 +106,6 @@ image_on_disc() {
 
 @test "enban write skips the verify with --no-verify" {
   # Arrange
-  linux_only
   blank_dvd
 
   # Act
@@ -128,7 +118,6 @@ image_on_disc() {
 
 @test "enban write leaves the tray closed with --no-eject" {
   # Arrange
-  linux_only
   blank_dvd
 
   # Act
@@ -141,7 +130,6 @@ image_on_disc() {
 
 @test "enban write says only written when it neither verifies nor ejects" {
   # Arrange
-  linux_only
   blank_dvd
 
   # Act
@@ -154,7 +142,6 @@ image_on_disc() {
 
 @test "enban write passes the speed to the burner" {
   # Arrange
-  linux_only
   blank_dvd
 
   # Act
@@ -167,7 +154,6 @@ image_on_disc() {
 
 @test "enban write reports a burn that fails" {
   # Arrange
-  linux_only
   blank_dvd
   disk_test_drive_flag fail_write
 
@@ -181,7 +167,6 @@ image_on_disc() {
 
 @test "enban write reports a disc that does not read back as the image" {
   # Arrange
-  linux_only
   blank_dvd
   disk_test_drive_flag corrupt
 
@@ -315,7 +300,6 @@ image_on_disc() {
 
 @test "enban write says so when the tray does not open" {
   # Arrange
-  linux_only
   blank_dvd
   disk_test_drive_flag fail_eject
 
@@ -330,7 +314,6 @@ image_on_disc() {
 
 @test "enban write draws its result with gum" {
   # Arrange
-  linux_only
   blank_dvd
   export ENBAN_TEST_GUM=1 ENBAN_TEST_GUM_LOG="${WORK}/gum.log"
 
@@ -345,7 +328,6 @@ image_on_disc() {
 
 @test "enban write --test runs the burn as a test and writes nothing" {
   # Arrange
-  linux_only
   blank_dvd
 
   # Act
@@ -374,7 +356,6 @@ image_on_disc() {
 
 @test "enban write --copies writes each copy on a fresh blank disc" {
   # Arrange
-  linux_only
   blank_dvd
   disk_test_drive_flag swap
 
@@ -392,7 +373,6 @@ image_on_disc() {
 
 @test "enban write --copies stops when no blank disc arrives" {
   # Arrange
-  linux_only
   blank_dvd
 
   # Act
@@ -422,7 +402,6 @@ image_on_disc() {
 
 @test "enban write --delete-image removes the image once it is written" {
   # Arrange
-  linux_only
   blank_dvd
 
   # Act
@@ -436,7 +415,6 @@ image_on_disc() {
 
 @test "enban write --delete-image keeps the image of a test write" {
   # Arrange
-  linux_only
   blank_dvd
 
   # Act
@@ -450,7 +428,6 @@ image_on_disc() {
 
 @test "enban write says when the image cannot be deleted" {
   # Arrange
-  linux_only
   local user
   user="$(id -u)"
   [[ "${user}" != 0 ]] || skip "root deletes from a read-only folder"
@@ -482,7 +459,6 @@ image_on_disc() {
 
 @test "enban write passes track at once, an open disc and OPC to the burner" {
   # Arrange
-  linux_only
   blank_dvd
 
   # Act
@@ -498,7 +474,6 @@ image_on_disc() {
 
 @test "enban write reads sao as disc at once" {
   # Arrange
-  linux_only
   blank_dvd
 
   # Act

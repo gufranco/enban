@@ -12,10 +12,6 @@ teardown() {
   rm -rf "${WORK}"
 }
 
-linux_only() {
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS reads the drive through drutil"
-}
-
 blank_dvd() {
   : >"${WORK}/disc.iso"
   disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160 11080
@@ -32,7 +28,6 @@ written_dvd() {
 
 @test "enban info --json describes a blank DVD-R in the drive" {
   # Arrange
-  linux_only
   blank_dvd
   local drive="stdio:${WORK}/disc.iso"
 
@@ -46,7 +41,6 @@ written_dvd() {
 
 @test "enban info names a written DVD-R as appendable with one session" {
   # Arrange
-  linux_only
   written_dvd
   local drive="stdio:${WORK}/disc.iso"
 
@@ -60,7 +54,6 @@ written_dvd() {
 
 @test "enban info prints the disc as readable lines" {
   # Arrange
-  linux_only
   blank_dvd
   local drive="stdio:${WORK}/disc.iso"
 
@@ -79,7 +72,6 @@ written_dvd() {
 
 @test "enban info lists every kind of disc the drive handles" {
   # Arrange
-  linux_only
   blank_dvd
   disk_test_drive_profiles 0011 0009 000a 0011 0013 0014 001a 0041 0042
   local drive="stdio:${WORK}/disc.iso"
@@ -94,7 +86,6 @@ written_dvd() {
 
 @test "enban info --json lists the kinds of disc the drive handles" {
   # Arrange
-  linux_only
   blank_dvd
   disk_test_drive_profiles 0011 0009 0011
   local drive="stdio:${WORK}/disc.iso"
@@ -109,7 +100,6 @@ written_dvd() {
 
 @test "enban info stops when the drive cannot be read" {
   # Arrange
-  linux_only
   local drive="stdio:${WORK}/missing/disc.iso"
 
   # Act
@@ -206,7 +196,6 @@ written_dvd() {
 
 @test "enban info reads a plain image file with no profile code and no speeds" {
   # Arrange
-  linux_only
   : >"${WORK}/plain.iso"
   local drive="stdio:${WORK}/plain.iso"
 
@@ -221,7 +210,6 @@ written_dvd() {
 
 @test "enban info says when the drive reports no speeds" {
   # Arrange
-  linux_only
   : >"${WORK}/plain.iso"
   local drive="stdio:${WORK}/plain.iso"
 
@@ -235,7 +223,6 @@ written_dvd() {
 
 @test "enban info draws the disc as a table with gum" {
   # Arrange
-  linux_only
   blank_dvd
   local drive="stdio:${WORK}/disc.iso"
 

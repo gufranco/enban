@@ -43,7 +43,6 @@ digest() {
 
 @test "enban checksum reads the readable sectors of the disc in the drive" {
   # Arrange
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS reads the drive through drutil"
   local search_path sha256
   disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160
   search_path="$(disk_test_path)"
@@ -61,7 +60,6 @@ digest() {
 
 @test "enban checksum refuses a blank disc" {
   # Arrange
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS reads the drive through drutil"
   disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160
 
   # Act
@@ -74,7 +72,6 @@ digest() {
 
 @test "enban checksum says when the disc cannot be read" {
   # Arrange
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS reads the drive through drutil"
   local search_path
   disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160
   search_path="$(disk_test_path)"

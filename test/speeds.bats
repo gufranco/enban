@@ -18,10 +18,6 @@ teardown() {
   rm -rf "${WORK}"
 }
 
-linux_only() {
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS reads the drive through drutil"
-}
-
 blank_dvd() {
   : >"${DISC}"
   disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160 11080
@@ -34,7 +30,6 @@ burn_speed() {
 
 @test "enban write remembers the speed it wrote a disc ID at" {
   # Arrange
-  linux_only
   blank_dvd
 
   # Act
@@ -49,7 +44,6 @@ burn_speed() {
 
 @test "enban write uses the remembered speed when none is given" {
   # Arrange
-  linux_only
   blank_dvd
   mkdir -p "${ENBAN_DATA}"
   printf 'YOYODYNE WARP DRIVE\tMCC 03RG20\t4\n' >"${ENBAN_DATA}/speeds.tsv"
@@ -67,7 +61,6 @@ burn_speed() {
 
 @test "enban write keeps one speed per disc ID and drive" {
   # Arrange
-  linux_only
   blank_dvd
   mkdir -p "${ENBAN_DATA}"
   printf 'YOYODYNE WARP DRIVE\tMCC 03RG20\t4\nother drive\tMCC 03RG20\t2\n' >"${ENBAN_DATA}/speeds.tsv"
@@ -84,7 +77,6 @@ burn_speed() {
 
 @test "enban write says when the speed cannot be remembered" {
   # Arrange
-  linux_only
   blank_dvd
   printf 'not a folder' >"${ENBAN_DATA}"
 
@@ -98,7 +90,6 @@ burn_speed() {
 
 @test "enban write keeps every speed when ten writes end at once" {
   # Arrange
-  linux_only
   local count=0
   blank_dvd
   sed -i 's/^product=.*/product=file/' "${WORK}/drive.state"
@@ -125,7 +116,6 @@ burn_speed() {
 
 @test "enban write leaves the speeds alone while another enban holds them" {
   # Arrange
-  linux_only
   blank_dvd
   mkdir -p "${ENBAN_DATA}"
   : >"${ENBAN_DATA}/.speeds.lock"

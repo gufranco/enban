@@ -23,10 +23,6 @@ teardown() {
   rm -rf "${WORK}"
 }
 
-linux_only() {
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS reads the drive through drutil"
-}
-
 answers() {
   printf '%s\n' "$@" >"${ENBAN_TEST_GUM_ANSWERS}"
 }
@@ -43,7 +39,6 @@ image_on_disc() {
 
 @test "the Write tab burns the chosen image, verifies it and shows the result" {
   # Arrange
-  linux_only
   blank_dvd
   answers "${IMAGE}" disc.iso
 
@@ -60,7 +55,6 @@ image_on_disc() {
 
 @test "the Write tab writes nothing when the typed name is wrong" {
   # Arrange
-  linux_only
   blank_dvd
   answers "${IMAGE}" sr0
 
@@ -76,7 +70,6 @@ image_on_disc() {
 
 @test "the Write tab shows why a burn failed" {
   # Arrange
-  linux_only
   blank_dvd
   disk_test_drive_flag fail_write
   answers "${IMAGE}" disc.iso
@@ -93,7 +86,6 @@ image_on_disc() {
 
 @test "the Write tab keeps the app open while a write runs and cancels it on c" {
   # Arrange
-  linux_only
   blank_dvd
   disk_test_drive_flag slow
   answers "${IMAGE}" disc.iso
@@ -112,7 +104,6 @@ image_on_disc() {
 
 @test "Enter on a result brings the form back" {
   # Arrange
-  linux_only
   blank_dvd
   answers "${IMAGE}" disc.iso
 
@@ -221,7 +212,7 @@ image_on_disc() {
 
 @test "the fields stop at the top and the bottom of the form" {
   # Arrange
-  local keys='1\033[A\033[B\033[B\033[B\033[B\033[B\033[B \033[A \nq'
+  local keys='1\033[A\033[B\033[B\033[B\033[B\033[B\033[B\033[B\033[B\033[B\033[B\033[B\033[B \033[A q'
 
   # Act
   run on_terminal "${keys}"
@@ -229,9 +220,8 @@ image_on_disc() {
   # Assert
   local shown
   shown="$(last_frame)"
-  [[ "${shown}" == *"  Verify     [x] on"* ]]
-  [[ "${shown}" == *"> Eject      [x] on"* ]]
-  [[ "${shown}" == *"  Test mode  [x] on"* ]]
+  [[ "${shown}" == *"  OPC        [x] on"* ]]
+  [[ "${shown}" == *"> Finalize   [ ] off"* ]]
 }
 
 @test "space on a field with nothing to turn leaves it alone" {
