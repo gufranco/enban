@@ -1,5 +1,19 @@
 # Changelog
 
+# [1.4.0](https://github.com/gufranco/enban/compare/v1.3.0...v1.4.0) (2026-11-11)
+
+
+### Bug Fixes
+
+* keep pane bottoms level when a line wraps ([a84f39d](https://github.com/gufranco/enban/commit/a84f39df3968fcafcbd9180e4793d1d5ccdfd9fe))
+
+
+### Features
+
+* build an image from the Build tab ([8063454](https://github.com/gufranco/enban/commit/806345451a67da03caafd45de13bb1aa36ffe1a2))
+* burn the Build layout straight to the disc ([4fa49f1](https://github.com/gufranco/enban/commit/4fa49f1c55395c1a1c5db45a3a612fbe92d815fe))
+* erase a rewritable disc with erase ([3ff53c8](https://github.com/gufranco/enban/commit/3ff53c83b68987bc1d663eed3ced8b49f2671091))
+
 # [1.3.0](https://github.com/gufranco/enban/compare/v1.2.0...v1.3.0) (2026-11-11)
 
 
