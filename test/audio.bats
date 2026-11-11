@@ -149,3 +149,31 @@ burner() {
   [[ "${sent}" == "-v dev=${DRIVE} -dao -dummy cuefile=${CUE}" ]]
   [[ "${output}" == *"Done. the test write to ${DRIVE} ran to the end, and nothing was written." ]]
 }
+
+@test "enban write burns an audio CD track at once and leaves it open" {
+  # Arrange
+  linux_only
+  disk_test_drive 0009 "CD-R" 359847 7056
+  burner
+
+  # Act
+  run disk_test_run enban write "${CUE}" --drive "${DRIVE}" --no-eject --mode tao --no-finalize <<<"disc.iso"
+
+  # Assert
+  local sent
+  sent="$(cat "${WORK}/cdrskin.log")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${sent}" == "-v dev=${DRIVE} -tao -multi cuefile=${CUE}" ]]
+}
+
+@test "enban write refuses OPC for an audio CD" {
+  # Arrange
+  local cue="${CUE}"
+
+  # Act
+  run disk_test_run enban write "${cue}" --drive "${DRIVE}" --opc </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: --opc applies to data discs; cdrskin calibrates an audio CD on its own." ]]
+}

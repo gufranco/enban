@@ -3,6 +3,12 @@
 # shellcheck source=SCRIPTDIR/state.sh
 . "${DISK_LIB:?}/state.sh"
 
+disk_audio_opc() {
+  [ "${DISK_WRITE_OPC}" = y ] || return 0
+  disk_error "--opc applies to data discs; cdrskin calibrates an audio CD on its own."
+  return 1
+}
+
 disk_audio_check() {
   if [ ! -f "${DISK_WRITE_IMAGE}" ]; then
     disk_error "no CUE sheet at ${DISK_WRITE_IMAGE}."
@@ -24,7 +30,8 @@ disk_audio_check() {
 
 disk_audio_burn() {
   disk_ab_log="$(mktemp "${TMPDIR:-/tmp}/enban-audio.XXXXXX")" || return 1
-  set -- -v "dev=${DISK_DRIVE}" -dao
+  set -- -v "dev=${DISK_DRIVE}" "-${DISK_WRITE_MODE}"
+  [ "${DISK_WRITE_FINALIZE}" = y ] || set -- "$@" -multi
   [ -z "${DISK_WRITE_SPEED}" ] || set -- "$@" "speed=${DISK_WRITE_SPEED}"
   [ "${DISK_WRITE_EJECT}" = n ] || set -- "$@" -eject
   [ "${DISK_WRITE_TEST}" = n ] || set -- "$@" -dummy
@@ -49,6 +56,7 @@ disk_audio_go() {
 }
 
 disk_audio_run() {
+  disk_audio_opc || return 1
   disk_audio_check || return 1
   disk_write_confirm || return 1
   disk_audio_go

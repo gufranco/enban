@@ -427,6 +427,21 @@ seconds. It cannot run with
 .B \-\-delete\-image
 Delete the image once every copy is written. A test write keeps it.
 .TP
+.BI \-\-mode " dao|tao"
+Write disc at once, the default, or track at once;
+.B sao
+means disc at once.
+.TP
+.B \-\-no\-finalize
+Leave the disc open, so another session can be added later.
+.TP
+.B \-\-opc
+Calibrate the laser power before a data disc is written. cdrskin calibrates an
+audio CD on its own, so an audio write refuses it. BURN-Proof is always on,
+because libburn turns buffer underrun protection on whenever the drive has it,
+and overburning is not offered, since neither xorriso nor cdrskin writes past
+the disc's capacity.
+.TP
 .B \-\-test
 Run the burn of write or discovery as a test, with the laser off: the drive goes
 through every step and nothing is written, so nothing is verified or read back.

@@ -479,3 +479,49 @@ image_on_disc() {
   [[ "${status}" -eq 1 ]]
   [[ "${output}" == "enban: option '--copies' works only with write. run 'enban help' for usage." ]]
 }
+
+@test "enban write passes track at once, an open disc and OPC to the burner" {
+  # Arrange
+  linux_only
+  blank_dvd
+
+  # Act
+  run write_typing disc.iso "${IMAGE}" --drive "${DRIVE}" --mode tao --no-finalize --opc --no-eject
+
+  # Assert
+  local burned
+  burned="$(sed -n 's/^burn=//p' "${WORK}/drive.state")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${burned}" == *" -tao -multi --perform_opc "* ]]
+  image_on_disc
+}
+
+@test "enban write reads sao as disc at once" {
+  # Arrange
+  linux_only
+  blank_dvd
+
+  # Act
+  run write_typing disc.iso "${IMAGE}" --drive "${DRIVE}" --mode sao --no-eject
+
+  # Assert
+  local burned
+  burned="$(sed -n 's/^burn=//p' "${WORK}/drive.state")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${burned}" == *" -dao "* ]]
+}
+
+@test "enban write --mode takes dao or tao and only write takes it" {
+  # Arrange
+  local mode=raw96
+
+  # Act
+  run disk_test_run enban write "${IMAGE}" --drive "${DRIVE}" --mode "${mode}" </dev/null
+
+  # Assert
+  local other
+  other="$(disk_test_run enban erase --drive "${DRIVE}" --opc </dev/null 2>&1 || true)"
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: --mode takes dao or tao, got: raw96" ]]
+  [[ "${other}" == "enban: option '--opc' works only with write. run 'enban help' for usage." ]]
+}

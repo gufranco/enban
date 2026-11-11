@@ -7,7 +7,7 @@ disk_write_tab_key() {
   disk_job_key write "$1" && return 0
   case "$1" in
   up) [ "${DISK_APP_W_FIELD}" -le 0 ] || DISK_APP_W_FIELD=$((DISK_APP_W_FIELD - 1)) ;;
-  down) [ "${DISK_APP_W_FIELD}" -ge 6 ] || DISK_APP_W_FIELD=$((DISK_APP_W_FIELD + 1)) ;;
+  down) [ "${DISK_APP_W_FIELD}" -ge 9 ] || DISK_APP_W_FIELD=$((DISK_APP_W_FIELD + 1)) ;;
   enter) disk_write_tab_edit ;;
   space) disk_write_tab_toggle ;;
   w) disk_write_tab_start ;;
@@ -39,6 +39,9 @@ disk_write_tab_toggle() {
   3) DISK_APP_W_EJECT="$(disk_job_flip "${DISK_APP_W_EJECT}")" ;;
   4) DISK_APP_W_TEST="$(disk_job_flip "${DISK_APP_W_TEST}")" ;;
   6) DISK_APP_W_DELETE="$(disk_job_flip "${DISK_APP_W_DELETE}")" ;;
+  7) disk_write_tab_mode ;;
+  8) DISK_APP_W_FINALIZE="$(disk_job_flip "${DISK_APP_W_FINALIZE}")" ;;
+  9) DISK_APP_W_OPC="$(disk_job_flip "${DISK_APP_W_OPC}")" ;;
   *) return 0 ;;
   esac
 }
@@ -55,6 +58,13 @@ disk_write_tab_speed() {
   case "$1" in
   *[!0-9]*) DISK_APP_STATUS="The speed must be a whole number, such as 8." ;;
   *) DISK_APP_W_SPEED="$1" ;;
+  esac
+}
+
+disk_write_tab_mode() {
+  case "${DISK_APP_W_MODE}" in
+  dao) DISK_APP_W_MODE=tao ;;
+  *) DISK_APP_W_MODE=dao ;;
   esac
 }
 
@@ -83,6 +93,9 @@ disk_write_tab_start() {
   DISK_WRITE_TEST="${DISK_APP_W_TEST}"
   DISK_WRITE_COPIES="${DISK_APP_W_COPIES}"
   DISK_WRITE_DELETE="${DISK_APP_W_DELETE}"
+  DISK_WRITE_MODE="${DISK_APP_W_MODE}"
+  DISK_WRITE_FINALIZE="${DISK_APP_W_FINALIZE}"
+  DISK_WRITE_OPC="${DISK_APP_W_OPC}"
   [ "${DISK_WRITE_COPIES}" -eq 1 ] || DISK_WRITE_EJECT=y
   disk_job_launch disk_write_tab_steps write "${DISK_APP_W_IMAGE} to ${DISK_DRIVE}"
 }
@@ -108,5 +121,12 @@ disk_frame_write() {
   disk_job_row 4 "${DISK_APP_W_FIELD}" "Test mode" "${disk_fw_test}"
   disk_job_row 5 "${DISK_APP_W_FIELD}" "Copies" "${DISK_APP_W_COPIES}"
   disk_job_row 6 "${DISK_APP_W_FIELD}" "Delete" "${disk_fw_delete}"
+  disk_fw_mode="disc at once"
+  [ "${DISK_APP_W_MODE}" = dao ] || disk_fw_mode="track at once"
+  disk_fw_finalize="$(disk_job_box "${DISK_APP_W_FINALIZE}")"
+  disk_fw_opc="$(disk_job_box "${DISK_APP_W_OPC}")"
+  disk_job_row 7 "${DISK_APP_W_FIELD}" "Mode" "${disk_fw_mode}"
+  disk_job_row 8 "${DISK_APP_W_FIELD}" "Finalize" "${disk_fw_finalize}"
+  disk_job_row 9 "${DISK_APP_W_FIELD}" "OPC" "${disk_fw_opc}"
   printf '%s\n' "" "enter edit   space toggle   w write"
 }

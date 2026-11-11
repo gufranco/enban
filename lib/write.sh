@@ -39,7 +39,9 @@ disk_write_confirm() {
 
 disk_write_burn() {
   disk_wb_log="$(mktemp "${TMPDIR:-/tmp}/enban-write.XXXXXX")" || return 1
-  set -- -as cdrecord -v "dev=${DISK_DRIVE}" -dao
+  set -- -as cdrecord -v "dev=${DISK_DRIVE}" "-${DISK_WRITE_MODE}"
+  [ "${DISK_WRITE_FINALIZE}" = y ] || set -- "$@" -multi
+  [ "${DISK_WRITE_OPC}" = n ] || set -- "$@" --perform_opc
   [ -z "${DISK_WRITE_SPEED}" ] || set -- "$@" "speed=${DISK_WRITE_SPEED}"
   [ "${DISK_WRITE_TEST}" = n ] || set -- "$@" -dummy
   disk_wb_status=0
@@ -86,6 +88,17 @@ disk_write_run() {
   disk_write_check || return 1
   disk_write_confirm || return 1
   disk_write_copies
+}
+
+disk_write_mode_ok() {
+  case "${DISK_WRITE_MODE}" in
+  dao | tao) return 0 ;;
+  sao) DISK_WRITE_MODE=dao ;;
+  *)
+    disk_error "--mode takes dao or tao, got: ${DISK_WRITE_MODE}"
+    return 1
+    ;;
+  esac
 }
 
 disk_write_copies_ok() {

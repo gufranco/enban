@@ -316,3 +316,33 @@ image_on_disc() {
   shown="$(last_frame)"
   [[ "${shown}" == *"> Delete     [x] the image, after the last copy"* ]]
 }
+
+@test "space switches the mode and turns finalize off and OPC on" {
+  # Arrange
+  local keys
+  keys="1$(printf '\\033[B%.0s' {1..7}) \\033[B \\033[B q"
+
+  # Act
+  run on_terminal "${keys}"
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"  Mode       track at once"* ]]
+  [[ "${shown}" == *"  Finalize   [ ] off"* ]]
+  [[ "${shown}" == *"> OPC        [x] on"* ]]
+}
+
+@test "space on Mode switches back to disc at once" {
+  # Arrange
+  local keys
+  keys="1$(printf '\\033[B%.0s' {1..7})  q"
+
+  # Act
+  run on_terminal "${keys}"
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"> Mode       disc at once"* ]]
+}
