@@ -129,12 +129,12 @@ teardown() {
   local shown
   shown="$(last_frame)"
   [[ "${status}" -eq 0 ]]
-  [[ "${shown}" == *"Read disc to image arrives in a coming release."* ]]
+  [[ "${shown}" == *"Read disc to image"*"> Image      none chosen, press Enter"* ]]
 }
 
-@test "the arrows and enter do nothing outside Home" {
+@test "the arrows and enter do nothing on a tab still to come" {
   # Arrange
-  local keys='2\033[B\nq'
+  local keys='3\033[B\nq'
 
   # Act
   run on_terminal "${keys}"
@@ -143,7 +143,7 @@ teardown() {
   local shown
   shown="$(last_frame)"
   [[ "${status}" -eq 0 ]]
-  [[ "${shown}" == *"Read disc to image arrives in a coming release."* ]]
+  [[ "${shown}" == *"Build image from files arrives in a coming release."* ]]
 }
 
 @test "? shows the keys and the next key closes them" {

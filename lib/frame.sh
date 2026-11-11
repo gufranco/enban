@@ -108,7 +108,6 @@ disk_frame_later() {
 
 disk_frame_tab_tile() {
   case "$1" in
-  Read) printf '2\n' ;;
   Build) printf '3\n' ;;
   Verify) printf '4\n' ;;
   *) printf '5\n' ;;
@@ -125,7 +124,8 @@ disk_frame_keys() {
   printf '%s\n' "  enter       open the job, or edit the field"
   printf '%s\n' "  space       turn the field on or off"
   printf '%s\n' "  w           write, on Write"
-  printf '%s\n' "  c           cancel a running write"
+  printf '%s\n' "  r           read, on Read"
+  printf '%s\n' "  c           cancel a running write or read"
   printf '%s\n' "  tab         next tab"
   printf '%s\n' "  0-9         jump to that tab"
   printf '%s\n' "  ?           these keys, closed by the next key"
@@ -141,7 +141,8 @@ disk_frame_left() {
   case "${disk_fp_name}" in
   Home) disk_frame_home ;;
   Write) disk_frame_write ;;
-  Read | Build | Verify | Discovery) disk_frame_later "${disk_fp_name}" ;;
+  Read) disk_frame_read ;;
+  Build | Verify | Discovery) disk_frame_later "${disk_fp_name}" ;;
   *) disk_frame_soon "${disk_fp_name}" ;;
   esac
 }

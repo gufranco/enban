@@ -27,6 +27,8 @@ Sleep 1500ms
 Screenshot write.png
 Sleep 600ms
 Tab
-Sleep 1s
+Sleep 1500ms
+Screenshot read.png
+Sleep 600ms
 Type "q"
 Sleep 1s

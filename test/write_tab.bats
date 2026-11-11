@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# shellcheck disable=SC2030,SC2031
+# shellcheck disable=SC2016,SC2030,SC2031
 
 # shellcheck source=test/helpers.bash
 source "${BATS_TEST_DIRNAME:-.}/helpers.bash"
@@ -258,4 +258,15 @@ image_on_disc() {
   local shown
   shown="$(last_frame)"
   [[ "${shown}" == *"No image at ${WORK}/missing.iso."* ]]
+}
+
+@test "the Write tab starts nothing while a read runs" {
+  # Arrange
+  local call='DISK_APP_JOB=running DISK_APP_JOB_KIND=read DISK_APP_JOB_PID=1 DISK_APP_W_IMAGE=image.iso; disk_write_tab_start; printf "%s|%s|%s\n" "${DISK_APP_JOB_KIND}" "${DISK_APP_JOB_PID}" "${DISK_APP_STATUS}"'
+
+  # Act
+  run disk_test_call eval "${call}"
+
+  # Assert
+  [[ "${output}" == "read|1|A read is running. Press c on its tab to cancel it first." ]]
 }

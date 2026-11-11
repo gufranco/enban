@@ -31,6 +31,10 @@ DISK_PROG=enban
 . "${DISK_LIB}/read.sh"
 # shellcheck source=SCRIPTDIR/../lib/write_tab.sh
 . "${DISK_LIB}/write_tab.sh"
+# shellcheck source=SCRIPTDIR/../lib/read_tab.sh
+. "${DISK_LIB}/read_tab.sh"
+# shellcheck source=SCRIPTDIR/../lib/job.sh
+. "${DISK_LIB}/job.sh"
 
 disk_usage() {
   if disk_ui_out; then
@@ -48,7 +52,7 @@ usage:
   enban [--drive DRIVE]               open the full-screen app on a terminal
   enban info --drive DRIVE [--json]   describe the drive and the disc in it
   enban write IMAGE --drive DRIVE     burn an image, verify it and eject
-  enban read --drive DRIVE IMAGE      copy a disc to an image and print its SHA-256
+  enban read --drive DRIVE IMAGE      copy a disc to an image and its SHA-256
   enban doctor                        check the tools enban needs
   enban version                       print the version
   enban help                          print this page
@@ -75,6 +79,8 @@ notes:
   arrows move between the jobs on Home and Enter opens one, ? shows the keys,
   and q quits. On Write, Enter edits a field, space turns verify or eject on
   or off, w writes after you type the drive's name, and c cancels the write.
+  On Read, Enter names the new image file, space turns verify on or off,
+  r reads the disc into it, and c cancels the read.
 
   --theme, else ENBAN_THEME, else KODOUGU_THEME picks the colours: kodougu,
   catppuccin-mocha, catppuccin-latte, dracula, nord, gruvbox, tokyo-night or

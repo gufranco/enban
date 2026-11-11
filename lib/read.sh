@@ -6,7 +6,7 @@
 disk_read_check() {
   disk_drive_read "${DISK_DRIVE}" read || return 1
   case "${DISK_DRIVE_STATUS}" in
-  appendable | closed) ;;
+  appendable | closed) : ;;
   *)
     disk_error "stopped: the disc in ${DISK_DRIVE} holds no data to read."
     return 1

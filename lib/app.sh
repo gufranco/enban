@@ -132,6 +132,7 @@ disk_app_decode() {
   20) DISK_APP_KEY=space ;;
   3f) DISK_APP_KEY=help ;;
   63) DISK_APP_KEY=c ;;
+  72) DISK_APP_KEY=r ;;
   77) DISK_APP_KEY=w ;;
   1b)
     stty min 0 time 1 2>/dev/null
@@ -185,7 +186,7 @@ disk_app_act() {
   [0-9]) [ "$1" -ge "$2" ] || DISK_APP_TAB="$1" ;;
   tab) DISK_APP_TAB=$(((DISK_APP_TAB + 1) % $2)) ;;
   help) DISK_APP_HELP=1 ;;
-  tick) disk_write_tab_poll ;;
+  tick) disk_job_poll ;;
   *) disk_app_pane_key "$1" ;;
   esac
   return 0
@@ -193,13 +194,14 @@ disk_app_act() {
 
 disk_app_may_quit() {
   [ "${DISK_APP_JOB}" = running ] || return 1
-  DISK_APP_STATUS="A write is running. Press c to cancel it first."
+  DISK_APP_STATUS="A ${DISK_APP_JOB_KIND} is running. Press c to cancel it first."
 }
 
 disk_app_pane_key() {
   case "$(disk_app_tab_name "${DISK_APP_TAB}")" in
   Home) disk_app_home_key "$1" ;;
   Write) disk_write_tab_key "$1" ;;
+  Read) disk_read_tab_key "$1" ;;
   *) return 0 ;;
   esac
 }
