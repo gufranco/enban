@@ -109,10 +109,12 @@ burn_speed() {
 
   # Act
   local index
+  local -a writers=()
   for index in 0 1 2 3 4 5 6 7 8 9; do
     disk_test_run enban write "${IMAGE}" --drive "stdio:${WORK}/disc${index}.iso" --speed 8 --no-verify --no-eject <<<"disc${index}.iso" >"${WORK}/out${index}" 2>&1 &
+    writers+=("$!")
   done
-  wait
+  wait "${writers[@]}"
 
   # Assert
   local kept
