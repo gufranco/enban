@@ -41,6 +41,8 @@ case " $* " in
   ;;
 *" -blank "*)
   fail_blank="$(value fail_blank)"
+  slow="$(value slow)"
+  [ "${slow}" != 1 ] || sleep 30
   if [ "${fail_blank}" = 1 ]; then
     printf 'xorriso : FAILURE : -blank: Job could not be performed properly.\n' >&2
     exit 5

@@ -15,7 +15,7 @@
 
 </div>
 
-`enban`, 円盤, is Japanese for a disc. It aims at the jobs a disc burner does: write an image, write files, read a disc to an image, build an image, verify a disc against an image, and stress-test a drive. Today it ships the app itself, with its full-screen frame, tabs and keys, `enban info`, which describes the drive and the disc in it, and `enban write`, which burns an image and verifies it, and `enban read`, which copies a disc to an image, all on Linux. The other jobs arrive in the coming releases, each as a tab and as a plain command for scripts.
+`enban`, 円盤, is Japanese for a disc. It aims at the jobs a disc burner does: write an image, write files, read a disc to an image, build an image, verify a disc against an image, and stress-test a drive. Today it ships the app, with its Write, Read, Build, Verify and Tools tabs, and the plain commands `info`, `write`, `read`, `verify`, `build`, `erase` and `checksum` for scripts. Work on a drive runs on Linux; building an image and checking an image's checksums also run on macOS. Discovery, the queue, the log and settings, the raw drive tools, and audio CDs arrive in the coming releases, each as a tab and as a plain command.
 
 ---
 
@@ -91,7 +91,8 @@ make install
 | `a`, `f` | Add a file or a folder to the disc layout on Build |
 | `x`, `n` | Remove or rename the focused entry on Build |
 | `b` | Build the layout into the chosen image file, or burn it to the disc when Target says so, after you type the drive's name |
-| `c` | Cancel a running write, read, verify or build |
+| `c` | Cancel the running job |
+| Esc | Leave a tool's panel for the tool list on Tools |
 | Tab | Next tab |
 | `0` to `9` | Switch to that tab |
 | `?` | Show the keys; the next key closes them |
@@ -146,6 +147,10 @@ Everything is POSIX `sh` with ShellCheck `-o all` at zero findings. The suites d
 <tr>
 <td width="50%" valign="top"><img src="screens/build.png" alt="enban: The Build tab, with the disc layout, capacity, output fields and the file system checks"><br><sub>The Build tab, with the disc layout, capacity, output fields and the file system checks</sub></td>
 <td width="50%" valign="top"><img src="screens/verify.png" alt="enban: The Verify tab, with its compare and image fields"><br><sub>The Verify tab, with its compare and image fields</sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="screens/tools.png" alt="enban: The Tools tab, with the drive and image tools"><br><sub>The Tools tab, with the drive and image tools</sub></td>
+<td width="50%" valign="top"></td>
 </tr>
 <tr>
 <td width="50%" valign="top"><img src="screens/doctor.png" alt="enban: doctor checks every tool it needs"><br><sub>doctor checks every tool it needs</sub></td>

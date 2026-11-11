@@ -123,6 +123,7 @@ disk_frame_keys() {
   printf '%s\n' "  v           verify, on Verify"
   printf '%s\n' "  a f x n b   add a file or folder, remove, rename, build, on Build"
   printf '%s\n' "  c           cancel the running job"
+  printf '%s\n' "  esc         back to the tool list, on Tools"
   printf '%s\n' "  tab         next tab"
   printf '%s\n' "  0-9         jump to that tab"
   printf '%s\n' "  ?           these keys, closed by the next key"
@@ -141,6 +142,7 @@ disk_frame_left() {
   Read) disk_frame_read ;;
   Verify) disk_frame_verify ;;
   Build) disk_frame_build ;;
+  Tools) disk_frame_tools ;;
   Discovery) disk_frame_later "${disk_fp_name}" ;;
   *) disk_frame_soon "${disk_fp_name}" ;;
   esac

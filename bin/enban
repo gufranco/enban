@@ -47,6 +47,8 @@ DISK_PROG=enban
 . "${DISK_LIB}/build_tab.sh"
 # shellcheck source=SCRIPTDIR/../lib/build_view.sh
 . "${DISK_LIB}/build_view.sh"
+# shellcheck source=SCRIPTDIR/../lib/tools_tab.sh
+. "${DISK_LIB}/tools_tab.sh"
 # shellcheck source=SCRIPTDIR/../lib/job.sh
 . "${DISK_LIB}/job.sh"
 
@@ -114,7 +116,8 @@ notes:
   c cancels the verify. On Build, a and f add a file or folder to the layout, x
   and n remove or rename the focused entry, Enter edits the type, label, image
   or target, b builds into the image or, after you type the drive's name,
-  onto the disc, and c cancels the build.
+  onto the disc, and c cancels the build. On Tools, Enter opens the focused
+  tool, space picks a quick or full erase, and Escape goes back to the list.
 
   --theme, else ENBAN_THEME, else KODOUGU_THEME picks the colours: kodougu,
   catppuccin-mocha, catppuccin-latte, dracula, nord, gruvbox, tokyo-night or

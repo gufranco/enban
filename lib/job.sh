@@ -25,6 +25,8 @@ disk_job_verb() {
   write) printf 'Writing.\n' ;;
   verify) printf 'Verifying.\n' ;;
   build) printf 'Building.\n' ;;
+  erase) printf 'Erasing.\n' ;;
+  checksum) printf 'Checking.\n' ;;
   *) printf 'Reading.\n' ;;
   esac
 }
@@ -58,6 +60,8 @@ disk_job_cancelled() {
   write) printf 'Cancelled while writing. The disc may be unusable.\n' ;;
   verify) printf 'Cancelled while verifying. Nothing on the disc changed.\n' ;;
   build) printf 'Cancelled while building. No image was written.\n' ;;
+  erase) printf 'Cancelled while erasing. The disc may be unusable.\n' ;;
+  checksum) printf 'Cancelled while checking. Nothing changed.\n' ;;
   *) printf 'Cancelled while reading. The image is incomplete.\n' ;;
   esac
 }
@@ -107,9 +111,11 @@ disk_job_busy() {
 
 disk_job_typed() {
   disk_jy_name="${DISK_DRIVE##*/}"
-  disk_app_ask "Type ${disk_jy_name} to write, or anything else to stop" "${disk_jy_name}"
+  disk_jy_verb="${1:-write}"
+  disk_app_ask "Type ${disk_jy_name} to ${disk_jy_verb}, or anything else to stop" "${disk_jy_name}"
   [ "${DISK_APP_ANSWER}" = "${disk_jy_name}" ] && return 0
   DISK_APP_STATUS="Nothing was written."
+  [ "${disk_jy_verb}" = write ] || DISK_APP_STATUS="Nothing was erased."
   return 1
 }
 

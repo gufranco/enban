@@ -210,6 +210,7 @@ disk_app_pane_key() {
   Read) disk_read_tab_key "$1" ;;
   Verify) disk_verify_tab_key "$1" ;;
   Build) disk_build_tab_key "$1" ;;
+  Tools) disk_tools_tab_key "$1" ;;
   *) return 0 ;;
   esac
 }

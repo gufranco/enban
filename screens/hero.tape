@@ -1,6 +1,6 @@
 Source common.tape
 Output hero.gif
-Set Height 1000
+Set Height 1200
 Hide
 Type ". ./setup.sh"
 Enter
@@ -47,6 +47,10 @@ Sleep 600ms
 Tab
 Sleep 1500ms
 Screenshot verify.png
+Sleep 600ms
+Type "7"
+Sleep 1500ms
+Screenshot tools.png
 Sleep 600ms
 Type "q"
 Sleep 1s
