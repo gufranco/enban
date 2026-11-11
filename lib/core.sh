@@ -3,7 +3,7 @@
 # shellcheck source=SCRIPTDIR/state.sh
 . "${DISK_LIB:?}/state.sh"
 
-ENBAN_VERSION="1.0.0"
+ENBAN_VERSION="1.1.0"
 
 disk_version() {
   printf '%s %s\n' "${1:-${DISK_PROG}}" "${ENBAN_VERSION}"
