@@ -209,3 +209,31 @@ info_everywhere() {
   # Assert
   [[ "${status}" -eq 0 ]]
 }
+
+write_everywhere() {
+  local page option
+  page="$(disk_test_run enban help)" || return 1
+  grep -q -- '^  enban write ' <<<"${page}" || return 1
+  grep -q -- '^\.B enban write$' "${REPO_DIR}/man/enban.1" || return 2
+  grep -q -- ' write ' "${REPO_DIR}/completions/enban.bash" || return 3
+  grep -q -- "'write:" "${REPO_DIR}/completions/_enban" || return 4
+  grep -q -- '-a write ' "${REPO_DIR}/completions/enban.fish" || return 5
+  for option in speed no-verify no-eject; do
+    grep -q -- "^  --${option} " <<<"${page}" || return 6
+    grep -qF -- "\\-\\-${option//-/\\-}" "${REPO_DIR}/man/enban.1" || return 7
+    grep -q -- "--${option}" "${REPO_DIR}/completions/enban.bash" || return 8
+    grep -q -- "'--${option}\[" "${REPO_DIR}/completions/_enban" || return 9
+    grep -q -- "-l ${option} " "${REPO_DIR}/completions/enban.fish" || return 10
+  done
+}
+
+@test "enban help, man page and completions list write and its options" {
+  # Arrange
+  local command=write
+
+  # Act
+  run write_everywhere "${command}"
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+}

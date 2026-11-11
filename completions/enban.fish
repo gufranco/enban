@@ -1,8 +1,12 @@
 complete -c enban -n __fish_use_subcommand -a info -d 'describe the drive and the disc in it'
+complete -c enban -n __fish_use_subcommand -a write -d 'burn an image, verify it and eject'
 complete -c enban -n __fish_use_subcommand -a doctor -d 'check the tools enban needs'
 complete -c enban -n __fish_use_subcommand -a version -d 'print the version'
 complete -c enban -n __fish_use_subcommand -a help -d 'print usage'
 
 complete -c enban -l drive -r -F -d 'the drive to read'
 complete -c enban -l json -d 'print the result as one JSON object'
+complete -c enban -l speed -r -d 'write at this many times the base speed'
+complete -c enban -l no-verify -d 'write without reading the disc back'
+complete -c enban -l no-eject -d 'leave the disc in the drive'
 complete -c enban -l theme -r -a 'kodougu catppuccin-mocha catppuccin-latte dracula nord gruvbox tokyo-night mono' -d 'colours of the terminal interface'

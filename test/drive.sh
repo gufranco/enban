@@ -14,7 +14,29 @@ name="$(value name)"
 blocks="$(value blocks)"
 speeds="$(value speeds)"
 
+disc_file() {
+  for arg in "$@"; do
+    case "${arg}" in
+    dev=stdio:*) printf '%s\n' "${arg#dev=stdio:}" ;;
+    *) ;;
+    esac
+  done
+}
+
 case " $* " in
+*" -as cdrecord "*)
+  fail_write="$(value fail_write)"
+  corrupt="$(value corrupt)"
+  file="$(disc_file "$@")"
+  if [ "${fail_write}" = 1 ]; then
+    printf 'xorriso : FAILURE : -as cdrecord: Job could not be performed properly.\n' >&2
+    exit 5
+  fi
+  "${real}" "$@" || exit "$?"
+  if [ "${corrupt}" = 1 ]; then
+    printf 'X' | dd of="${file}" bs=1 seek=4096 conv=notrunc 2>/dev/null
+  fi
+  ;;
 *" -list_speeds "*)
   "${real}" "$@" >/dev/null || exit "$?"
   # shellcheck disable=SC2086

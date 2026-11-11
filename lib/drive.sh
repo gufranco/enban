@@ -6,7 +6,7 @@
 disk_drive_read() {
   case "$(disk_os)" in
   Darwin)
-    disk_error "reading a drive is not supported on macOS yet, so info stops here."
+    disk_error "reading a drive is not supported on macOS yet, so ${2:-info} stops here."
     return 2
     ;;
   *) ;;

@@ -12,6 +12,14 @@ enban \- write, read, build and verify CD, DVD and Blu-ray discs
 .BI \-\-drive " drive"
 .RB [ \-\-json ]
 .br
+.B enban write
+.I image
+.BI \-\-drive " drive"
+.RB [ \-\-speed
+.IR n ]
+.RB [ \-\-no\-verify ]
+.RB [ \-\-no\-eject ]
+.br
 .B enban doctor
 .br
 .B enban version
@@ -37,6 +45,15 @@ through
 .BR xorriso .
 Reading a drive on macOS is not supported yet, so info stops there.
 .TP
+.B write
+Burn
+.I image
+to the blank disc in the drive. The image must be a whole number of 2048-byte
+sectors and fit the free space. enban asks for the drive's name, as in
+.BR sr0 ,
+and writes only when it is typed. Then it reads the disc back, compares it
+with the image and ejects the disc. It refuses a disc that is not blank.
+.TP
 .B doctor
 List the tools enban needs and whether each is installed. Exits non-zero only
 when a required tool is missing.
@@ -49,11 +66,22 @@ Print the usage page.
 .SH OPTIONS
 .TP
 .BI \-\-drive " drive"
-The drive info and the app read, such as
+The drive info, write and the app use, such as
 .IR /dev/sr0 .
 .TP
 .B \-\-json
 Print the result of info as one JSON object, for scripts.
+.TP
+.BI \-\-speed " n"
+Write at
+.I n
+times the base speed of the disc, such as 8. By default the drive picks.
+.TP
+.B \-\-no\-verify
+Write without reading the disc back.
+.TP
+.B \-\-no\-eject
+Leave the disc in the drive when the write ends.
 .TP
 .BI \-\-theme " name"
 Colours of the terminal interface:

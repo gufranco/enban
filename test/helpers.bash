@@ -40,6 +40,10 @@ disk_test_drive() {
   disk_test_shim xorriso "exec sh $(printf '%q' "${ENBAN_TESTS_DIR}/drive.sh") \"\${REAL}\" $(printf '%q' "${state}") \"\$@\""
 }
 
+disk_test_drive_flag() {
+  printf '%s=1\n' "$1" >>"${WORK:?}/drive.state"
+}
+
 disk_test_path_without_shims() {
   if [[ "${ENBAN_TEST_OS}" == "Darwin" ]]; then
     printf '%s:%s\n' "${ENBAN_TESTS_DIR}/shim" "${PATH}"

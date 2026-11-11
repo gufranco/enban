@@ -25,6 +25,8 @@ DISK_PROG=enban
 . "${DISK_LIB}/frame.sh"
 # shellcheck source=SCRIPTDIR/../lib/drive.sh
 . "${DISK_LIB}/drive.sh"
+# shellcheck source=SCRIPTDIR/../lib/write.sh
+. "${DISK_LIB}/write.sh"
 
 disk_usage() {
   if disk_ui_out; then
@@ -41,6 +43,7 @@ enban - write, read, build and verify CD, DVD and Blu-ray discs
 usage:
   enban [--drive DRIVE]               open the full-screen app on a terminal
   enban info --drive DRIVE [--json]   describe the drive and the disc in it
+  enban write IMAGE --drive DRIVE     burn an image, verify it and eject
   enban doctor                        check the tools enban needs
   enban version                       print the version
   enban help                          print this page
@@ -48,11 +51,17 @@ usage:
 options:
   --drive DRIVE       the drive to read, such as /dev/sr0; else ENBAN_DRIVE
   --json              print the result of info as one JSON object, for scripts
+  --speed N           write at N times, such as 8; the drive picks by default
+  --no-verify         write without reading the disc back
+  --no-eject          leave the disc in the drive when the write ends
   --theme NAME        colours of the terminal interface, see notes
 
 notes:
-  info and the app read the drive through xorriso on Linux. Reading a drive
-  on macOS is not supported yet.
+  info, write and the app read the drive through xorriso on Linux. Reading a
+  drive on macOS is not supported yet.
+
+  write burns only a blank disc, asks for the drive's name before it starts,
+  then reads the disc back and compares it with the image.
 
   The app draws in the terminal's alternate screen and gives the screen back
   when it ends, on q or on an interrupt. Tab and the digits switch tabs, the
@@ -68,6 +77,7 @@ examples:
   enban --drive /dev/sr0
   enban --theme nord
   enban info --drive /dev/sr0 --json
+  enban write debian.iso --drive /dev/sr0 --speed 8
   enban doctor
 USAGE
 }
@@ -75,26 +85,41 @@ USAGE
 disk_option_flag() {
   case "$1" in
   --json) DISK_JSON=y ;;
+  --no-verify) DISK_WRITE_VERIFY=n ;;
+  --no-eject) DISK_WRITE_EJECT=n ;;
   *) return 1 ;;
+  esac
+  disk_option_seen "$1"
+}
+
+disk_option_value() {
+  case "$1" in
+  --speed) DISK_WRITE_SPEED="$2" ;;
+  *) DISK_DRIVE="$2" ;;
+  esac
+  disk_option_seen "$1"
+}
+
+disk_option_seen() {
+  case "$1" in
+  --speed | --no-verify | --no-eject) DISK_WRITE_OPTION="${DISK_WRITE_OPTION:-$1}" ;;
+  *) ;;
   esac
   return 0
 }
 
-disk_option_value() {
-  DISK_DRIVE="$2"
-  return 0
-}
-
 disk_options() {
-  DISK_VALUE_OPTIONS="--drive"
+  DISK_VALUE_OPTIONS="--drive --speed"
+  disk_op_room="$1"
+  shift
   disk_op_left="$#"
   while [ "${disk_op_left}" -gt 0 ]; do
     disk_op_arg="$1"
     shift
     disk_op_left=$((disk_op_left - 1))
     if ! disk_cli_is_option "${disk_op_arg}"; then
-      disk_cli_hint "unexpected argument '${disk_op_arg}'"
-      return 1
+      disk_option_operand "${disk_op_arg}" || return 1
+      continue
     fi
     disk_cli_option "${disk_op_arg}" "${disk_op_left}" "${1:-}" || return 1
     if [ "${DISK_CLI_USED}" -eq 1 ]; then
@@ -104,8 +129,29 @@ disk_options() {
   done
 }
 
+disk_option_operand() {
+  if [ "${disk_op_room}" -lt 1 ]; then
+    disk_cli_hint "unexpected argument '$1'"
+    return 1
+  fi
+  DISK_OPERAND="$1"
+  disk_op_room=$((disk_op_room - 1))
+}
+
+disk_only_for() {
+  if [ "$1" != info ] && [ "${DISK_JSON}" = y ]; then
+    disk_cli_hint "option '--json' works only with info"
+    return 1
+  fi
+  if [ "$1" != write ] && [ -n "${DISK_WRITE_OPTION}" ]; then
+    disk_cli_hint "option '${DISK_WRITE_OPTION}' works only with write"
+    return 1
+  fi
+}
+
 disk_info() {
-  disk_options "$@" || return 1
+  disk_options 0 "$@" || return 1
+  disk_only_for info || return 1
   if [ -z "${DISK_DRIVE}" ]; then
     disk_cli_hint "info needs --drive"
     return 1
@@ -113,12 +159,30 @@ disk_info() {
   disk_drive_report "${DISK_DRIVE}"
 }
 
-disk_app_start() {
-  disk_options "$@" || return 1
-  if [ "${DISK_JSON}" = y ]; then
-    disk_cli_hint "option '--json' works only with info"
+disk_write() {
+  disk_options 1 "$@" || return 1
+  disk_only_for write || return 1
+  if [ -z "${DISK_OPERAND}" ]; then
+    disk_cli_hint "write needs an image"
     return 1
   fi
+  if [ -z "${DISK_DRIVE}" ]; then
+    disk_cli_hint "write needs --drive"
+    return 1
+  fi
+  case "${DISK_WRITE_SPEED}" in
+  *[!0-9]*)
+    disk_error "--speed must be a whole number of times, such as 8, got: ${DISK_WRITE_SPEED}"
+    return 1
+    ;;
+  *) DISK_WRITE_IMAGE="${DISK_OPERAND}" ;;
+  esac
+  disk_write_run
+}
+
+disk_app_start() {
+  disk_options 0 "$@" || return 1
+  disk_only_for app || return 1
   disk_open
 }
 
@@ -166,6 +230,10 @@ disk_route() {
   info)
     shift
     disk_info "$@"
+    ;;
+  write)
+    shift
+    disk_write "$@"
     ;;
   '') disk_open ;;
   -*) disk_app_start "$@" ;;

@@ -151,14 +151,14 @@ written_dvd() {
 
 @test "enban info rejects an option it does not know with a value" {
   # Arrange
-  local option=--speed=8
+  local option=--label=DATA
 
   # Act
   run disk_test_run enban info "${option}" </dev/null
 
   # Assert
   [[ "${status}" -eq 1 ]]
-  [[ "${output}" == "enban: unknown option '--speed'. run 'enban help' for usage." ]]
+  [[ "${output}" == "enban: unknown option '--label'. run 'enban help' for usage." ]]
 }
 
 @test "enban info rejects a stray argument" {

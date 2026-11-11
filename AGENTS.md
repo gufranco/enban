@@ -27,6 +27,7 @@ Guidance for anyone, human or agent, changing enban. What enban is and how to us
 - enban is the family's first full-screen member: a bare `enban` on a terminal opens the app, never a menu.
 - The app restores the screen, cursor and echo on `q`, Ctrl+D and an interrupt, and warns when echo is still off afterwards.
 - `enban info --json` prints one JSON object with the drive, profile, status, sessions, free sectors and write speeds.
+- `enban write` burns only a blank disc with room for the image, writes only after the drive's name is typed, verifies by reading back exactly the image's sectors, because cdrecord pads the end of a track, and ejects unless told not to.
 
 ## Domain rules
 
