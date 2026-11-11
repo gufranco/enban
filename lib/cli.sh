@@ -94,7 +94,7 @@ disk_tool_flavor() {
 
 disk_doctor_note() {
   case "${1##*/}" in
-  dd | cmp | od | awk | sed | head | tr) disk_tool_flavor "$1" ;;
+  dd | cmp | od | awk | sed | head | tr | stat) disk_tool_flavor "$1" ;;
   *) ;;
   esac
 }
@@ -150,7 +150,7 @@ disk_doctor_optional() {
 
 disk_doctor_core() {
   disk_dc_status=0
-  for disk_dc_tool in dd cmp od awk sed head tr sudo; do
+  for disk_dc_tool in dd cmp od awk sed head tr stat sudo; do
     disk_doctor_tool "${disk_dc_tool}" "required" || disk_dc_status=1
   done
   disk_doctor_platform || disk_dc_status=1
