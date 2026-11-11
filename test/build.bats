@@ -276,7 +276,7 @@ volume_id() {
 
   # Assert
   [[ "${status}" -eq 1 ]]
-  [[ "${output}" == "enban: option '--speed' works only with write. run 'enban help' for usage." ]]
+  [[ "${output}" == "enban: option '--speed' works only with write and discovery. run 'enban help' for usage." ]]
 }
 
 @test "write refuses --fs, which only build takes" {

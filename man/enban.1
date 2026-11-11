@@ -50,6 +50,15 @@ enban \- write, read, build and verify CD, DVD and Blu-ray discs
 .I file
 .RB [ \-\-no\-verify ]
 .br
+.B enban discovery
+.BI \-\-drive " drive"
+.RB [ \-\-sectors
+.IR n ]
+.RB [ \-\-speed
+.IR n ]
+.RB [ \-\-csv
+.IR file ]
+.br
 .B enban doctor
 .br
 .B enban version
@@ -181,6 +190,13 @@ each copy, verifies it unless
 .B \-\-no\-verify
 is given, and ejects it. A table at the end gives the state of every image.
 .TP
+.B discovery
+Fill a blank disc with a known pattern, all its free sectors unless
+.B \-\-sectors
+says fewer, after the drive's name is typed. Then read it back in a hundred
+stretches, compare every sector, and save the read rate of each stretch as CSV.
+It names the first sector that reads back wrong or cannot be read.
+.TP
 .B doctor
 List the tools enban needs and whether each is installed. Exits non-zero only
 when a required tool is missing.
@@ -222,6 +238,14 @@ default.
 .B \-\-full
 Erase every sector of the disc instead of only its start.
 .TP
+.BI \-\-sectors " n"
+How many sectors discovery writes; all free sectors by default.
+.TP
+.BI \-\-csv " file"
+Where discovery saves the read rate; a new file under
+.B ENBAN_DATA
+by default.
+.TP
 .BI \-\-theme " name"
 Colours of the terminal interface:
 .BR kodougu ,
@@ -241,6 +265,11 @@ The default is
 The drive when
 .B \-\-drive
 is not given.
+.TP
+.B ENBAN_DATA
+The folder where discovery keeps its CSV files and its list of runs,
+.I ~/.local/share/enban
+by default.
 .TP
 .B ENBAN_QUEUE_WAIT
 How many seconds queue waits for a blank disc before it gives up on an image,

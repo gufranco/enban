@@ -15,7 +15,7 @@
 
 </div>
 
-`enban`, 円盤, is Japanese for a disc. It aims at the jobs a disc burner does: write an image, write files, read a disc to an image, build an image, verify a disc against an image, and stress-test a drive. Today it ships the app, with its Write, Read, Build, Verify, Queue and Tools tabs, and the plain commands `info`, `write`, `read`, `verify`, `build`, `erase`, `checksum` and `queue` for scripts. Work on a drive runs on Linux; building an image and checking an image's checksums also run on macOS. Discovery, the log and settings, the raw drive tools, and audio CDs arrive in the coming releases, each as a tab and as a plain command.
+`enban`, 円盤, is Japanese for a disc. It aims at the jobs a disc burner does: write an image, write files, read a disc to an image, build an image, verify a disc against an image, and stress-test a drive. Today it ships the app, with its Write, Read, Build, Verify, Queue and Tools tabs, and the plain commands `info`, `write`, `read`, `verify`, `build`, `erase`, `checksum`, `queue` and `discovery` for scripts. Work on a drive runs on Linux; building an image and checking an image's checksums also run on macOS. The log and settings, the raw drive tools, and audio CDs arrive in the coming releases, each as a tab and as a plain command.
 
 ---
 
@@ -78,6 +78,7 @@ make install
 | `enban erase --drive /dev/sr0` | Blank a rewritable disc once you type the drive's name. `--full` overwrites every sector instead of only the start. Linux only for now |
 | `enban checksum family.iso`, `enban checksum --drive /dev/sr0` | Read an image or the disc once and print its MD5, SHA-1 and SHA-256. The disc form is Linux only for now |
 | `enban queue family.queue` | Write the images a queue file lists, one per line as an image, a drive, an optional speed and copy count. Each drive works through its images in order while the drives run at the same time; enban waits for a blank disc before each copy, `ENBAN_QUEUE_WAIT` seconds at most. Linux only for now |
+| `enban discovery --drive /dev/sr0` | Fill a blank disc with a known pattern once you type the drive's name, read every sector back and save the read rate as CSV, under `ENBAN_DATA` unless `--csv` names a file. `--sectors` limits how much it writes and `--speed` sets the write speed. Linux only for now |
 | `enban doctor` | List the tools enban needs and whether they are installed |
 | `enban version`, `enban help` | Print the version or the full usage page |
 

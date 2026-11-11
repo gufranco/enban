@@ -184,5 +184,5 @@ prefix_of() {
 
   # Assert
   [[ "${status}" -eq 1 ]]
-  [[ "${output}" == "enban: option '--speed' works only with write. run 'enban help' for usage." ]]
+  [[ "${output}" == "enban: option '--speed' works only with write and discovery. run 'enban help' for usage." ]]
 }
