@@ -27,6 +27,8 @@ DISK_PROG=enban
 . "${DISK_LIB}/drive.sh"
 # shellcheck source=SCRIPTDIR/../lib/write.sh
 . "${DISK_LIB}/write.sh"
+# shellcheck source=SCRIPTDIR/../lib/read.sh
+. "${DISK_LIB}/read.sh"
 # shellcheck source=SCRIPTDIR/../lib/write_tab.sh
 . "${DISK_LIB}/write_tab.sh"
 
@@ -46,6 +48,7 @@ usage:
   enban [--drive DRIVE]               open the full-screen app on a terminal
   enban info --drive DRIVE [--json]   describe the drive and the disc in it
   enban write IMAGE --drive DRIVE     burn an image, verify it and eject
+  enban read --drive DRIVE IMAGE      copy a disc to an image and print its SHA-256
   enban doctor                        check the tools enban needs
   enban version                       print the version
   enban help                          print this page
@@ -54,7 +57,7 @@ options:
   --drive DRIVE       the drive to read, such as /dev/sr0; else ENBAN_DRIVE
   --json              print the result of info as one JSON object, for scripts
   --speed N           write at N times, such as 8; the drive picks by default
-  --no-verify         write without reading the disc back
+  --no-verify         write or read without the second pass that compares
   --no-eject          leave the disc in the drive when the write ends
   --theme NAME        colours of the terminal interface, see notes
 
@@ -63,7 +66,9 @@ notes:
   drive on macOS is not supported yet.
 
   write burns only a blank disc, asks for the drive's name before it starts,
-  then reads the disc back and compares it with the image.
+  then reads the disc back and compares it with the image. read copies the
+  readable sectors of a disc that holds data, never overwrites a file, reads
+  the disc again to compare and prints the SHA-256.
 
   The app draws in the terminal's alternate screen and gives the screen back
   when it ends, on q or on an interrupt. Tab and the digits switch tabs, the
@@ -81,6 +86,7 @@ examples:
   enban --theme nord
   enban info --drive /dev/sr0 --json
   enban write debian.iso --drive /dev/sr0 --speed 8
+  enban read --drive /dev/sr0 backup.iso
   enban doctor
 USAGE
 }
@@ -105,7 +111,8 @@ disk_option_value() {
 
 disk_option_seen() {
   case "$1" in
-  --speed | --no-verify | --no-eject) DISK_WRITE_OPTION="${DISK_WRITE_OPTION:-$1}" ;;
+  --speed | --no-eject) DISK_WRITE_OPTION="${DISK_WRITE_OPTION:-$1}" ;;
+  --no-verify) DISK_VERIFY_OPTION="$1" ;;
   *) ;;
   esac
   return 0
@@ -150,6 +157,13 @@ disk_only_for() {
     disk_cli_hint "option '${DISK_WRITE_OPTION}' works only with write"
     return 1
   fi
+  case "$1:${DISK_VERIFY_OPTION}" in
+  write:* | read:* | *:) return 0 ;;
+  *)
+    disk_cli_hint "option '--no-verify' works only with write and read"
+    return 1
+    ;;
+  esac
 }
 
 disk_info() {
@@ -181,6 +195,21 @@ disk_write() {
   *) DISK_WRITE_IMAGE="${DISK_OPERAND}" ;;
   esac
   disk_write_run
+}
+
+disk_read() {
+  disk_options 1 "$@" || return 1
+  disk_only_for read || return 1
+  if [ -z "${DISK_OPERAND}" ]; then
+    disk_cli_hint "read needs a file to write the image to"
+    return 1
+  fi
+  if [ -z "${DISK_DRIVE}" ]; then
+    disk_cli_hint "read needs --drive"
+    return 1
+  fi
+  DISK_READ_OUT="${DISK_OPERAND}"
+  disk_read_run
 }
 
 disk_app_start() {
@@ -237,6 +266,10 @@ disk_route() {
   write)
     shift
     disk_write "$@"
+    ;;
+  read)
+    shift
+    disk_read "$@"
     ;;
   '') disk_open ;;
   -*) disk_app_start "$@" ;;

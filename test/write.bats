@@ -277,7 +277,7 @@ image_on_disc() {
   [[ "${output}" == "enban: --speed must be a whole number of times, such as 8, got: fast" ]]
 }
 
-@test "enban info refuses an option that only write takes" {
+@test "enban info refuses an option that only write and read take" {
   # Arrange
   local option=--no-verify
 
@@ -286,7 +286,19 @@ image_on_disc() {
 
   # Assert
   [[ "${status}" -eq 1 ]]
-  [[ "${output}" == "enban: option '--no-verify' works only with write. run 'enban help' for usage." ]]
+  [[ "${output}" == "enban: option '--no-verify' works only with write and read. run 'enban help' for usage." ]]
+}
+
+@test "enban info refuses an option that only write takes" {
+  # Arrange
+  local option=--no-eject
+
+  # Act
+  run disk_test_run enban info --drive "${DRIVE}" "${option}" </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: option '--no-eject' works only with write. run 'enban help' for usage." ]]
 }
 
 @test "enban write refuses --json, which only info takes" {

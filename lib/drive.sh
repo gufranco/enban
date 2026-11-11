@@ -32,7 +32,7 @@ disk_drive_fields() {
       }
     }
     /^Media status : / { status = substr($0, 16) }
-    /^Media blocks : / { free = $7 }
+    /^Media blocks : / { readable = $4; free = $7 }
     /^Media summary: / { sessions = $3; data = $5 }
     END {
       if (status == "is blank") state = "blank"
@@ -40,7 +40,7 @@ disk_drive_fields() {
       else if (status ~ /is closed/) state = "closed"
       else if (status == "is not present") state = "empty"
       else state = "unreadable"
-      printf "%s\n%s\n%s\n%s\n%s\n%s\n%d\n%d\n%d\n", vendor, product, revision, profile, code, state, sessions, data, free
+      printf "%s\n%s\n%s\n%s\n%s\n%s\n%d\n%d\n%d\n%d\n", vendor, product, revision, profile, code, state, sessions, data, free, readable
     }')"
   disk_drive_assign <<EOF
 ${disk_df_lines}
@@ -57,6 +57,7 @@ disk_drive_assign() {
   read -r DISK_DRIVE_SESSIONS
   read -r DISK_DRIVE_DATA
   read -r DISK_DRIVE_FREE
+  read -r DISK_DRIVE_READABLE
 }
 
 disk_drive_speed_list() {

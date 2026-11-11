@@ -124,6 +124,7 @@ disk_doctor_platform() {
     ;;
   *)
     disk_doctor_tool xorriso "builds images and reads the drive" || disk_dp_status=1
+    disk_doctor_tool sha256sum "prints the checksum of a disc read" || disk_dp_status=1
     disk_doctor_tool cdrskin "burns CD, DVD and Blu-ray" || disk_dp_status=1
     disk_doctor_optional cdrdao "cdrdao package, needed only for raw CD reads and audio"
     ;;

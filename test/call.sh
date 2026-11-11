@@ -18,6 +18,8 @@ DISK_LIB="$(cd "$(dirname "$0")/../lib" && pwd)" || exit 1
 . "${DISK_LIB}/drive.sh"
 # shellcheck source=SCRIPTDIR/../lib/write.sh
 . "${DISK_LIB}/write.sh"
+# shellcheck source=SCRIPTDIR/../lib/read.sh
+. "${DISK_LIB}/read.sh"
 # shellcheck source=SCRIPTDIR/../lib/write_tab.sh
 . "${DISK_LIB}/write_tab.sh"
 

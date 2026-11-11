@@ -15,7 +15,7 @@
 
 </div>
 
-`enban`, 円盤, is Japanese for a disc. It aims at the jobs a disc burner does: write an image, write files, read a disc to an image, build an image, verify a disc against an image, and stress-test a drive. Today it ships the app itself, with its full-screen frame, tabs and keys, `enban info`, which describes the drive and the disc in it, and `enban write`, which burns an image and verifies it, both on Linux. The other jobs arrive in the coming releases, each as a tab and as a plain command for scripts.
+`enban`, 円盤, is Japanese for a disc. It aims at the jobs a disc burner does: write an image, write files, read a disc to an image, build an image, verify a disc against an image, and stress-test a drive. Today it ships the app itself, with its full-screen frame, tabs and keys, `enban info`, which describes the drive and the disc in it, and `enban write`, which burns an image and verifies it, and `enban read`, which copies a disc to an image, all on Linux. The other jobs arrive in the coming releases, each as a tab and as a plain command for scripts.
 
 ---
 
@@ -72,6 +72,7 @@ make install
 | `enban --drive /dev/sr0` | Open the full-screen app on a terminal, with the disc in that drive on the right; `ENBAN_DRIVE` sets the drive too |
 | `enban info --drive /dev/sr0` | Describe the drive and the disc: profile, blank or appendable, sessions, free sectors and write speeds. `--json` prints one object for scripts. Linux only for now |
 | `enban write image.iso --drive /dev/sr0` | Burn the image to a blank disc once you type the drive's name, read it back to compare, then eject. `--speed 8`, `--no-verify` and `--no-eject` change that. Linux only for now |
+| `enban read --drive /dev/sr0 backup.iso` | Copy the disc into a new image file, read it again to compare, and print the SHA-256. `--no-verify` skips the second read. Linux only for now |
 | `enban doctor` | List the tools enban needs and whether they are installed |
 | `enban version`, `enban help` | Print the version or the full usage page |
 

@@ -20,6 +20,11 @@ enban \- write, read, build and verify CD, DVD and Blu-ray discs
 .RB [ \-\-no\-verify ]
 .RB [ \-\-no\-eject ]
 .br
+.B enban read
+.BI \-\-drive " drive"
+.I image
+.RB [ \-\-no\-verify ]
+.br
 .B enban doctor
 .br
 .B enban version
@@ -58,6 +63,12 @@ sectors and fit the free space. enban asks for the drive's name, as in
 and writes only when it is typed. Then it reads the disc back, compares it
 with the image and ejects the disc. It refuses a disc that is not blank.
 .TP
+.B read
+Copy the readable sectors of the disc into
+.IR image ,
+read the disc again to compare, and print the SHA-256 of the copy. It refuses
+a disc that holds no data and never overwrites a file.
+.TP
 .B doctor
 List the tools enban needs and whether each is installed. Exits non-zero only
 when a required tool is missing.
@@ -82,7 +93,7 @@ Write at
 times the base speed of the disc, such as 8. By default the drive picks.
 .TP
 .B \-\-no\-verify
-Write without reading the disc back.
+Write or read without the second pass that compares the disc and the image.
 .TP
 .B \-\-no\-eject
 Leave the disc in the drive when the write ends.
