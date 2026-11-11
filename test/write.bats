@@ -286,7 +286,7 @@ image_on_disc() {
 
   # Assert
   [[ "${status}" -eq 1 ]]
-  [[ "${output}" == "enban: option '--no-verify' works only with write and read. run 'enban help' for usage." ]]
+  [[ "${output}" == "enban: option '--no-verify' works only with write, read and queue. run 'enban help' for usage." ]]
 }
 
 @test "enban info refuses an option that only write takes" {

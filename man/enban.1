@@ -46,6 +46,10 @@ enban \- write, read, build and verify CD, DVD and Blu-ray discs
 .B enban checksum
 .BI \-\-drive " drive"
 .br
+.B enban queue
+.I file
+.RB [ \-\-no\-verify ]
+.br
 .B enban doctor
 .br
 .B enban version
@@ -151,6 +155,18 @@ Read
 or the readable sectors of the disc in the drive once, and print their MD5,
 SHA-1 and SHA-256.
 .TP
+.B queue
+Write the images
+.I file
+lists, one per line as an image, a drive, then optionally a speed or
+.B auto
+and a number of copies, separated by tabs or spaces. Lines starting with # are
+skipped. It asks for each drive's name once, writes each drive's images in
+order while the drives work at the same time, waits for a blank disc before
+each copy, verifies it unless
+.B \-\-no\-verify
+is given, and ejects it. A table at the end gives the state of every image.
+.TP
 .B doctor
 List the tools enban needs and whether each is installed. Exits non-zero only
 when a required tool is missing.
@@ -175,7 +191,8 @@ Write at
 times the base speed of the disc, such as 8. By default the drive picks.
 .TP
 .B \-\-no\-verify
-Write or read without the second pass that compares the disc and the image.
+Write, read or queue without the second pass that compares the disc and the
+image.
 .TP
 .B \-\-no\-eject
 Leave the disc in the drive when the write ends.
@@ -210,6 +227,10 @@ The default is
 The drive when
 .B \-\-drive
 is not given.
+.TP
+.B ENBAN_QUEUE_WAIT
+How many seconds queue waits for a blank disc before it gives up on an image,
+600 by default.
 .TP
 .B ENBAN_THEME
 The theme when

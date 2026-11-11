@@ -182,5 +182,5 @@ change_sector() {
 
   # Assert
   [[ "${status}" -eq 1 ]]
-  [[ "${output}" == "enban: option '--no-verify' works only with write and read. run 'enban help' for usage." ]]
+  [[ "${output}" == "enban: option '--no-verify' works only with write, read and queue. run 'enban help' for usage." ]]
 }

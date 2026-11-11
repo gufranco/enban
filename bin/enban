@@ -37,6 +37,8 @@ DISK_PROG=enban
 . "${DISK_LIB}/erase.sh"
 # shellcheck source=SCRIPTDIR/../lib/checksum.sh
 . "${DISK_LIB}/checksum.sh"
+# shellcheck source=SCRIPTDIR/../lib/queue.sh
+. "${DISK_LIB}/queue.sh"
 # shellcheck source=SCRIPTDIR/../lib/write_tab.sh
 . "${DISK_LIB}/write_tab.sh"
 # shellcheck source=SCRIPTDIR/../lib/read_tab.sh
@@ -74,6 +76,7 @@ usage:
   enban erase --drive DRIVE [--full]  blank a rewritable disc
   enban checksum IMAGE                print the MD5, SHA-1 and SHA-256 of IMAGE
   enban checksum --drive DRIVE        the same for the disc in the drive
+  enban queue FILE                    write the images a queue file lists
   enban doctor                        check the tools enban needs
   enban version                       print the version
   enban help                          print this page
@@ -82,7 +85,7 @@ options:
   --drive DRIVE       the drive to read, such as /dev/sr0; else ENBAN_DRIVE
   --json              print the result of info as one JSON object, for scripts
   --speed N           write at N times, such as 8; the drive picks by default
-  --no-verify         write or read without the second pass that compares
+  --no-verify         write, read or queue without the pass that compares
   --no-eject          leave the disc in the drive when the write ends
   --fs LIST           file systems build writes; iso9660,joliet,udf by default
   --label NAME        the volume name build writes; the folder's by default
@@ -104,6 +107,13 @@ notes:
   blanks a rewritable disc that holds data, only after you type the drive's
   name; --full overwrites every sector and takes much longer. checksum reads
   an image or the disc once and prints its MD5, SHA-1 and SHA-256.
+
+  A queue file lists one image per line as IMAGE, DRIVE, then optionally a
+  speed or auto and a number of copies, separated by tabs or spaces; lines
+  starting with # are skipped. queue asks for each drive's name once, writes
+  every drive's images in order while the drives work at the same time, waits
+  for a blank disc before each copy and ejects after it. ENBAN_QUEUE_WAIT sets
+  how many seconds to wait for a blank disc, 600 by default.
 
   The app draws in the terminal's alternate screen and gives the screen back
   when it ends, on q or on an interrupt. Tab and the digits switch tabs, the
@@ -134,6 +144,7 @@ examples:
   enban build ~/Photos/2009 family.iso --label "Family 2009"
   enban erase --drive /dev/sr0
   enban checksum --drive /dev/sr0
+  enban queue family.queue
   enban doctor
 USAGE
 }
@@ -222,9 +233,9 @@ disk_only_for() {
     return 1
   fi
   case "$1:${DISK_VERIFY_OPTION}" in
-  write:* | read:* | *:) return 0 ;;
+  write:* | read:* | queue:* | *:) return 0 ;;
   *)
-    disk_cli_hint "option '--no-verify' works only with write and read"
+    disk_cli_hint "option '--no-verify' works only with write, read and queue"
     return 1
     ;;
   esac
@@ -324,6 +335,17 @@ disk_checksum() {
   disk_checksum_run
 }
 
+disk_queue() {
+  disk_options 1 "$@" || return 1
+  disk_only_for queue || return 1
+  if [ -z "${DISK_OPERAND}" ]; then
+    disk_cli_hint "queue needs a queue file"
+    return 1
+  fi
+  DISK_QUEUE_FILE="${DISK_OPERAND}"
+  disk_queue_run
+}
+
 disk_app_start() {
   disk_options 0 "$@" || return 1
   disk_only_for app || return 1
@@ -398,6 +420,10 @@ disk_route() {
   checksum)
     shift
     disk_checksum "$@"
+    ;;
+  queue)
+    shift
+    disk_queue "$@"
     ;;
   '') disk_open ;;
   -*) disk_app_start "$@" ;;

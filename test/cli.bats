@@ -329,3 +329,14 @@ options_everywhere() {
   # Assert
   [[ "${status}" -eq 0 ]]
 }
+
+@test "enban help, man page and completions list queue" {
+  # Arrange
+  local command=queue
+
+  # Act
+  run command_everywhere "${command}"
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+}

@@ -10,6 +10,7 @@ _enban() {
     'build:make an image from a folder'
     'erase:blank a rewritable disc'
     'checksum:print the MD5, SHA-1 and SHA-256 of an image or disc'
+    'queue:write the images a queue file lists'
     'doctor:check the tools enban needs'
     'version:print the version'
     'help:print usage'

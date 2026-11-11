@@ -77,6 +77,7 @@ make install
 | `enban build ~/Photos/2009 family.iso` | Make an image from a folder with ISO9660, Joliet and UDF, named after the folder. `--fs iso9660,joliet` leaves UDF out, and `--label "Family 2009"` names the volume. Works on macOS and Linux |
 | `enban erase --drive /dev/sr0` | Blank a rewritable disc once you type the drive's name. `--full` overwrites every sector instead of only the start. Linux only for now |
 | `enban checksum family.iso`, `enban checksum --drive /dev/sr0` | Read an image or the disc once and print its MD5, SHA-1 and SHA-256. The disc form is Linux only for now |
+| `enban queue family.queue` | Write the images a queue file lists, one per line as an image, a drive, an optional speed and copy count. Each drive works through its images in order while the drives run at the same time; enban waits for a blank disc before each copy, `ENBAN_QUEUE_WAIT` seconds at most. Linux only for now |
 | `enban doctor` | List the tools enban needs and whether they are installed |
 | `enban version`, `enban help` | Print the version or the full usage page |
 

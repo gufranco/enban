@@ -18,9 +18,20 @@ disc_file() {
   for arg in "$@"; do
     case "${arg}" in
     dev=stdio:*) printf '%s\n' "${arg#dev=stdio:}" ;;
+    stdio:*) printf '%s\n' "${arg#stdio:}" ;;
     *) ;;
     esac
   done
+}
+
+swap_disc() {
+  file="$(disc_file "$@")"
+  count=1
+  while [ -e "${file}.${count}" ] && [ "${count}" -lt 100 ]; do
+    count=$((count + 1))
+  done
+  cp "${file}" "${file}.${count}"
+  : >"${file}"
 }
 
 case " $* " in
@@ -65,7 +76,9 @@ case " $* " in
 *" -eject all "*)
   fail_eject="$(value fail_eject)"
   [ "${fail_eject}" != 1 ] || exit 5
-  "${real}" "$@"
+  "${real}" "$@" || exit "$?"
+  swap="$(value swap)"
+  [ "${swap}" != 1 ] || swap_disc "$@"
   ;;
 *" -list_speeds "*)
   "${real}" "$@" >/dev/null || exit "$?"
@@ -82,14 +95,17 @@ case " $* " in
     }'
   ;;
 *)
-  "${real}" "$@" >"${state}.out" || {
+  out="$(mktemp "${state}.out.XXXXXX")"
+  "${real}" "$@" >"${out}" || {
     status="$?"
-    cat "${state}.out"
+    cat "${out}"
+    rm -f "${out}"
     exit "${status}"
   }
   awk -v name="${name}" -v code="${code}" -v blocks="${blocks}" '
     /^Media current: stdio file/ { printf "Media current: %s (%sh)\n", name, code; next }
     /^Media blocks : / { printf "Media blocks : %d readable , %d writable , %d overall\n", $4, blocks - $4, blocks; next }
-    { print }' "${state}.out"
+    { print }' "${out}"
+  rm -f "${out}"
   ;;
 esac
