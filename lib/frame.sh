@@ -122,6 +122,7 @@ disk_frame_keys() {
   printf '%s\n' "  r           read, on Read"
   printf '%s\n' "  v           verify, on Verify"
   printf '%s\n' "  a f x n b   add a file or folder, remove, rename, build, on Build"
+  printf '%s\n' "  a x J K o s add, remove, move, save and start the queue, on Queue"
   printf '%s\n' "  c           cancel the running job"
   printf '%s\n' "  esc         back to the tool list, on Tools"
   printf '%s\n' "  tab         next tab"
@@ -143,6 +144,7 @@ disk_frame_left() {
   Verify) disk_frame_verify ;;
   Build) disk_frame_build ;;
   Tools) disk_frame_tools ;;
+  Queue) disk_frame_queue ;;
   Discovery) disk_frame_later "${disk_fp_name}" ;;
   *) disk_frame_soon "${disk_fp_name}" ;;
   esac
@@ -172,6 +174,7 @@ disk_frame_panes() {
   disk_fs_name="$(disk_app_tab_name "${DISK_APP_TAB}")"
   disk_fs_right="${DISK_APP_DISC}"
   [ "${disk_fs_name}" != Build ] || disk_fs_right="${DISK_APP_B_SIDE}"
+  [ "${disk_fs_name}" != Queue ] || disk_fs_right="$(disk_queue_side)"
   disk_fs_room=$((DISK_APP_ROWS - 6))
   [ "${disk_fs_room}" -ge 3 ] || disk_fs_room=3
   if [ "${DISK_APP_HELP}" -eq 1 ]; then

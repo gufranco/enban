@@ -51,6 +51,10 @@ DISK_PROG=enban
 . "${DISK_LIB}/build_view.sh"
 # shellcheck source=SCRIPTDIR/../lib/tools_tab.sh
 . "${DISK_LIB}/tools_tab.sh"
+# shellcheck source=SCRIPTDIR/../lib/queue_tab.sh
+. "${DISK_LIB}/queue_tab.sh"
+# shellcheck source=SCRIPTDIR/../lib/queue_view.sh
+. "${DISK_LIB}/queue_view.sh"
 # shellcheck source=SCRIPTDIR/../lib/job.sh
 . "${DISK_LIB}/job.sh"
 
@@ -128,6 +132,9 @@ notes:
   or target, b builds into the image or, after you type the drive's name,
   onto the disc, and c cancels the build. On Tools, Enter opens the focused
   tool, space picks a quick or full erase, and Escape goes back to the list.
+  On Queue, a adds an image, x removes it, J and K move it, Enter sets its
+  speed and copies, v turns the verify on or off, o saves the queue to a file
+  and s starts it after you type each drive's name.
 
   --theme, else ENBAN_THEME, else KODOUGU_THEME picks the colours: kodougu,
   catppuccin-mocha, catppuccin-latte, dracula, nord, gruvbox, tokyo-night or

@@ -48,6 +48,26 @@ Tab
 Sleep 1500ms
 Screenshot verify.png
 Sleep 600ms
+Type "6"
+Sleep 1000ms
+Type "a"
+Sleep 1000ms
+Type "debian-12.iso"
+Enter
+Sleep 1000ms
+Type "/dev/sr0"
+Enter
+Sleep 1000ms
+Type "a"
+Sleep 1000ms
+Type "family-2009.iso"
+Enter
+Sleep 1000ms
+Type "/dev/sr1"
+Enter
+Sleep 1500ms
+Screenshot queue.png
+Sleep 600ms
 Type "7"
 Sleep 1500ms
 Screenshot tools.png
