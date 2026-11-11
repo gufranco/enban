@@ -467,3 +467,18 @@ teardown() {
   [[ "${status}" -eq 0 ]]
   [[ "${output}" == *$'\033[?1049l'* ]]
 }
+
+@test "two panes keep their bottoms level when a long line wraps" {
+  # Arrange
+  disk_test_shim stty "case \"\$1\" in size) printf '40 100\\n' ;; *) exec \"\${REAL}\" \"\$@\" ;; esac"
+  local keys="3q"
+
+  # Act
+  run on_terminal "${keys}"
+
+  # Assert
+  local shown bottoms
+  shown="$(last_frame)"
+  bottoms="$(grep -c "$(printf '\342\225\260').*$(printf '\342\225\260')" <<<"${shown}" || true)"
+  [[ "${bottoms}" -eq 1 ]]
+}

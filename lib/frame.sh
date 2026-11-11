@@ -48,22 +48,26 @@ disk_frame_box() {
   disk_fb_top="$(disk_app_ink "${DISK_APP_C_ACCENT}" "$(printf '\342\225\255%s\342\225\256' "${disk_fb_rule}")")"
   disk_fb_bottom="$(disk_app_ink "${DISK_APP_C_ACCENT}" "$(printf '\342\225\260%s\342\225\257' "${disk_fb_rule}")")"
   disk_fb_side="$(disk_app_ink "${DISK_APP_C_ACCENT}" "$(printf '\342\224\202')")"
-  awk -v w=$(($1 - 4)) -v top="${disk_fb_top}" -v bottom="${disk_fb_bottom}" -v side="${disk_fb_side}" '
-    function row(s) { printf "%s %s %s\n", side, sprintf("%-" w "s", s), side }
+  disk_frame_wrap $(($1 - 4)) | awk -v w=$(($1 - 4)) -v top="${disk_fb_top}" -v bottom="${disk_fb_bottom}" -v side="${disk_fb_side}" '
     BEGIN { print top }
+    { printf "%s %s %s\n", side, sprintf("%-" w "s", $0), side }
+    END { print bottom }'
+}
+
+disk_frame_wrap() {
+  awk -v w="$1" '
     {
       line = $0
       while (length(line) > w) {
         cut = w
         while (cut > 1 && substr(line, cut + 1, 1) != " ") cut--
         if (cut == 1) cut = w
-        row(substr(line, 1, cut))
+        print substr(line, 1, cut)
         line = substr(line, cut + 1)
         sub(/^ +/, "", line)
       }
-      row(line)
-    }
-    END { print bottom }'
+      print line
+    }'
 }
 
 disk_frame_tiles() {
@@ -175,10 +179,13 @@ disk_frame_panes() {
     printf '%s\n' "${disk_fs_right}" | disk_frame_box "${DISK_APP_COLS}"
     return 0
   fi
+  disk_fs_rwidth=$((DISK_APP_COLS - DISK_APP_PANE_LEFT - 1))
+  disk_fs_left="$(printf '%s\n' "${disk_fs_left}" | disk_frame_wrap $((DISK_APP_PANE_LEFT - 4)))"
+  disk_fs_right="$(printf '%s\n' "${disk_fs_right}" | disk_frame_wrap $((disk_fs_rwidth - 4)))"
   disk_fs_lines="$(printf '%s\n' "${disk_fs_left}" | awk 'END { print NR }')"
   disk_fs_height="$(printf '%s\n' "${disk_fs_right}" | awk -v n="${disk_fs_lines}" 'END { print (NR > n ? NR : n) }')"
   disk_fs_lbox="$(disk_frame_padded "${disk_fs_left}" "${disk_fs_height}" | disk_frame_box "${DISK_APP_PANE_LEFT}")"
-  disk_fs_rbox="$(disk_frame_padded "${disk_fs_right}" "${disk_fs_height}" | disk_frame_box $((DISK_APP_COLS - DISK_APP_PANE_LEFT - 1)))"
+  disk_fs_rbox="$(disk_frame_padded "${disk_fs_right}" "${disk_fs_height}" | disk_frame_box "${disk_fs_rwidth}")"
   disk_frame_join "${disk_fs_lbox}" "${disk_fs_rbox}"
 }
 
