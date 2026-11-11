@@ -140,6 +140,7 @@ disk_app_decode() {
   6e) DISK_APP_KEY=n ;;
   6f) DISK_APP_KEY=o ;;
   73) DISK_APP_KEY=s ;;
+  74) DISK_APP_KEY=t ;;
   72) DISK_APP_KEY=r ;;
   76) DISK_APP_KEY=v ;;
   77) DISK_APP_KEY=w ;;
@@ -216,6 +217,7 @@ disk_app_pane_key() {
   Build) disk_build_tab_key "$1" ;;
   Tools) disk_tools_tab_key "$1" ;;
   Queue) disk_queue_tab_key "$1" ;;
+  Discovery) disk_discovery_tab_key "$1" ;;
   *) return 0 ;;
   esac
 }

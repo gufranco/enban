@@ -135,7 +135,7 @@ teardown() {
 
 @test "the arrows and enter do nothing on a tab still to come" {
   # Arrange
-  local keys='5\033[B\nq'
+  local keys='8\033[B\nq'
 
   # Act
   run on_terminal "${keys}"
@@ -144,7 +144,7 @@ teardown() {
   local shown
   shown="$(last_frame)"
   [[ "${status}" -eq 0 ]]
-  [[ "${shown}" == *"Discovery test arrives in a coming release."* ]]
+  [[ "${shown}" == *"Log"*"This tab arrives in a coming release."* ]]
 }
 
 @test "? shows the keys and the next key closes them" {
@@ -424,9 +424,9 @@ teardown() {
   [[ "${shown}" == *"> Discovery test"* ]]
 }
 
-@test "the Discovery tab names the job that arrives there" {
+@test "the Settings tab says it arrives in a coming release" {
   # Arrange
-  local keys="5q"
+  local keys="9q"
 
   # Act
   run on_terminal "${keys}"
@@ -434,7 +434,7 @@ teardown() {
   # Assert
   local final
   final="$(last_frame)"
-  [[ "${final}" == *"Discovery test arrives in a coming release."* ]]
+  [[ "${final}" == *"Settings"*"This tab arrives in a coming release."* ]]
 }
 
 @test "a wide terminal shows the drive and its disc in the header" {

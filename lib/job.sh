@@ -28,6 +28,7 @@ disk_job_verb() {
   erase) printf 'Erasing.\n' ;;
   checksum) printf 'Checking.\n' ;;
   queue) printf 'Writing the queue.\n' ;;
+  discovery) printf 'Testing.\n' ;;
   *) printf 'Reading.\n' ;;
   esac
 }
@@ -64,6 +65,7 @@ disk_job_cancelled() {
   erase) printf 'Cancelled while erasing. The disc may be unusable.\n' ;;
   checksum) printf 'Cancelled while checking. Nothing changed.\n' ;;
   queue) printf 'Cancelled while writing the queue. A disc in a drive may be unusable.\n' ;;
+  discovery) printf 'Cancelled while testing. The disc holds part of the test data.\n' ;;
   *) printf 'Cancelled while reading. The image is incomplete.\n' ;;
   esac
 }

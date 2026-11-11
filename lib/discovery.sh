@@ -124,7 +124,7 @@ disk_discovery_done() {
   disk_dd_folder="$(disk_discovery_folder)"
   mkdir -p "${disk_dd_folder}"
   disk_dd_when="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-  printf '%s\t%s\t%s\t%s\t%s\t%s\n' "${disk_dd_when}" "${DISK_DRIVE}" "${disk_dd_profile}" "${DISK_DISCOVERY_COUNT}" "${DISK_WRITE_SPEED:-auto}" "${disk_dd_verdict}" >>"${disk_dd_folder}/runs.tsv"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "${disk_dd_when}" "${DISK_DRIVE}" "${disk_dd_profile}" "${DISK_DISCOVERY_COUNT}" "${DISK_WRITE_SPEED:-auto}" "${disk_dd_verdict}" "${DISK_DISCOVERY_CSV}" >>"${disk_dd_folder}/runs.tsv"
   printf 'Written      %s sectors\nRead back    %s of %s sectors\nCSV          %s\n' "${DISK_DISCOVERY_COUNT}" "${DISK_DISCOVERY_GOOD}" "${DISK_DISCOVERY_COUNT}" "${DISK_DISCOVERY_CSV}"
   disk_discovery_verdict
 }

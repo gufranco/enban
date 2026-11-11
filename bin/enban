@@ -57,6 +57,8 @@ DISK_PROG=enban
 . "${DISK_LIB}/queue_tab.sh"
 # shellcheck source=SCRIPTDIR/../lib/queue_view.sh
 . "${DISK_LIB}/queue_view.sh"
+# shellcheck source=SCRIPTDIR/../lib/discovery_tab.sh
+. "${DISK_LIB}/discovery_tab.sh"
 # shellcheck source=SCRIPTDIR/../lib/job.sh
 . "${DISK_LIB}/job.sh"
 
@@ -144,7 +146,9 @@ notes:
   tool, space picks a quick or full erase, and Escape goes back to the list.
   On Queue, a adds an image, x removes it, J and K move it, Enter sets its
   speed and copies, v turns the verify on or off, o saves the queue to a file
-  and s starts it after you type each drive's name.
+  and s starts it after you type each drive's name. On Discovery, Enter sets
+  the sectors or the speed and t starts the test after you type the drive's
+  name.
 
   --theme, else ENBAN_THEME, else KODOUGU_THEME picks the colours: kodougu,
   catppuccin-mocha, catppuccin-latte, dracula, nord, gruvbox, tokyo-night or

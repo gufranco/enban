@@ -48,6 +48,10 @@ Tab
 Sleep 1500ms
 Screenshot verify.png
 Sleep 600ms
+Type "5"
+Sleep 1500ms
+Screenshot discovery.png
+Sleep 600ms
 Type "6"
 Sleep 1000ms
 Type "a"

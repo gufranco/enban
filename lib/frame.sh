@@ -104,11 +104,6 @@ disk_frame_home() {
     }'
 }
 
-disk_frame_later() {
-  disk_fl_title="$(disk_frame_tile 5 1)"
-  printf '%s\n' "$1" "" "${disk_fl_title} arrives in a coming release."
-}
-
 disk_frame_soon() {
   printf '%s\n' "$1" "" "This tab arrives in a coming release."
 }
@@ -123,6 +118,7 @@ disk_frame_keys() {
   printf '%s\n' "  v           verify, on Verify"
   printf '%s\n' "  a f x n b   add a file or folder, remove, rename, build, on Build"
   printf '%s\n' "  a x J K o s add, remove, move, save and start the queue, on Queue"
+  printf '%s\n' "  t           start the test, on Discovery"
   printf '%s\n' "  c           cancel the running job"
   printf '%s\n' "  esc         back to the tool list, on Tools"
   printf '%s\n' "  tab         next tab"
@@ -145,7 +141,7 @@ disk_frame_left() {
   Build) disk_frame_build ;;
   Tools) disk_frame_tools ;;
   Queue) disk_frame_queue ;;
-  Discovery) disk_frame_later "${disk_fp_name}" ;;
+  Discovery) disk_frame_discovery ;;
   *) disk_frame_soon "${disk_fp_name}" ;;
   esac
 }

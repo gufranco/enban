@@ -15,7 +15,7 @@
 
 </div>
 
-`enban`, 円盤, is Japanese for a disc. It aims at the jobs a disc burner does: write an image, write files, read a disc to an image, build an image, verify a disc against an image, and stress-test a drive. Today it ships the app, with its Write, Read, Build, Verify, Queue and Tools tabs, and the plain commands `info`, `write`, `read`, `verify`, `build`, `erase`, `checksum`, `queue` and `discovery` for scripts. Work on a drive runs on Linux; building an image and checking an image's checksums also run on macOS. The log and settings, the raw drive tools, and audio CDs arrive in the coming releases, each as a tab and as a plain command.
+`enban`, 円盤, is Japanese for a disc. It aims at the jobs a disc burner does: write an image, write files, read a disc to an image, build an image, verify a disc against an image, and stress-test a drive. Today it ships the app, with its Write, Read, Build, Verify, Discovery, Queue and Tools tabs, and the plain commands `info`, `write`, `read`, `verify`, `build`, `erase`, `checksum`, `queue` and `discovery` for scripts. Work on a drive runs on Linux; building an image and checking an image's checksums also run on macOS. The log and settings, the raw drive tools, and audio CDs arrive in the coming releases, each as a tab and as a plain command.
 
 ---
 
@@ -95,6 +95,7 @@ make install
 | `x`, `n` | Remove or rename the focused entry on Build; `x` removes the focused image on Queue |
 | `J`, `K` | Move the focused image down or up the queue on Queue |
 | `o`, `s` | Save the queue to a file, or start it after you type each drive's name, on Queue |
+| `t` | Start a discovery test after you type the drive's name, on Discovery |
 | `b` | Build the layout into the chosen image file, or burn it to the disc when Target says so, after you type the drive's name |
 | `c` | Cancel the running job |
 | Esc | Leave a tool's panel for the tool list on Tools |
@@ -152,6 +153,10 @@ Everything is POSIX `sh` with ShellCheck `-o all` at zero findings. The suites d
 <tr>
 <td width="50%" valign="top"><img src="screens/build.png" alt="enban: The Build tab, with the disc layout, capacity, output fields and the file system checks"><br><sub>The Build tab, with the disc layout, capacity, output fields and the file system checks</sub></td>
 <td width="50%" valign="top"><img src="screens/verify.png" alt="enban: The Verify tab, with its compare and image fields"><br><sub>The Verify tab, with its compare and image fields</sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="screens/discovery.png" alt="enban: The Discovery tab, with its sectors and speed fields"><br><sub>The Discovery tab, with its sectors and speed fields</sub></td>
+<td width="50%" valign="top"></td>
 </tr>
 <tr>
 <td width="50%" valign="top"><img src="screens/queue.png" alt="enban: The Queue tab, with two images waiting for a drive"><br><sub>The Queue tab, with two images waiting for a drive</sub></td>

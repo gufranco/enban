@@ -132,7 +132,7 @@ pattern_line() {
   runs="$(cat "${ENBAN_DATA}/discovery/runs.tsv")"
   [[ "${status}" -eq 0 ]]
   [[ "${saved}" -eq 1 ]]
-  [[ "${runs}" == *"${DRIVE}"$'\t'"DVD-R"$'\t'"64"$'\t'"auto"$'\t'"good" ]]
+  [[ "${runs}" == *"${DRIVE}"$'\t'"DVD-R"$'\t'"64"$'\t'"auto"$'\t'"good"$'\t'"${ENBAN_DATA}/discovery/"*".csv" ]]
 }
 
 @test "enban discovery refuses a disc that is not blank" {
