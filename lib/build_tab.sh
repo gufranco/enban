@@ -8,7 +8,7 @@ disk_build_tab_key() {
   disk_bk_count="$(disk_build_tab_count)"
   case "$1" in
   up) [ "${DISK_APP_B_FOCUS}" -le 0 ] || DISK_APP_B_FOCUS=$((DISK_APP_B_FOCUS - 1)) ;;
-  down) [ "${DISK_APP_B_FOCUS}" -ge $((disk_bk_count + 2)) ] || DISK_APP_B_FOCUS=$((DISK_APP_B_FOCUS + 1)) ;;
+  down) [ "${DISK_APP_B_FOCUS}" -ge $((disk_bk_count + 3)) ] || DISK_APP_B_FOCUS=$((DISK_APP_B_FOCUS + 1)) ;;
   a) disk_build_tab_add file ;;
   f) disk_build_tab_add folder ;;
   x) disk_build_tab_remove "${disk_bk_count}" ;;
@@ -110,6 +110,7 @@ disk_build_tab_edit() {
   0) DISK_APP_B_FS="$(disk_build_tab_next_fs "${DISK_APP_B_FS}")" ;;
   1) disk_build_tab_label ;;
   2) disk_build_tab_out ;;
+  3) DISK_APP_B_TARGET="$(disk_build_tab_flip_target "${DISK_APP_B_TARGET}")" ;;
   *) return 0 ;;
   esac
   disk_build_tab_refresh
@@ -121,6 +122,13 @@ disk_build_tab_next_fs() {
   iso9660,joliet) printf 'iso9660,udf\n' ;;
   iso9660,udf) printf 'iso9660\n' ;;
   *) printf 'iso9660,joliet,udf\n' ;;
+  esac
+}
+
+disk_build_tab_flip_target() {
+  case "$1" in
+  image) printf 'disc\n' ;;
+  *) printf 'image\n' ;;
   esac
 }
 
@@ -150,13 +158,40 @@ disk_build_tab_start() {
     DISK_APP_STATUS="Add a file or folder first: press a or f."
     return 0
   fi
+  DISK_BUILD_LAYOUT="${DISK_APP_B_LAYOUT}"
+  DISK_BUILD_FS="${DISK_APP_B_FS}"
+  DISK_BUILD_LABEL="${DISK_APP_B_LABEL}"
+  case "${DISK_APP_B_TARGET}" in
+  disc) disk_build_tab_to_disc ;;
+  *) disk_build_tab_to_image ;;
+  esac
+}
+
+disk_build_tab_to_image() {
   if [ -z "${DISK_APP_B_OUT}" ]; then
     DISK_APP_STATUS="Choose an image file first: Enter on Image."
     return 0
   fi
-  DISK_BUILD_LAYOUT="${DISK_APP_B_LAYOUT}"
   DISK_BUILD_OUT="${DISK_APP_B_OUT}"
-  DISK_BUILD_FS="${DISK_APP_B_FS}"
-  DISK_BUILD_LABEL="${DISK_APP_B_LABEL}"
   disk_job_launch disk_build_run build "the layout into ${DISK_APP_B_OUT}"
+}
+
+disk_build_tab_to_disc() {
+  if [ -n "${DISK_APP_DRIVE_NOTE}" ]; then
+    DISK_APP_STATUS="There is no drive to write to."
+    return 0
+  fi
+  disk_job_typed || return 0
+  DISK_WRITE_SPEED=""
+  DISK_WRITE_VERIFY=y
+  DISK_WRITE_EJECT=y
+  disk_job_launch disk_build_tab_disc_steps build "the layout to ${DISK_DRIVE}"
+}
+
+disk_build_tab_disc_steps() {
+  DISK_BUILD_OUT="${DISK_APP_JOB_DIR}/disc.iso"
+  disk_build_run || return 1
+  DISK_WRITE_IMAGE="${DISK_BUILD_OUT}"
+  disk_write_check || return 1
+  disk_write_go
 }

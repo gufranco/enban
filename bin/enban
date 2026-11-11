@@ -101,8 +101,9 @@ notes:
   r reads the disc into it, and c cancels the read. On Verify, space turns the
   image comparison on or off, Enter names the image, v verifies the disc, and
   c cancels the verify. On Build, a and f add a file or folder to the layout, x
-  and n remove or rename the focused entry, Enter edits the type, label or
-  image, b builds and c cancels the build.
+  and n remove or rename the focused entry, Enter edits the type, label, image
+  or target, b builds into the image or, after you type the drive's name,
+  onto the disc, and c cancels the build.
 
   --theme, else ENBAN_THEME, else KODOUGU_THEME picks the colours: kodougu,
   catppuccin-mocha, catppuccin-latte, dracula, nord, gruvbox, tokyo-night or

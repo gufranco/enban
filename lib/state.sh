@@ -108,6 +108,7 @@ export LC_ALL
 : "${DISK_APP_B_FS:=iso9660,joliet,udf}"
 : "${DISK_APP_B_LABEL:=}"
 : "${DISK_APP_B_OUT:=}"
+: "${DISK_APP_B_TARGET:=image}"
 : "${DISK_APP_B_SIDE:=}"
 : "${DISK_BUILD_DVD_SECTORS:=2298496}"
 : "${DISK_JOB_NOTE:=}"

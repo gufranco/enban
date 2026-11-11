@@ -62,12 +62,7 @@ disk_write_tab_start() {
     DISK_APP_STATUS="There is no drive to write to."
     return 0
   fi
-  disk_ws_name="${DISK_DRIVE##*/}"
-  disk_app_ask "Type ${disk_ws_name} to write, or anything else to stop" "${disk_ws_name}"
-  if [ "${DISK_APP_ANSWER}" != "${disk_ws_name}" ]; then
-    DISK_APP_STATUS="Nothing was written."
-    return 0
-  fi
+  disk_job_typed || return 0
   DISK_WRITE_IMAGE="${DISK_APP_W_IMAGE}"
   DISK_WRITE_SPEED="${DISK_APP_W_SPEED}"
   DISK_WRITE_VERIFY="${DISK_APP_W_VERIFY}"

@@ -320,3 +320,80 @@ answers() {
   shown="$(last_frame)"
   [[ "${shown}" == *"Disc layout"* ]]
 }
+
+@test "Enter on Target switches between an image file and the disc in the drive" {
+  # Arrange
+  local keys='3\033[B\033[B\033[B\nq'
+
+  # Act
+  run on_terminal "${keys}"
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"> Target     the disc in the drive"* ]]
+}
+
+@test "b to the disc needs a drive" {
+  # Arrange
+  answers "${SRC}"
+
+  # Act
+  run on_terminal '3f\033[B\033[B\033[B\033[B\nbq'
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"There is no drive to write to."* ]]
+}
+
+@test "b to the disc writes nothing without the typed drive name" {
+  # Arrange
+  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS reads the drive through drutil"
+  disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160 11080
+  : >"${WORK}/disc.iso"
+  answers "${SRC}" "wrong"
+
+  # Act
+  run on_terminal '3f\033[B\033[B\033[B\033[B\nbq' --drive "stdio:${WORK}/disc.iso"
+
+  # Assert
+  local shown size
+  shown="$(last_frame)"
+  size="$(wc -c <"${WORK}/disc.iso")"
+  [[ "${shown}" == *"Nothing was written."* ]]
+  [[ "${size//[[:space:]]/}" -eq 0 ]]
+}
+
+@test "b to the disc builds the layout and burns it after the typed drive name" {
+  # Arrange
+  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS reads the drive through drutil"
+  disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160 11080
+  : >"${WORK}/disc.iso"
+  answers "${SRC}" disc.iso
+
+  # Act
+  run on_terminal_in_steps '3f\033[B\033[B\033[B\033[B\nb' 'is written, verified' 'q' --drive "stdio:${WORK}/disc.iso"
+
+  # Assert
+  local shown listed
+  shown="$(last_frame)"
+  listed="$(xorriso -indev "${WORK}/disc.iso" -find / -type f 2>/dev/null)"
+  [[ "${shown}" == *"Result"*"Done. stdio:${WORK}/disc.iso is written, verified and ejected."* ]]
+  [[ "${listed}" == *"/photos/trip/kyoto-temple.jpg"* ]]
+}
+
+@test "the Target field shows the drive it writes to" {
+  # Arrange
+  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS reads the drive through drutil"
+  disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160 11080
+  : >"${WORK}/disc.iso"
+
+  # Act
+  run on_terminal '3\033[B\033[B\033[B\nq' --drive "stdio:${WORK}/disc.iso"
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"> Target     the disc in stdio:${WORK}/disc.iso"* ]]
+}

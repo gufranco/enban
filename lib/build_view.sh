@@ -37,7 +37,21 @@ disk_frame_build() {
   disk_fb_first="the first entry's name"
   disk_job_row $((disk_fb_count + 1)) "${DISK_APP_B_FOCUS}" "Label" "${DISK_APP_B_LABEL:-${disk_fb_first}}"
   disk_job_row $((disk_fb_count + 2)) "${DISK_APP_B_FOCUS}" "Image" "${DISK_APP_B_OUT:-none chosen, press Enter}"
+  disk_fb_target="$(disk_build_target_text)"
+  disk_job_row $((disk_fb_count + 3)) "${DISK_APP_B_FOCUS}" "Target" "${disk_fb_target}"
   printf '%s\n' "" "a file   f folder   x remove   n rename   b build"
+}
+
+disk_build_target_text() {
+  if [ "${DISK_APP_B_TARGET}" = image ]; then
+    printf 'an image file\n'
+    return 0
+  fi
+  if [ -n "${DISK_APP_DRIVE_NOTE}" ]; then
+    printf 'the disc in the drive\n'
+    return 0
+  fi
+  printf 'the disc in %s\n' "${DISK_DRIVE}"
 }
 
 disk_build_rows() {

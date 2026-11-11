@@ -105,6 +105,14 @@ disk_job_busy() {
   DISK_APP_STATUS="A ${DISK_APP_JOB_KIND} is running. Press c on its tab to cancel it first."
 }
 
+disk_job_typed() {
+  disk_jy_name="${DISK_DRIVE##*/}"
+  disk_app_ask "Type ${disk_jy_name} to write, or anything else to stop" "${disk_jy_name}"
+  [ "${DISK_APP_ANSWER}" = "${disk_jy_name}" ] && return 0
+  DISK_APP_STATUS="Nothing was written."
+  return 1
+}
+
 disk_job_key() {
   [ "${DISK_APP_JOB}" != idle ] && [ "${DISK_APP_JOB_KIND}" = "$1" ] || return 1
   case "${DISK_APP_JOB}:$2" in

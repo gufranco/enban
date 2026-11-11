@@ -88,7 +88,7 @@ make install
 | `v` | Verify the disc, against the chosen image or alone |
 | `a`, `f` | Add a file or a folder to the disc layout on Build |
 | `x`, `n` | Remove or rename the focused entry on Build |
-| `b` | Build the layout into the chosen image file |
+| `b` | Build the layout into the chosen image file, or burn it to the disc when Target says so, after you type the drive's name |
 | `c` | Cancel a running write, read, verify or build |
 | Tab | Next tab |
 | `0` to `9` | Switch to that tab |
