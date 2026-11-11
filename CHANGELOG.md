@@ -1,5 +1,20 @@
 # Changelog
 
+# [1.6.0](https://github.com/gufranco/enban/compare/v1.5.0...v1.6.0) (2026-11-11)
+
+
+### Bug Fixes
+
+* draw the key list across the whole screen ([d34c666](https://github.com/gufranco/enban/commit/d34c666ce42d8ca862645724f56a4dcae028df49))
+
+
+### Features
+
+* build and run a write queue on Queue ([49dbdee](https://github.com/gufranco/enban/commit/49dbdee7dd1e5694378908b2b630235e15edf801))
+* run and compare discovery tests in the app ([2eee9f4](https://github.com/gufranco/enban/commit/2eee9f459b3ba6cad02dacf23fb785793192dc31))
+* test a drive and disc with discovery ([3b506ec](https://github.com/gufranco/enban/commit/3b506ec027b4189850e95b17ca294e45dbe9c6b1))
+* write a queue of images across drives ([cc831c4](https://github.com/gufranco/enban/commit/cc831c437b214ee486850779411772c473e7849f))
+
 # [1.5.0](https://github.com/gufranco/enban/compare/v1.4.0...v1.5.0) (2026-11-11)
 
 
