@@ -76,6 +76,7 @@ make install
 | `enban verify --drive /dev/sr0 debian.iso` | Read every sector of the disc and compare it with the image, naming the first sector that differs or cannot be read. Leave out the image to only check that every sector reads. Linux only for now |
 | `enban build ~/Photos/2009 family.iso` | Make an image from a folder with ISO9660, Joliet and UDF, named after the folder. `--fs iso9660,joliet` leaves UDF out, and `--label "Family 2009"` names the volume. Works on macOS and Linux |
 | `enban erase --drive /dev/sr0` | Blank a rewritable disc once you type the drive's name. `--full` overwrites every sector instead of only the start. Linux only for now |
+| `enban checksum family.iso`, `enban checksum --drive /dev/sr0` | Read an image or the disc once and print its MD5, SHA-1 and SHA-256. The disc form is Linux only for now |
 | `enban doctor` | List the tools enban needs and whether they are installed |
 | `enban version`, `enban help` | Print the version or the full usage page |
 

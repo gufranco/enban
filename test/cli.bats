@@ -318,3 +318,14 @@ options_everywhere() {
   [[ "${status}" -eq 0 ]]
   [[ "${options_status}" -eq 0 ]]
 }
+
+@test "enban help, man page and completions list checksum" {
+  # Arrange
+  local command=checksum
+
+  # Act
+  run command_everywhere "${command}"
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+}

@@ -40,6 +40,12 @@ enban \- write, read, build and verify CD, DVD and Blu-ray discs
 .BI \-\-drive " drive"
 .RB [ \-\-full ]
 .br
+.B enban checksum
+.I image
+.br
+.B enban checksum
+.BI \-\-drive " drive"
+.br
 .B enban doctor
 .br
 .B enban version
@@ -135,6 +141,12 @@ BD-RE. It asks for the drive's name first and touches nothing when the
 answer differs. A quick erase clears the start of the disc;
 .B \-\-full
 overwrites every sector.
+.TP
+.B checksum
+Read
+.I image
+or the readable sectors of the disc in the drive once, and print their MD5,
+SHA-1 and SHA-256.
 .TP
 .B doctor
 List the tools enban needs and whether each is installed. Exits non-zero only

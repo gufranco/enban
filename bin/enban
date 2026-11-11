@@ -35,6 +35,8 @@ DISK_PROG=enban
 . "${DISK_LIB}/build.sh"
 # shellcheck source=SCRIPTDIR/../lib/erase.sh
 . "${DISK_LIB}/erase.sh"
+# shellcheck source=SCRIPTDIR/../lib/checksum.sh
+. "${DISK_LIB}/checksum.sh"
 # shellcheck source=SCRIPTDIR/../lib/write_tab.sh
 . "${DISK_LIB}/write_tab.sh"
 # shellcheck source=SCRIPTDIR/../lib/read_tab.sh
@@ -68,6 +70,8 @@ usage:
   enban verify --drive DRIVE [IMAGE]  check every sector, or compare with IMAGE
   enban build FOLDER IMAGE            make an image from a folder
   enban erase --drive DRIVE [--full]  blank a rewritable disc
+  enban checksum IMAGE                print the MD5, SHA-1 and SHA-256 of IMAGE
+  enban checksum --drive DRIVE        the same for the disc in the drive
   enban doctor                        check the tools enban needs
   enban version                       print the version
   enban help                          print this page
@@ -96,7 +100,8 @@ notes:
   image from a folder on macOS and Linux, with ISO9660 always and Joliet and
   UDF unless --fs leaves them out. UDF on Linux needs genisoimage. erase
   blanks a rewritable disc that holds data, only after you type the drive's
-  name; --full overwrites every sector and takes much longer.
+  name; --full overwrites every sector and takes much longer. checksum reads
+  an image or the disc once and prints its MD5, SHA-1 and SHA-256.
 
   The app draws in the terminal's alternate screen and gives the screen back
   when it ends, on q or on an interrupt. Tab and the digits switch tabs, the
@@ -125,6 +130,7 @@ examples:
   enban verify --drive /dev/sr0 debian.iso
   enban build ~/Photos/2009 family.iso --label "Family 2009"
   enban erase --drive /dev/sr0
+  enban checksum --drive /dev/sr0
   enban doctor
 USAGE
 }
@@ -300,6 +306,21 @@ disk_erase() {
   disk_erase_run
 }
 
+disk_checksum() {
+  disk_options 1 "$@" || return 1
+  disk_only_for checksum || return 1
+  if [ -n "${DISK_OPERAND}" ] && [ -n "${DISK_DRIVE}" ]; then
+    disk_cli_hint "checksum takes an image or --drive, not both"
+    return 1
+  fi
+  if [ -z "${DISK_OPERAND}${DISK_DRIVE}" ]; then
+    disk_cli_hint "checksum needs an image or --drive"
+    return 1
+  fi
+  DISK_CHECKSUM_IMAGE="${DISK_OPERAND}"
+  disk_checksum_run
+}
+
 disk_app_start() {
   disk_options 0 "$@" || return 1
   disk_only_for app || return 1
@@ -370,6 +391,10 @@ disk_route() {
   erase)
     shift
     disk_erase "$@"
+    ;;
+  checksum)
+    shift
+    disk_checksum "$@"
     ;;
   '') disk_open ;;
   -*) disk_app_start "$@" ;;
