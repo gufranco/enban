@@ -96,12 +96,10 @@ disk_settings_write() {
   disk_sw_verify="$(disk_settings_word "${DISK_WRITE_VERIFY}")"
   disk_sw_eject="$(disk_settings_word "${DISK_WRITE_EJECT}")"
   disk_sw_read="$(disk_settings_word "${DISK_READ_VERIFY}")"
-  {
-    printf 'write_verify=%s\nwrite_eject=%s\n' "${disk_sw_verify}" "${disk_sw_eject}"
-    printf 'write_speed=%s\nread_verify=%s\n' "${DISK_WRITE_SPEED:-auto}" "${disk_sw_read}"
-    printf 'build_fs=%s\nqueue_wait=%s\n' "${DISK_BUILD_FS}" "${DISK_QUEUE_WAIT}"
-    [ -n "${disk_sw_theme}" ] || printf 'theme=%s\n' "${DISK_THEME}"
-  } >"$1"
+  printf 'write_verify=%s\nwrite_eject=%s\n' "${disk_sw_verify}" "${disk_sw_eject}" >"$1"
+  printf 'write_speed=%s\nread_verify=%s\n' "${DISK_WRITE_SPEED:-auto}" "${disk_sw_read}" >>"$1"
+  printf 'build_fs=%s\nqueue_wait=%s\n' "${DISK_BUILD_FS}" "${DISK_QUEUE_WAIT}" >>"$1"
+  [ -n "${disk_sw_theme}" ] || printf 'theme=%s\n' "${DISK_THEME}" >>"$1"
 }
 
 disk_settings_word() {
