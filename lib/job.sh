@@ -29,6 +29,7 @@ disk_job_verb() {
   erase) printf 'Erasing.\n' ;;
   checksum) printf 'Checking.\n' ;;
   queue) printf 'Writing the queue.\n' ;;
+  convert) printf 'Converting.\n' ;;
   discovery) printf 'Testing.\n' ;;
   *) printf 'Reading.\n' ;;
   esac
@@ -69,6 +70,7 @@ disk_job_cancelled() {
   checksum) printf 'Cancelled while checking. Nothing changed.\n' ;;
   queue) printf 'Cancelled while writing the queue. A disc in a drive may be unusable.\n' ;;
   discovery) printf 'Cancelled while testing. The disc holds part of the test data.\n' ;;
+  convert) printf 'Cancelled while converting. No ISO was written.\n' ;;
   *) printf 'Cancelled while reading. The image is incomplete.\n' ;;
   esac
 }
@@ -121,8 +123,11 @@ disk_job_typed() {
   disk_jy_verb="${1:-write}"
   disk_app_ask "Type ${disk_jy_name} to ${disk_jy_verb}, or anything else to stop" "${disk_jy_name}"
   [ "${DISK_APP_ANSWER}" = "${disk_jy_name}" ] && return 0
-  DISK_APP_STATUS="Nothing was written."
-  [ "${disk_jy_verb}" = write ] || DISK_APP_STATUS="Nothing was erased."
+  case "${disk_jy_verb}" in
+  write) DISK_APP_STATUS="Nothing was written." ;;
+  erase) DISK_APP_STATUS="Nothing was erased." ;;
+  *) DISK_APP_STATUS="Nothing was touched." ;;
+  esac
   return 1
 }
 

@@ -14,6 +14,11 @@ _enban() {
     'discovery:fill a blank disc with test data and read it back'
     'sector:show one sector as hex and text'
     'cue:write a CUE sheet for an audio CD'
+    'close:close the open session or the disc'
+    'speed:set the read speed'
+    'region:show or set the DVD region'
+    'booktype:show or set the book type'
+    'convert:turn an image into an ISO'
     'doctor:check the tools enban needs'
     'version:print the version'
     'help:print usage'
@@ -41,6 +46,9 @@ _enban() {
     '--title[the album title cue writes]:title:' \
     '--performer[the performer cue writes]:performer:' \
     '--pregap[the gap before each track]:seconds:' \
+    '--raw[show raw 2352-byte sectors]' \
+    '--finalize[close the whole disc]' \
+    '--set[the region to set]:region:(1 2 3 4 5 6 7 8)' \
     '*:image:_files' \
     '--theme[colours of the terminal interface]:theme:(kodougu catppuccin-mocha catppuccin-latte dracula nord gruvbox tokyo-night mono)'
 }

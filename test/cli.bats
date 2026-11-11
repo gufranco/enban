@@ -396,3 +396,20 @@ options_everywhere() {
   [[ "${status}" -eq 0 ]]
   [[ "${options_status}" -eq 0 ]]
 }
+
+@test "enban help, man page and completions list the drive tools and convert" {
+  # Arrange
+  local first=close
+
+  # Act
+  run command_everywhere "${first}"
+
+  # Assert
+  local each status_all=0
+  for each in speed region booktype convert; do
+    command_everywhere "${each}" || status_all=1
+  done
+  options_everywhere raw finalize set || status_all=1
+  [[ "${status}" -eq 0 ]]
+  [[ "${status_all}" -eq 0 ]]
+}

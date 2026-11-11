@@ -139,7 +139,7 @@ jobs:
           mkdir -p "${HOME}/apt-archives/partial"
           sudo apt-get update -qq
           sudo apt-get install -y -qq -o Dir::Cache::Archives="${HOME}/apt-archives" -o APT::Sandbox::User=root \
-            bats dash zsh mandoc parallel xorriso cdrskin cdrdao genisoimage "${extra[@]}"
+            bats dash zsh mandoc parallel xorriso cdrskin cdrdao genisoimage sg3-utils dvd+rw-tools bchunk iat "${extra[@]}"
           sudo chown -R "$(id -u):$(id -g)" "${HOME}/apt-archives"
       - name: Install gum
         env:

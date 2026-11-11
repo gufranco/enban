@@ -70,6 +70,28 @@ enban \- write, read, build and verify CD, DVD and Blu-ray discs
 .RB [ \-\-pregap
 .IR seconds ]
 .br
+.B enban close
+.BI \-\-drive " drive"
+.RB [ \-\-finalize ]
+.br
+.B enban speed
+.BI \-\-drive " drive"
+.I n
+|
+.B max
+.br
+.B enban region
+.BI \-\-drive " drive"
+.RB [ \-\-set
+.IR n ]
+.br
+.B enban booktype
+.BI \-\-drive " drive"
+.RI [ type ]
+.br
+.B enban convert
+.I image iso
+.br
 .B enban discovery
 .BI \-\-drive " drive"
 .RB [ \-\-sectors
@@ -245,6 +267,38 @@ one track for each WAV
 with CD-TEXT titles from the file names. Every track must be CD audio, 44100 Hz,
 16-bit and stereo, and the album must fit the 80 minutes of a CD-R.
 .TP
+.B close
+Close the open session of the disc in the drive, or with
+.B \-\-finalize
+the whole disc, after the drive's name is typed. It sends CLOSE TRACK/SESSION
+through
+.BR sg_raw .
+.TP
+.B speed
+Set the drive's read speed to
+.I n
+times the disc's 1x, 177 kB/s for a CD, 1385 for a DVD and 4496 for a
+Blu-ray, or to the drive's fastest with
+.BR max .
+.TP
+.B region
+Show the drive's DVD region, the changes left and the RPC scheme, or with
+.B \-\-set
+spend one change to set the region, after the drive's name is typed.
+.TP
+.B booktype
+Show the book type of a DVD+R or DVD+RW, or set it to dvd-rom, dvd+r or dvd+rw
+through
+.B dvd+rw-booktype
+after the drive's name is typed. It needs root.
+.TP
+.B convert
+Turn a BIN/CUE image into an ISO through
+.BR bchunk ,
+or an NRG, MDF, CDI or IMG image through
+.BR iat .
+An image that is already an ISO is refused.
+.TP
 .B doctor
 List the tools enban needs and whether each is installed. Exits non-zero only
 when a required tool is missing.
@@ -308,6 +362,15 @@ The performer cue writes as CD-TEXT.
 .TP
 .BI \-\-pregap " seconds"
 The gap cue puts before every track after the first; 2 by default.
+.TP
+.B \-\-raw
+Show raw 2352-byte sectors: of a BIN image, or of the disc through READ CD.
+.TP
+.B \-\-finalize
+Close the whole disc instead of only the session.
+.TP
+.BI \-\-set " n"
+The region, 1 to 8, that region sets.
 .TP
 .BI \-\-csv " file"
 Where discovery saves the read rate; a new file under

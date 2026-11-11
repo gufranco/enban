@@ -13,17 +13,40 @@ disk_sector_source() {
     DISK_SECTOR_NAME="${DISK_SECTOR_IMAGE}"
     return 0
   fi
-  disk_drive_read "${DISK_DRIVE}" sector || return 1
+  if [ "${DISK_SECTOR_RAW}" = y ]; then
+    disk_raw_ready sector || return 1
+  else
+    disk_drive_read "${DISK_DRIVE}" sector || return 1
+  fi
   DISK_SECTOR_FROM="${DISK_DRIVE#stdio:}"
   DISK_SECTOR_NAME="${DISK_DRIVE}"
 }
 
+disk_sector_size() {
+  if [ "${DISK_SECTOR_RAW}" = y ]; then
+    printf '2352\n'
+    return 0
+  fi
+  printf '2048\n'
+}
+
 disk_sector_read() {
-  dd if="${DISK_SECTOR_FROM}" of="$1" bs=2048 skip="${DISK_SECTOR_LBA}" count=1 2>/dev/null || : >"$1"
+  disk_sr_size="$(disk_sector_size)"
+  if [ "${DISK_SECTOR_RAW}" = y ] && [ -z "${DISK_SECTOR_IMAGE}" ]; then
+    disk_sector_raw_read "$1" || return 1
+  else
+    dd if="${DISK_SECTOR_FROM}" of="$1" bs="${disk_sr_size}" skip="${DISK_SECTOR_LBA}" count=1 2>/dev/null || : >"$1"
+  fi
   disk_sr_bytes="$(wc -c <"$1" | tr -d '[:space:]')"
-  [ "${disk_sr_bytes}" -eq 2048 ] && return 0
+  [ "${disk_sr_bytes}" -eq "${disk_sr_size}" ] && return 0
   disk_error "sector ${DISK_SECTOR_LBA} is past the end of ${DISK_SECTOR_NAME}."
   return 1
+}
+
+disk_sector_raw_read() {
+  disk_sw_lba="$(printf '%08x' "${DISK_SECTOR_LBA}" | sed 's/../& /g')"
+  # shellcheck disable=SC2086
+  disk_raw_send -r 2352 -o "$1" "${DISK_SECTOR_FROM}" be 00 ${disk_sw_lba} 00 00 01 f8 00 00
 }
 
 disk_sector_rows() {
@@ -56,10 +79,12 @@ disk_sector_decode() {
 }
 
 disk_sector_show() {
-  printf 'LBA %s of %s, user data 2048 bytes\n' "${DISK_SECTOR_LBA}" "${DISK_SECTOR_NAME}"
+  disk_sh_kind="user data 2048"
+  [ "${DISK_SECTOR_RAW}" = n ] || disk_sh_kind="raw 2352"
+  printf 'LBA %s of %s, %s bytes\n' "${DISK_SECTOR_LBA}" "${DISK_SECTOR_NAME}" "${disk_sh_kind}"
   printf '%s\n' "offset  00 01 02 03 04 05 06 07  08 09 0a 0b 0c 0d 0e 0f  text"
   disk_sector_rows "$1"
-  disk_sector_decode "$1"
+  [ "${DISK_SECTOR_RAW}" = y ] || disk_sector_decode "$1"
 }
 
 disk_sector_run() {

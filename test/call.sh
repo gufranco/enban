@@ -36,6 +36,14 @@ DISK_LIB="$(cd "$(dirname "$0")/../lib" && pwd)" || exit 1
 . "${DISK_LIB}/sector.sh"
 # shellcheck source=SCRIPTDIR/../lib/cue.sh
 . "${DISK_LIB}/cue.sh"
+# shellcheck source=SCRIPTDIR/../lib/raw.sh
+. "${DISK_LIB}/raw.sh"
+# shellcheck source=SCRIPTDIR/../lib/booktype.sh
+. "${DISK_LIB}/booktype.sh"
+# shellcheck source=SCRIPTDIR/../lib/audio.sh
+. "${DISK_LIB}/audio.sh"
+# shellcheck source=SCRIPTDIR/../lib/convert.sh
+. "${DISK_LIB}/convert.sh"
 # shellcheck source=SCRIPTDIR/../lib/settings.sh
 . "${DISK_LIB}/settings.sh"
 # shellcheck source=SCRIPTDIR/../lib/settings_tab.sh
@@ -56,6 +64,8 @@ DISK_LIB="$(cd "$(dirname "$0")/../lib" && pwd)" || exit 1
 . "${DISK_LIB}/build_view.sh"
 # shellcheck source=SCRIPTDIR/../lib/tools_tab.sh
 . "${DISK_LIB}/tools_tab.sh"
+# shellcheck source=SCRIPTDIR/../lib/drive_tools.sh
+. "${DISK_LIB}/drive_tools.sh"
 # shellcheck source=SCRIPTDIR/../lib/queue_tab.sh
 . "${DISK_LIB}/queue_tab.sh"
 # shellcheck source=SCRIPTDIR/../lib/queue_view.sh

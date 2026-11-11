@@ -6,16 +6,16 @@
 disk_tools_list() {
   printf '%s\n' \
     "Erase disc|quick or full, rewritable media only|erase" \
-    "Close|track, session or disc|scsi" \
-    "Book type|next write, this disc, or the drive|scsi" \
-    "Read speed|set or reset|scsi" \
+    "Close|session or disc|close" \
+    "Book type|DVD-ROM, DVD+R or DVD+RW|booktype" \
+    "Read speed|set or reset|speed" \
     "Tray|eject the disc|tray" \
     "Capabilities|what this drive reads and writes|caps" \
     "Sector viewer|hex of any LBA, user data|sector" \
-    "Region|read or change the DVD region|scsi" \
+    "Region|read or change the DVD region|region" \
     "Speed memory|remembered speed per media ID|settings" \
     "Create CUE|audio tracks, pregaps, CD-TEXT|cue" \
-    "Convert|BIN/CUE, NRG, MDS, CDI, CCD to ISO|cue" \
+    "Convert|BIN/CUE, NRG, MDS, CDI, CCD to ISO|convert" \
     "Volume label|change an ISO's label in place|later" \
     "Checksum|MD5, SHA-1 and SHA-256|checksum" \
     "Layer break|show the IFO layer break of DVD Video|later" \
@@ -29,6 +29,7 @@ disk_tools_field() {
 disk_tools_tab_key() {
   disk_job_key erase "$1" && return 0
   disk_job_key checksum "$1" && return 0
+  disk_job_key convert "$1" && return 0
   case "${DISK_APP_T_OPEN}" in
   erase) disk_tools_tab_erase_key "$1" ;;
   caps) disk_tools_tab_caps_key "$1" ;;
@@ -54,8 +55,7 @@ disk_tools_tab_open() {
   tray) disk_tools_tab_eject ;;
   checksum) disk_tools_tab_checksum ;;
   sector) disk_tools_tab_sector_open ;;
-  scsi) DISK_APP_STATUS="${disk_to_name} needs raw drive commands that wait for a test on a real drive." ;;
-  cue) DISK_APP_STATUS="${disk_to_name} arrives with audio CD and CUE support." ;;
+  close | booktype | speed | region | cue | convert) "disk_tools_tab_${disk_to_action}" ;;
   settings) DISK_APP_STATUS="${disk_to_name} arrives with the log and settings." ;;
   *) DISK_APP_STATUS="${disk_to_name} arrives in a coming release." ;;
   esac
@@ -90,11 +90,17 @@ disk_tools_tab_sector_open() {
 }
 
 disk_tools_tab_sector_key() {
+  disk_tk_last=7
+  [ "${DISK_APP_T_RAW}" = n ] || disk_tk_last=9
   case "$1" in
   left) [ "${DISK_APP_T_LBA}" -le 0 ] || DISK_APP_T_LBA=$((DISK_APP_T_LBA - 1)) ;;
   right) DISK_APP_T_LBA=$((DISK_APP_T_LBA + 1)) ;;
   up) [ "${DISK_APP_T_PAGE}" -le 0 ] || DISK_APP_T_PAGE=$((DISK_APP_T_PAGE - 1)) ;;
-  down) [ "${DISK_APP_T_PAGE}" -ge 7 ] || DISK_APP_T_PAGE=$((DISK_APP_T_PAGE + 1)) ;;
+  down) [ "${DISK_APP_T_PAGE}" -ge "${disk_tk_last}" ] || DISK_APP_T_PAGE=$((DISK_APP_T_PAGE + 1)) ;;
+  m)
+    DISK_APP_T_RAW="$(disk_job_flip "${DISK_APP_T_RAW}")"
+    DISK_APP_T_PAGE=0
+    ;;
   g) disk_tools_tab_sector_go ;;
   esc) DISK_APP_T_OPEN="" ;;
   *) return 0 ;;
@@ -115,6 +121,7 @@ disk_tools_tab_sector_go() {
 disk_frame_tools_sector() {
   DISK_SECTOR_IMAGE="${DISK_APP_T_IMAGE}"
   DISK_SECTOR_LBA="${DISK_APP_T_LBA}"
+  DISK_SECTOR_RAW="${DISK_APP_T_RAW}"
   disk_fx_shown="$(disk_sector_run 2>&1)" || :
   disk_fx_first="$(printf '%s\n' "${disk_fx_shown}" | sed -n '1p')"
   case "${disk_fx_first}" in
@@ -128,7 +135,7 @@ disk_frame_tools_sector() {
   printf 'Sector viewer   %s\n\n' "${disk_fx_first}"
   printf '%s\n' "${disk_fx_shown}" | sed -n "2p;$((DISK_APP_T_PAGE * 16 + 3)),$((DISK_APP_T_PAGE * 16 + 18))p"
   printf '%s\n' "${disk_fx_shown}" | sed -n '/^Decoded$/,$p'
-  printf '\n%s\n' "left/right sector   up/down page   g go to LBA   esc back"
+  printf '\n%s\n' "left/right sector   up/down page   g go to LBA   m raw   esc back"
 }
 
 disk_tools_sentence() {
@@ -178,6 +185,7 @@ disk_tools_tab_checksum() {
 disk_frame_tools() {
   disk_job_pane erase && return 0
   disk_job_pane checksum && return 0
+  disk_job_pane convert && return 0
   case "${DISK_APP_T_OPEN}" in
   erase) disk_frame_tools_erase ;;
   caps) disk_frame_tools_caps ;;

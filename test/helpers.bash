@@ -47,6 +47,10 @@ disk_test_drive_profiles() {
   printf 'current=%s\nprofiles=%s\n' "$1" "${*:2}" >>"${WORK:?}/drive.state"
 }
 
+disk_test_raw() {
+  disk_test_shim sg_raw "exec sh $(printf '%q' "${ENBAN_TESTS_DIR}/sg_raw.sh") $(printf '%q' "${WORK:?}/drive.state") \"\$@\""
+}
+
 disk_test_drive_flag() {
   printf '%s=1\n' "$1" >>"${WORK:?}/drive.state"
 }

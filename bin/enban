@@ -45,6 +45,14 @@ DISK_PROG=enban
 . "${DISK_LIB}/sector.sh"
 # shellcheck source=SCRIPTDIR/../lib/cue.sh
 . "${DISK_LIB}/cue.sh"
+# shellcheck source=SCRIPTDIR/../lib/raw.sh
+. "${DISK_LIB}/raw.sh"
+# shellcheck source=SCRIPTDIR/../lib/booktype.sh
+. "${DISK_LIB}/booktype.sh"
+# shellcheck source=SCRIPTDIR/../lib/audio.sh
+. "${DISK_LIB}/audio.sh"
+# shellcheck source=SCRIPTDIR/../lib/convert.sh
+. "${DISK_LIB}/convert.sh"
 # shellcheck source=SCRIPTDIR/../lib/settings.sh
 . "${DISK_LIB}/settings.sh"
 # shellcheck source=SCRIPTDIR/../lib/settings_tab.sh
@@ -65,6 +73,8 @@ DISK_PROG=enban
 . "${DISK_LIB}/build_view.sh"
 # shellcheck source=SCRIPTDIR/../lib/tools_tab.sh
 . "${DISK_LIB}/tools_tab.sh"
+# shellcheck source=SCRIPTDIR/../lib/drive_tools.sh
+. "${DISK_LIB}/drive_tools.sh"
 # shellcheck source=SCRIPTDIR/../lib/queue_tab.sh
 . "${DISK_LIB}/queue_tab.sh"
 # shellcheck source=SCRIPTDIR/../lib/queue_view.sh
@@ -101,6 +111,11 @@ usage:
   enban sector IMAGE [--lba N]        show one sector as hex and text
   enban sector --drive DRIVE          the same for the disc in the drive
   enban cue CUE TRACK.wav...          write a CUE sheet for an audio CD
+  enban close --drive DRIVE           close the open session, or --finalize
+  enban speed --drive DRIVE N|max     set the drive's read speed
+  enban region --drive DRIVE          show the DVD region, or --set N
+  enban booktype --drive DRIVE [TYPE] show or set the book type of a DVD+R
+  enban convert IMAGE ISO             turn a BIN/CUE, NRG, MDF or CDI into ISO
   enban doctor                        check the tools enban needs
   enban version                       print the version
   enban help                          print this page
@@ -122,6 +137,9 @@ options:
   --title TEXT        the album title cue writes as CD-TEXT
   --performer TEXT    the performer cue writes as CD-TEXT
   --pregap SECONDS    the gap cue puts before each track after the first; 2
+  --raw               sector shows raw 2352-byte sectors
+  --finalize          close finalizes the whole disc, not only the session
+  --set N             the region, 1 to 8, that region sets
   --theme NAME        colours of the terminal interface, see notes
 
 notes:
@@ -153,6 +171,12 @@ notes:
   names a file. sector shows the 2048 bytes of one sector and decodes a
   primary volume descriptor. cue checks that every track is CD audio, 44100
   Hz, 16-bit and stereo, and that the album fits the 80 minutes of a CD-R.
+  write burns a .cue as an audio CD through cdrskin.
+
+  close, speed, region and sector --raw send MMC commands through sg_raw from
+  sg3-utils; booktype runs dvd+rw-booktype and needs root; convert uses bchunk
+  for BIN/CUE and iat for NRG, MDF, CDI and IMG. close, region --set and
+  booktype ask for the drive's name first.
 
   The app draws in the terminal's alternate screen and gives the screen back
   when it ends, on q or on an interrupt. Tab and the digits switch tabs, the
@@ -200,6 +224,8 @@ examples:
   enban discovery --drive /dev/sr0 --speed 8
   enban sector debian.iso --lba 16
   enban cue album.cue 01.wav 02.wav --title "Trip 2024"
+  enban region --drive /dev/sr0
+  enban convert disc.cue disc.iso
   enban doctor
 USAGE
 }
@@ -218,6 +244,8 @@ disk_option_flag() {
   --eject) DISK_WRITE_EJECT=y ;;
   --no-eject) DISK_WRITE_EJECT=n ;;
   --full) DISK_ERASE_FULL=y ;;
+  --finalize) DISK_CLOSE_FINALIZE=y ;;
+  --raw) DISK_SECTOR_RAW=y ;;
   *) return 1 ;;
   esac
   disk_option_seen "$1"
@@ -233,6 +261,7 @@ disk_option_value() {
   --title) DISK_CUE_TITLE="$2" ;;
   --performer) DISK_CUE_PERFORMER="$2" ;;
   --pregap) DISK_CUE_PREGAP="$2" ;;
+  --set) DISK_REGION_SET="$2" ;;
   --label) DISK_BUILD_LABEL="$2" ;;
   *) DISK_DRIVE="$2" ;;
   esac
@@ -253,7 +282,9 @@ disk_option_seen() {
   --fs | --label) DISK_BUILD_OPTION="${DISK_BUILD_OPTION:-$1}" ;;
   --full) DISK_ERASE_OPTION="$1" ;;
   --sectors | --csv) DISK_DISCOVERY_OPTION="${DISK_DISCOVERY_OPTION:-$1}" ;;
-  --lba) DISK_SECTOR_OPTION="$1" ;;
+  --lba | --raw) DISK_SECTOR_OPTION="${DISK_SECTOR_OPTION:-$1}" ;;
+  --finalize) DISK_RAW_OPTION="$1:close" ;;
+  --set) DISK_RAW_OPTION="$1:region" ;;
   --title | --performer | --pregap) DISK_CUE_OPTION="${DISK_CUE_OPTION:-$1}" ;;
   *) ;;
   esac
@@ -261,7 +292,7 @@ disk_option_seen() {
 }
 
 disk_options() {
-  DISK_VALUE_OPTIONS="--drive --speed --fs --label --sectors --csv --lba --title --performer --pregap"
+  DISK_VALUE_OPTIONS="--drive --speed --fs --label --sectors --csv --lba --title --performer --pregap --set"
   disk_op_room="$1"
   shift
   disk_op_left="$#"
@@ -308,6 +339,7 @@ disk_only_for() {
   disk_option_owner "$1" "${DISK_DISCOVERY_OPTION}" discovery discovery || return 1
   disk_option_owner "$1" "${DISK_SECTOR_OPTION}" sector sector || return 1
   disk_option_owner "$1" "${DISK_CUE_OPTION}" cue cue || return 1
+  disk_option_owner "$1" "${DISK_RAW_OPTION%:*}" "${DISK_RAW_OPTION#*:}" "${DISK_RAW_OPTION#*:}" || return 1
   disk_option_owner "$1" "${DISK_VERIFY_OPTION}" "write read queue" "write, read and queue"
 }
 
@@ -350,7 +382,10 @@ disk_write() {
   fi
   disk_speed_ok || return 1
   DISK_WRITE_IMAGE="${DISK_OPERAND}"
-  disk_write_run
+  case "${DISK_WRITE_IMAGE}" in
+  *.cue | *.CUE) disk_audio_run ;;
+  *) disk_write_run ;;
+  esac
 }
 
 disk_read() {
@@ -463,6 +498,76 @@ disk_cue() {
   disk_cue_run
 }
 
+disk_close() {
+  disk_options 0 "$@" || return 1
+  disk_only_for close || return 1
+  disk_needs_drive close || return 1
+  disk_close_run
+}
+
+disk_speed() {
+  disk_options 1 "$@" || return 1
+  disk_only_for speed || return 1
+  disk_needs_drive speed || return 1
+  if [ -z "${DISK_OPERAND}" ]; then
+    disk_cli_hint "speed needs a speed, such as 4 or max"
+    return 1
+  fi
+  case "${DISK_OPERAND}" in
+  max | [1-9] | [1-9][0-9]) DISK_SPEED_WANTED="${DISK_OPERAND}" ;;
+  *)
+    disk_error "the speed must be a whole number of times or max, got: ${DISK_OPERAND}"
+    return 1
+    ;;
+  esac
+  disk_speed_run
+}
+
+disk_region() {
+  disk_options 0 "$@" || return 1
+  disk_only_for region || return 1
+  disk_needs_drive region || return 1
+  case "${DISK_REGION_SET}" in
+  '' | [1-8]) disk_region_run ;;
+  *)
+    disk_error "--set takes a region from 1 to 8, got: ${DISK_REGION_SET}"
+    return 1
+    ;;
+  esac
+}
+
+disk_booktype() {
+  disk_options 1 "$@" || return 1
+  disk_only_for booktype || return 1
+  disk_needs_drive booktype || return 1
+  case "${DISK_OPERAND}" in
+  '' | dvd-rom | dvd+r | dvd+rw) DISK_BOOKTYPE="${DISK_OPERAND}" ;;
+  *)
+    disk_error "the book type must be dvd-rom, dvd+r or dvd+rw, got: ${DISK_OPERAND}"
+    return 1
+    ;;
+  esac
+  disk_booktype_run
+}
+
+disk_convert() {
+  disk_options 2 "$@" || return 1
+  disk_only_for convert || return 1
+  if [ -z "${DISK_OPERAND_TWO}" ]; then
+    disk_cli_hint "convert needs an image and an ISO file to create"
+    return 1
+  fi
+  DISK_CONVERT_IN="${DISK_OPERAND}"
+  DISK_CONVERT_OUT="${DISK_OPERAND_TWO}"
+  disk_convert_run
+}
+
+disk_needs_drive() {
+  [ -n "${DISK_DRIVE}" ] && return 0
+  disk_cli_hint "$1 needs --drive"
+  return 1
+}
+
 disk_one_source() {
   if [ -n "${DISK_OPERAND}" ] && [ -n "${DISK_DRIVE}" ]; then
     disk_cli_hint "$1 takes an image or --drive, not both"
@@ -573,6 +678,11 @@ disk_route() {
   cue)
     shift
     disk_cue "$@"
+    ;;
+  close | speed | region | booktype | convert)
+    disk_mn_command="$1"
+    shift
+    "disk_${disk_mn_command}" "$@"
     ;;
   '') disk_open ;;
   -*) disk_app_start "$@" ;;

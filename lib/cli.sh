@@ -128,6 +128,10 @@ disk_doctor_platform() {
     disk_doctor_tool cdrskin "burns CD, DVD and Blu-ray" || disk_dp_status=1
     disk_doctor_optional cdrdao "cdrdao package, needed only for raw CD reads and audio"
     disk_doctor_optional genisoimage "genisoimage package, needed only for UDF images"
+    disk_doctor_optional sg_raw "sg3-utils package, needed for close, speed, region and raw sectors"
+    disk_doctor_optional dvd+rw-booktype "dvd+rw-tools package, needed for the book type"
+    disk_doctor_optional bchunk "bchunk package, needed to convert BIN/CUE images"
+    disk_doctor_optional iat "iat package, needed to convert NRG, MDF, CDI and IMG images"
     ;;
   esac
   return "${disk_dp_status}"

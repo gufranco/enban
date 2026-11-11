@@ -15,7 +15,7 @@
 
 </div>
 
-`enban`, 円盤, is Japanese for a disc. It aims at the jobs a disc burner does: write an image, write files, read a disc to an image, build an image, verify a disc against an image, and stress-test a drive. Today it ships the app, with its Write, Read, Build, Verify, Discovery, Queue, Tools, Log and Settings tabs, and the plain commands `info`, `write`, `read`, `verify`, `build`, `erase`, `checksum`, `queue`, `discovery`, `sector` and `cue` for scripts. Work on a drive runs on Linux; building an image and checking an image's checksums also run on macOS. Audio CDs arrive in a coming release. Closing a session, the read speed, the region, raw 2352-byte sectors and the book type need raw drive commands, which wait for a test on a real drive, each as a tab and as a plain command.
+`enban`, 円盤, is Japanese for a disc. It aims at the jobs a disc burner does: write an image, write files, read a disc to an image, build an image, verify a disc against an image, and stress-test a drive. Today it ships the app, with its Write, Read, Build, Verify, Discovery, Queue, Tools, Log and Settings tabs, and the plain commands `info`, `write`, `read`, `verify`, `build`, `erase`, `checksum`, `queue`, `discovery`, `sector`, `cue`, `close`, `speed`, `region`, `booktype` and `convert` for scripts. Work on a drive runs on Linux; building an image and checking an image's checksums also run on macOS. Volume label, layer break, mount and speed memory arrive in the coming releases, each as a tab and as a plain command.
 
 ---
 
@@ -49,7 +49,7 @@ hdiutil            ok       /usr/bin/hdiutil
 | [`gum`](https://github.com/charmbracelet/gum) | The family look for doctor, version and help | `brew install gum` |
 | POSIX `sh`, `stty`, `dd`, `od`, `awk` | The app and its key reading | Preinstalled on macOS and Linux |
 | `drutil` and `hdiutil` | The drive and images on macOS | Preinstalled |
-| `xorriso` and `cdrskin`, optionally `cdrdao` and `genisoimage` | The drive and images on Linux; genisoimage only for UDF images | `apt install xorriso cdrskin cdrdao genisoimage` |
+| `xorriso` and `cdrskin`, optionally `cdrdao`, `genisoimage`, `sg3-utils`, `dvd+rw-tools`, `bchunk` and `iat` | The drive and images on Linux; genisoimage for UDF images, sg3-utils for close, speed, region and raw sectors, dvd+rw-tools for the book type, bchunk and iat to convert images | `apt install xorriso cdrskin cdrdao genisoimage sg3-utils dvd+rw-tools bchunk iat` |
 
 ### Install
 
@@ -79,8 +79,14 @@ make install
 | `enban checksum family.iso`, `enban checksum --drive /dev/sr0` | Read an image or the disc once and print its MD5, SHA-1 and SHA-256. The disc form is Linux only for now |
 | `enban queue family.queue` | Write the images a queue file lists, one per line as an image, a drive, an optional speed and copy count. Each drive works through its images in order while the drives run at the same time; enban waits for a blank disc before each copy, `ENBAN_QUEUE_WAIT` seconds at most. Linux only for now |
 | `enban discovery --drive /dev/sr0` | Fill a blank disc with a known pattern once you type the drive's name, read every sector back and save the read rate as CSV, under `ENBAN_DATA` unless `--csv` names a file. `--sectors` limits how much it writes and `--speed` sets the write speed. Linux only for now |
-| `enban sector family.iso --lba 16` | Show one 2048-byte sector of an image or, with `--drive`, of the disc, as hex and text, and decode a primary volume descriptor. The disc form is Linux only for now |
+| `enban sector family.iso --lba 16` | Show one 2048-byte sector of an image or, with `--drive`, of the disc, as hex and text, and decode a primary volume descriptor. `--raw` shows 2352-byte sectors of a BIN image, or of the disc through READ CD with sg3-utils. The disc form is Linux only for now |
 | `enban cue album.cue 01.wav 02.wav --title "Trip"` | Write a CUE sheet for an audio CD from WAV tracks in CD audio, with CD-TEXT titles from the file names and a 2-second gap between tracks unless `--pregap` says otherwise. It refuses tracks longer than 80 minutes |
+| `enban write album.cue --drive /dev/sr0` | Burn a CUE sheet as an audio CD on a blank CD-R or CD-RW once you type the drive's name, through cdrskin. Linux only for now |
+| `enban close --drive /dev/sr0` | Close the open session once you type the drive's name, or `--finalize` the whole disc. Needs sg3-utils; Linux only |
+| `enban speed --drive /dev/sr0 4` | Set the drive's read speed in times of the disc's 1x, or `max`. Needs sg3-utils; Linux only |
+| `enban region --drive /dev/sr0` | Show the drive's DVD region and the changes left; `--set 2` spends one change once you type the drive's name. Needs sg3-utils; Linux only |
+| `enban booktype --drive /dev/sr0 dvd-rom` | Make a DVD+R or DVD+RW read as `dvd-rom`, `dvd+r` or `dvd+rw`, or show the book type with no type. Needs dvd+rw-tools and root; Linux only |
+| `enban convert disc.cue disc.iso` | Turn a BIN/CUE image into an ISO through bchunk, or an NRG, MDF, CDI or IMG image through iat |
 | `enban doctor` | List the tools enban needs and whether they are installed |
 | `enban version`, `enban help` | Print the version or the full usage page |
 
@@ -103,7 +109,7 @@ make install
 | `b` | Build the layout into the chosen image file, or burn it to the disc when Target says so, after you type the drive's name |
 | `c` | Cancel the running job |
 | Esc | Leave a tool's panel for the tool list on Tools |
-| Left, Right, `g` | Step to the previous or next sector, or go to an LBA, in the Sector viewer |
+| Left, Right, `g`, `m` | Step to the previous or next sector, go to an LBA, or switch to raw 2352-byte sectors, in the Sector viewer |
 | Tab | Next tab |
 | `0` to `9` | Switch to that tab |
 | `?` | Show the keys; the next key closes them |

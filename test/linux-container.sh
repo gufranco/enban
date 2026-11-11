@@ -16,7 +16,7 @@ docker run --rm --privileged \
     apt-get update -qq >/dev/null
     apt-get install -y -qq --no-install-recommends \
       bats zsh dash util-linux sudo ca-certificates git curl python3 procps \
-      xorriso cdrskin cdrdao genisoimage mandoc openssl >/dev/null
+      xorriso cdrskin cdrdao genisoimage sg3-utils dvd+rw-tools bchunk iat mandoc openssl >/dev/null
     i=0
     while [ "$i" -lt 64 ]; do
       [ -e "/dev/loop$i" ] || mknod -m 660 "/dev/loop$i" b 7 "$i"
