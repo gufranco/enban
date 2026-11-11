@@ -70,7 +70,7 @@ make install
 | Command | Purpose |
 |:--------|:--------|
 | `enban --drive /dev/sr0` | Open the full-screen app on a terminal, with the disc in that drive on the right; `ENBAN_DRIVE` sets the drive too |
-| `enban info --drive /dev/sr0` | Describe the drive and the disc: profile, blank or appendable, sessions, free sectors and write speeds. `--json` prints one object for scripts. Linux only for now |
+| `enban info --drive /dev/sr0` | Describe the drive and the disc: profile, blank or appendable, sessions, free sectors, write speeds and the kinds of disc the drive handles. `--json` prints one object for scripts. Linux only for now |
 | `enban write image.iso --drive /dev/sr0` | Burn the image to a blank disc once you type the drive's name, read it back to compare, then eject. `--speed 8`, `--no-verify` and `--no-eject` change that. Linux only for now |
 | `enban read --drive /dev/sr0 backup.iso` | Copy the disc into a new image file, read it again to compare, and print the SHA-256. `--no-verify` skips the second read. Linux only for now |
 | `enban verify --drive /dev/sr0 debian.iso` | Read every sector of the disc and compare it with the image, naming the first sector that differs or cannot be read. Leave out the image to only check that every sector reads. Linux only for now |

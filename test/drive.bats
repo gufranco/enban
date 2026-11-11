@@ -41,7 +41,7 @@ written_dvd() {
 
   # Assert
   [[ "${status}" -eq 0 ]]
-  [[ "${output}" == "{\"drive\":\"${drive}\",\"vendor\":\"YOYODYNE\",\"product\":\"WARP DRIVE\",\"revision\":\"FX01\",\"profile\":\"DVD-R sequential recording\",\"profile_code\":\"0011\",\"status\":\"blank\",\"sessions\":0,\"data_sectors\":0,\"free_sectors\":2298496,\"write_speeds\":[{\"bytes_per_second\":22160000,\"x\":16.0},{\"bytes_per_second\":11080000,\"x\":8.0}]}" ]]
+  [[ "${output}" == "{\"drive\":\"${drive}\",\"vendor\":\"YOYODYNE\",\"product\":\"WARP DRIVE\",\"revision\":\"FX01\",\"profile\":\"DVD-R sequential recording\",\"profile_code\":\"0011\",\"status\":\"blank\",\"sessions\":0,\"data_sectors\":0,\"free_sectors\":2298496,\"write_speeds\":[{\"bytes_per_second\":22160000,\"x\":16.0},{\"bytes_per_second\":11080000,\"x\":8.0}],\"media\":[]}" ]]
 }
 
 @test "enban info names a written DVD-R as appendable with one session" {
@@ -74,6 +74,37 @@ written_dvd() {
   [[ "${lines[2]}" == "Sessions  0, 0 data sectors" ]]
   [[ "${lines[3]}" == "Free      2298496 sectors, 4.7 GB" ]]
   [[ "${lines[4]}" == "Speeds    16.0x, 8.0x" ]]
+  [[ "${lines[5]}" == "Media     none reported" ]]
+}
+
+@test "enban info lists every kind of disc the drive handles" {
+  # Arrange
+  linux_only
+  blank_dvd
+  disk_test_drive_profiles 0011 0009 000a 0011 0013 0014 001a 0041 0042
+  local drive="stdio:${WORK}/disc.iso"
+
+  # Act
+  run disk_test_run enban info --drive "${drive}" </dev/null
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+  [[ "${lines[5]}" == "Media     CD-R, CD-RW, DVD-R, DVD-RW, DVD+RW, BD-R" ]]
+}
+
+@test "enban info --json lists the kinds of disc the drive handles" {
+  # Arrange
+  linux_only
+  blank_dvd
+  disk_test_drive_profiles 0011 0009 0011
+  local drive="stdio:${WORK}/disc.iso"
+
+  # Act
+  run disk_test_run enban info --drive "${drive}" --json </dev/null
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+  [[ "${output}" == *",\"media\":[\"CD-R\",\"DVD-R\"]}" ]]
 }
 
 @test "enban info stops when the drive cannot be read" {
@@ -185,7 +216,7 @@ written_dvd() {
   # Assert
   [[ "${status}" -eq 0 ]]
   [[ "${output}" == *"\"profile\":\"stdio file, overwriteable\",\"profile_code\":\"\",\"status\":\"blank\","* ]]
-  [[ "${output}" == *"\"write_speeds\":[]}" ]]
+  [[ "${output}" == *"\"write_speeds\":[],\"media\":[]}" ]]
 }
 
 @test "enban info says when the drive reports no speeds" {

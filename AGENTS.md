@@ -26,7 +26,7 @@ Guidance for anyone, human or agent, changing enban. What enban is and how to us
 
 - enban is the family's first full-screen member: a bare `enban` on a terminal opens the app, never a menu.
 - The app restores the screen, cursor and echo on `q`, Ctrl+D and an interrupt, and warns when echo is still off afterwards.
-- `enban info --json` prints one JSON object with the drive, profile, status, sessions, free sectors and write speeds.
+- `enban info --json` prints one JSON object with the drive, profile, status, sessions, free sectors, write speeds and `media`, the short names of the profiles `xorriso -list_profiles all` reports, which a `stdio:` drive leaves empty.
 - `enban write` burns only a blank disc with room for the image, writes only after the drive's name is typed, verifies by reading back exactly the image's sectors, because cdrecord pads the end of a track, and ejects unless told not to.
 - `enban read` copies the readable sectors that `xorriso -toc` reports, refuses a disc with no data and an existing file, reads again to compare unless told not to, and prints the SHA-256 with `sha256sum`, which doctor checks on Linux.
 - `enban verify` reads the sectors `xorriso -toc` reports, or exactly the image's sectors when an image is given, streams them through `cmp -l` without a temporary copy, and counts the sectors read from the `records in` line of `dd`; it names the first sector that differs, then the first that could not be read.

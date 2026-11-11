@@ -48,6 +48,18 @@ case " $* " in
   printf '%s\n' "$*" | sed -n 's/.* -blank \([a-z_]*\).*/blanked=\1/p' >>"${state}"
   "${real}" "$@"
   ;;
+*" -list_profiles "*)
+  profiles="$(value profiles)"
+  current="$(value current)"
+  [ -n "${profiles}" ] || exec "${real}" "$@"
+  # shellcheck disable=SC2086
+  printf '%s\n' ${profiles} | awk -v current="${current}" '
+    BEGIN {
+      split("0009 CD-R|000a CD-RW|0011 DVD-R sequential recording|0013 DVD-RW restricted overwrite|0014 DVD-RW sequential recording|001a DVD+RW|001b DVD+R|0041 BD-R sequential recording|0042 BD-R random recording|0043 BD-RE", rows, "|")
+      for (i in rows) { code = substr(rows[i], 1, 4); names[code] = substr(rows[i], 6) }
+    }
+    { printf "Profile      : 0x%s (%s)%s\n", toupper($1), names[$1], ($1 == current ? " (current)" : "") }'
+  ;;
 *" -eject all "*)
   fail_eject="$(value fail_eject)"
   [ "${fail_eject}" != 1 ] || exit 5

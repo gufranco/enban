@@ -19,6 +19,25 @@ disk_drive_read() {
   DISK_DRIVE="$1"
   disk_drive_fields "${disk_dd_toc}"
   DISK_DRIVE_SPEEDS="$(disk_drive_speed_list "${disk_dd_speeds}")"
+  disk_dd_profiles="$(xorriso -outdev "$1" -list_profiles all 2>/dev/null)" || disk_dd_profiles=""
+  DISK_DRIVE_MEDIA="$(disk_drive_media_list "${disk_dd_profiles}")"
+}
+
+disk_drive_media_list() {
+  printf '%s\n' "$1" | awk '
+    /^Profile      : 0x/ {
+      name = $0
+      sub(/^Profile      : 0x[0-9A-Fa-f]+ \(/, "", name)
+      sub(/\)( \(current\))?$/, "", name)
+      split(name, word, " ")
+      short = word[1]
+      sub(/,$/, "", short)
+      if (!(short in seen)) { seen[short] = 1; print short }
+    }'
+}
+
+disk_drive_media_text() {
+  printf '%s\n' "${DISK_DRIVE_MEDIA}" | awk 'NF { out = out (out == "" ? "" : ", ") $0 } END { print (out == "" ? "none reported" : out) }'
 }
 
 disk_drive_fields() {
@@ -75,8 +94,9 @@ disk_drive_json() {
   printf '{"drive":%s,"vendor":%s,"product":%s,"revision":%s,"profile":%s,"profile_code":%s,"status":"%s",' \
     "${disk_dj_drive}" "${disk_dj_vendor}" "${disk_dj_product}" "${disk_dj_revision}" \
     "${disk_dj_profile}" "${disk_dj_code}" "${DISK_DRIVE_STATUS}"
-  printf '"sessions":%s,"data_sectors":%s,"free_sectors":%s,"write_speeds":[%s]}\n' \
-    "${DISK_DRIVE_SESSIONS}" "${DISK_DRIVE_DATA}" "${DISK_DRIVE_FREE}" "${disk_dj_speeds}"
+  disk_dj_media="$(printf '%s\n' "${DISK_DRIVE_MEDIA}" | awk 'NF { out = out (out == "" ? "" : ",") "\"" $0 "\"" } END { print out }')"
+  printf '"sessions":%s,"data_sectors":%s,"free_sectors":%s,"write_speeds":[%s],"media":[%s]}\n' \
+    "${DISK_DRIVE_SESSIONS}" "${DISK_DRIVE_DATA}" "${DISK_DRIVE_FREE}" "${disk_dj_speeds}" "${disk_dj_media}"
 }
 
 disk_drive_free_text() {
@@ -99,6 +119,8 @@ disk_drive_rows() {
   printf 'Sessions\t%s, %s data sectors\n' "${DISK_DRIVE_SESSIONS}" "${DISK_DRIVE_DATA}"
   printf 'Free\t%s sectors, %s\n' "${DISK_DRIVE_FREE}" "${disk_dr_free}"
   printf 'Speeds\t%s\n' "${disk_dr_speeds}"
+  disk_dr_media="$(disk_drive_media_text)"
+  printf 'Media\t%s\n' "${disk_dr_media}"
 }
 
 disk_drive_report() {

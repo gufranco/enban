@@ -57,6 +57,7 @@ export LC_ALL
 : "${DISK_DRIVE_DATA:=0}"
 : "${DISK_DRIVE_FREE:=0}"
 : "${DISK_DRIVE_READABLE:=0}"
+: "${DISK_DRIVE_MEDIA:=}"
 : "${DISK_DRIVE_SPEEDS:=}"
 : "${DISK_OPERAND:=}"
 : "${DISK_OPERAND_TWO:=}"
