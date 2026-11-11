@@ -39,6 +39,8 @@ DISK_PROG=enban
 . "${DISK_LIB}/build_boot.sh"
 # shellcheck source=SCRIPTDIR/../lib/build_video.sh
 . "${DISK_LIB}/build_video.sh"
+# shellcheck source=SCRIPTDIR/../lib/build_bdmv.sh
+. "${DISK_LIB}/build_bdmv.sh"
 # shellcheck source=SCRIPTDIR/../lib/erase.sh
 . "${DISK_LIB}/erase.sh"
 # shellcheck source=SCRIPTDIR/../lib/checksum.sh
@@ -170,6 +172,8 @@ options:
   --load-sectors N    the 512-byte sectors the BIOS loads with no emulation; 4
   --boot-info-table   patch the boot image with the disc layout
   --dvd-video         build lays out VIDEO_TS for a DVD player, with UDF
+  --bdmv              build writes a BDMV folder as UDF 2.50 for a Blu-ray
+                      player; macOS only
   --full              erase every sector instead of the start of the disc
   --sectors N         how many sectors discovery writes; all free by default
   --csv FILE          where discovery saves its read rate
@@ -317,6 +321,7 @@ disk_option_flag() {
   --cue) DISK_READ_CUE=y ;;
   --boot-info-table) DISK_BUILD_INFO=y ;;
   --dvd-video) DISK_BUILD_DVD=y ;;
+  --bdmv) DISK_BUILD_BDMV=y ;;
   --ignore-miscompares) DISK_VERIFY_IGNORE=y ;;
   *) return 1 ;;
   esac
@@ -365,7 +370,7 @@ disk_option_seen() {
     [ -z "${DISK_VERIFY_OPTION}" ] || [ "${DISK_VERIFY_OPTION}" = "$1" ] || DISK_VERIFY_CLASH=y
     DISK_VERIFY_OPTION="$1"
     ;;
-  --fs | --label | --publisher | --preparer | --application | --system-id | --volume-set | --date | --iso-level | --boot | --dvd-video) DISK_BUILD_OPTION="${DISK_BUILD_OPTION:-$1}" ;;
+  --fs | --label | --publisher | --preparer | --application | --system-id | --volume-set | --date | --iso-level | --boot | --dvd-video | --bdmv) DISK_BUILD_OPTION="${DISK_BUILD_OPTION:-$1}" ;;
   --emulation | --platform | --load-sectors | --boot-info-table)
     DISK_BUILD_OPTION="${DISK_BUILD_OPTION:-$1}"
     DISK_BOOT_OPTION="${DISK_BOOT_OPTION:-$1}"

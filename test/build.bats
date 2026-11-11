@@ -41,13 +41,22 @@ listed_files() {
   LC_ALL=C sort <<<"${rows}"
 }
 
+detach_settled() {
+  local try
+  for try in 1 2 3 4 5; do
+    hdiutil detach "$1" >/dev/null 2>&1 && return 0
+    sleep "${try}"
+  done
+  hdiutil detach -force "$1" >/dev/null
+}
+
 image_files() {
   case "${ENBAN_TEST_OS}" in
   Darwin)
     mkdir -p "${WORK}/mnt"
     hdiutil attach -readonly -nobrowse -mountpoint "${WORK}/mnt" "$1" >/dev/null || return 1
     sized_files "${WORK}/mnt"
-    hdiutil detach "${WORK}/mnt" >/dev/null
+    detach_settled "${WORK}/mnt"
     ;;
   *) listed_files "$1" ;;
   esac
@@ -862,6 +871,154 @@ player_order() {
   # Assert
   [[ "${status}" -eq 1 ]]
   [[ "${output}" == "enban: --dvd-video and --boot do not go together: a DVD Video disc does not boot." ]]
+}
+
+bdmv_tree() {
+  mkdir -p "$1/BDMV/STREAM"
+  head -c 300000 /dev/urandom >"$1/BDMV/STREAM/00000.m2ts"
+  head -c 2048 /dev/urandom >"$1/BDMV/index.bdmv"
+}
+
+udf_revision() {
+  local found offset revision
+  found="$(LC_ALL=C grep -obUaF -m 1 '*OSTA UDF Compliant' "$1")"
+  found="${found%%$'\n'*}"
+  offset="${found%%:*}"
+  revision="$(od -An -tx2 -j $((offset + 23)) -N 2 "$1")"
+  printf '%s' "${revision//[[:space:]]/}"
+}
+
+@test "enban build --bdmv writes the folder as UDF 2.50 and nothing else" {
+  # Arrange
+  [[ "${ENBAN_TEST_OS}" == "Darwin" ]] || skip "Linux refuses --bdmv"
+  local wanted
+  bdmv_tree "${SRC}"
+  wanted="$(sized_files "${SRC}")"
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --bdmv </dev/null
+
+  # Assert
+  local listed revision
+  listed="$(image_files "${OUT}")"
+  revision="$(udf_revision "${OUT}")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${listed}" == "${wanted}" ]]
+  [[ "${revision}" == "0250" ]]
+  [[ "${lines[2]}" == "File systems  UDF 2.50" ]]
+  [[ ! -e "${OUT}.mnt" ]]
+}
+
+@test "enban build --bdmv finds BDMV among the layout entries" {
+  # Arrange
+  [[ "${ENBAN_TEST_OS}" == "Darwin" ]] || skip "Linux refuses --bdmv"
+  local call wanted
+  bdmv_tree "${WORK}/movie"
+  call="$(layout_call BDMV "${WORK}/movie/BDMV")"
+  wanted="$(sized_files "${WORK}/movie")"
+
+  # Act
+  run disk_test_call eval "DISK_BUILD_BDMV=y ${call}"
+
+  # Assert
+  local listed
+  listed="$(image_files "${OUT}")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${listed}" == "${wanted}" ]]
+}
+
+@test "enban build --bdmv on Linux says no tool writes UDF 2.50" {
+  # Arrange
+  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS builds it with newfs_udf"
+  bdmv_tree "${SRC}"
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --bdmv </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: --bdmv needs UDF 2.50, which no Linux tool writes into an image. build it on macOS." ]]
+}
+
+@test "enban build --bdmv needs a BDMV folder at the root" {
+  # Arrange
+  [[ "${ENBAN_TEST_OS}" == "Darwin" ]] || skip "Linux refuses --bdmv"
+  local option=--bdmv
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" "${option}" </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: --bdmv needs a BDMV folder at the root of the disc." ]]
+}
+
+@test "enban build --bdmv takes none of the other build fields" {
+  # Arrange
+  [[ "${ENBAN_TEST_OS}" == "Darwin" ]] || skip "Linux refuses --bdmv"
+  bdmv_tree "${SRC}"
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --bdmv --publisher Franco </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: --bdmv writes UDF 2.50 alone, which holds a label and nothing more, so leave out --publisher." ]]
+}
+
+@test "enban build --bdmv reports a newfs_udf that fails and leaves nothing behind" {
+  # Arrange
+  [[ "${ENBAN_TEST_OS}" == "Darwin" ]] || skip "Linux refuses --bdmv"
+  bdmv_tree "${SRC}"
+  disk_test_shim newfs_udf "exit 1"
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --bdmv </dev/null
+
+  # Assert
+  local left
+  left="$(find "${WORK}" -maxdepth 1 -name '.enban-build.*')"
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: unable to build ${OUT} from ${SRC}." ]]
+  [[ -z "${left}" ]]
+  [[ ! -e "${OUT}" ]]
+}
+
+@test "enban build --bdmv reports a copy that fails and detaches the image" {
+  # Arrange
+  [[ "${ENBAN_TEST_OS}" == "Darwin" ]] || skip "Linux refuses --bdmv"
+  bdmv_tree "${SRC}"
+  disk_test_shim cp "exit 1"
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --bdmv </dev/null
+
+  # Assert
+  local left attached
+  left="$(find "${WORK}" -maxdepth 1 -name '.enban-build.*')"
+  attached="$(hdiutil info | grep -c -F "${WORK}" || true)"
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: unable to build ${OUT} from ${SRC}." ]]
+  [[ -z "${left}" ]]
+  [[ "${attached}" == "0" ]]
+}
+
+@test "enban build --bdmv forces the detach of a volume that stays busy" {
+  # Arrange
+  [[ "${ENBAN_TEST_OS}" == "Darwin" ]] || skip "Linux refuses --bdmv"
+  bdmv_tree "${SRC}"
+  disk_test_shim hdiutil 'case "$1:$2" in detach:-force) exec "${REAL}" "$@" ;; detach:*) exit 16 ;; *) exec "${REAL}" "$@" ;; esac'
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --bdmv </dev/null
+
+  # Assert
+  local revision attached
+  revision="$(udf_revision "${OUT}")"
+  attached="$(hdiutil info | grep -c -F "${WORK}" || true)"
+  [[ "${status}" -eq 0 ]]
+  [[ "${revision}" == "0250" ]]
+  [[ "${attached}" == "0" ]]
 }
 
 quoted() {

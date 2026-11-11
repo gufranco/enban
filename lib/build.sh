@@ -11,6 +11,7 @@ disk_build_check() {
   fi
   disk_build_fs "${DISK_BUILD_FS}" || return 1
   disk_build_label || return 1
+  disk_build_bdmv_check || return 1
   disk_build_ids_check || return 1
   disk_build_boot_check || return 1
   disk_build_video_check || return 1
@@ -84,8 +85,9 @@ disk_build_make() {
   disk_bm_part="$(mktemp "$(dirname "${DISK_BUILD_OUT}")/.enban-build.XXXXXX")" || return 1
   [ -z "${DISK_JOB_NOTE}" ] || printf '%s\n' "${disk_bm_part}" >"${DISK_JOB_NOTE}"
   disk_bm_status=0
-  case "$(disk_os):${DISK_BUILD_MKISOFS}" in
-  Darwin:n) disk_build_hybrid "${disk_bm_part}" || disk_bm_status=1 ;;
+  case "$(disk_os):${DISK_BUILD_MKISOFS}:${DISK_BUILD_BDMV}" in
+  *:y) disk_build_bdmv "${disk_bm_part}" || disk_bm_status=1 ;;
+  Darwin:n:n) disk_build_hybrid "${disk_bm_part}" || disk_bm_status=1 ;;
   *) disk_build_mkisofs "${disk_bm_part}" || disk_bm_status=1 ;;
   esac
   if [ "${disk_bm_status}" -eq 0 ] && mv "${disk_bm_part}" "${DISK_BUILD_OUT}"; then
@@ -167,6 +169,10 @@ disk_build_grafts() {
 }
 
 disk_build_names() {
+  if [ "${DISK_BUILD_BDMV}" = y ]; then
+    printf 'UDF 2.50\n'
+    return 0
+  fi
   disk_bn_list="ISO9660"
   [ "${DISK_BUILD_JOLIET}" = n ] || disk_bn_list="${disk_bn_list}, Joliet"
   [ "${DISK_BUILD_UDF}" = n ] || disk_bn_list="${disk_bn_list}, UDF"

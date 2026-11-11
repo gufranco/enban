@@ -57,6 +57,7 @@ _enban() {
     '--load-sectors[sectors the firmware loads with no emulation]:sectors:' \
     '--boot-info-table[write the disc layout into the boot image copy]' \
     '--dvd-video[lay out VIDEO_TS for a DVD player]' \
+    '--bdmv[write BDMV as UDF 2.50 for a Blu-ray player]' \
     '--full[erase every sector]' \
     '--sectors[how many sectors discovery writes]:sectors:' \
     '--csv[where discovery saves its read rate]:file:_files' \

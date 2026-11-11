@@ -511,3 +511,16 @@ answers() {
   shown="$(last_frame)"
   [[ "${shown}" == *"> DVD Video  [x]"* ]]
 }
+
+@test "Enter on Blu-ray turns the BDMV layout on" {
+  # Arrange
+  local keys='3\033[B\033[B\033[B\033[B\033[B\033[B\033[B\033[B\033[B\033[B\nq'
+
+  # Act
+  run on_terminal "${keys}"
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"> Blu-ray    [x]"* ]]
+}
