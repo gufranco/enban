@@ -1,5 +1,12 @@
 # Changelog
 
+# [1.3.0](https://github.com/gufranco/enban/compare/v1.2.0...v1.3.0) (2026-11-11)
+
+
+### Features
+
+* build an image from a folder ([a29385c](https://github.com/gufranco/enban/commit/a29385c91def6a1fb4bf7864cffa7046cb403784))
+
 # [1.2.0](https://github.com/gufranco/enban/compare/v1.1.0...v1.2.0) (2026-11-11)
 
 
