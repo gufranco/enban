@@ -1,4 +1,5 @@
 #!/usr/bin/env bats
+# shellcheck disable=SC2016
 
 # shellcheck source=test/helpers.bash
 source "${BATS_TEST_DIRNAME:-.}/helpers.bash"
@@ -288,4 +289,79 @@ volume_id() {
   # Assert
   [[ "${status}" -eq 1 ]]
   [[ "${output}" == "enban: option '--fs' works only with build. run 'enban help' for usage." ]]
+}
+
+quoted() {
+  local text="$1"
+  printf "'%s'" "${text//\'/\'\\\'\'}"
+}
+
+layout_call() {
+  local format="" words="" name source out
+  while [[ $# -gt 0 ]]; do
+    name="$(quoted "$1")"
+    source="$(quoted "$2")"
+    format="${format}%s\\t%s\\t0\\t0\\t0\\n"
+    words="${words} ${name} ${source}"
+    shift 2
+  done
+  out="$(quoted "${OUT}")"
+  printf 'DISK_BUILD_LAYOUT="$(printf %s%s)" DISK_BUILD_OUT=%s; disk_build_run' "'${format}'" "${words}" "${out}"
+}
+
+@test "a layout puts each entry at the root of the image under its disc name" {
+  # Arrange
+  local call wanted
+  call="$(layout_call pictures "${SRC}/sub" readme.txt "${SRC}/notes.txt")"
+  mkdir -p "${WORK}/wanted/pictures"
+  cp "${SRC}/sub/photo.bin" "${SRC}/sub/tiny.dat" "${WORK}/wanted/pictures/"
+  cp "${SRC}/notes.txt" "${WORK}/wanted/readme.txt"
+  wanted="$(sized_files "${WORK}/wanted")"
+
+  # Act
+  run disk_test_call eval "${call}"
+
+  # Assert
+  local listed label
+  listed="$(image_files "${OUT}")"
+  label="$(volume_id "${OUT}")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${listed}" == "${wanted}" ]]
+  [[ "${label}" == "PICTURES" ]]
+  [[ "${lines[0]}" == "Files         3" ]]
+  [[ "${lines[3]}" == "Done. ${OUT} is built from 2 entries." ]]
+}
+
+@test "a layout stops at an entry whose source is gone" {
+  # Arrange
+  local call
+  call="$(layout_call pictures "${WORK}/gone")"
+
+  # Act
+  run disk_test_call eval "${call}"
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: no file or folder at ${WORK}/gone." ]]
+  [[ ! -e "${OUT}" ]]
+}
+
+@test "a layout keeps an equals sign in a name and a path" {
+  # Arrange
+  local call wanted
+  mkdir -p "${WORK}/a=b"
+  cp "${SRC}/notes.txt" "${WORK}/a=b/x=y.txt"
+  call="$(layout_call 'one=two' "${WORK}/a=b")"
+  mkdir -p "${WORK}/wanted/one=two"
+  cp "${SRC}/notes.txt" "${WORK}/wanted/one=two/x=y.txt"
+  wanted="$(sized_files "${WORK}/wanted")"
+
+  # Act
+  run disk_test_call eval "${call}"
+
+  # Assert
+  local listed
+  listed="$(image_files "${OUT}")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${listed}" == "${wanted}" ]]
 }

@@ -31,6 +31,18 @@ Sleep 1500ms
 Screenshot read.png
 Sleep 600ms
 Tab
+Sleep 1000ms
+Type "f"
+Sleep 1000ms
+Type "family-2009"
+Enter
+Sleep 1500ms
+Type "a"
+Sleep 1000ms
+Type "notes.txt"
+Enter
+Sleep 1500ms
+Screenshot build.png
 Sleep 600ms
 Tab
 Sleep 1500ms

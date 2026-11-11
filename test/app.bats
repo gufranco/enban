@@ -57,7 +57,7 @@ teardown() {
   local shown
   shown="$(last_frame)"
   [[ "${status}" -eq 0 ]]
-  [[ "${shown}" == *"Build image from files arrives in a coming release."* ]]
+  [[ "${shown}" == *"Build image from files"*"Disc layout"* ]]
 }
 
 @test "Tab moves to the next tab" {
@@ -134,7 +134,7 @@ teardown() {
 
 @test "the arrows and enter do nothing on a tab still to come" {
   # Arrange
-  local keys='3\033[B\nq'
+  local keys='5\033[B\nq'
 
   # Act
   run on_terminal "${keys}"
@@ -143,7 +143,7 @@ teardown() {
   local shown
   shown="$(last_frame)"
   [[ "${status}" -eq 0 ]]
-  [[ "${shown}" == *"Build image from files arrives in a coming release."* ]]
+  [[ "${shown}" == *"Discovery test arrives in a coming release."* ]]
 }
 
 @test "? shows the keys and the next key closes them" {
@@ -423,18 +423,16 @@ teardown() {
   [[ "${shown}" == *"> Discovery test"* ]]
 }
 
-@test "the Build and Discovery tabs name the job that arrives there" {
+@test "the Discovery tab names the job that arrives there" {
   # Arrange
-  local keys="3"
+  local keys="5q"
 
   # Act
-  run on_terminal "${keys}5q"
+  run on_terminal "${keys}"
 
   # Assert
-  local shown final
-  shown="$(screen)"
+  local final
   final="$(last_frame)"
-  [[ "${shown}" == *"Build image from files arrives in a coming release."* ]]
   [[ "${final}" == *"Discovery test arrives in a coming release."* ]]
 }
 

@@ -131,10 +131,15 @@ disk_app_decode() {
   09) DISK_APP_KEY=tab ;;
   20) DISK_APP_KEY=space ;;
   3f) DISK_APP_KEY=help ;;
+  61) DISK_APP_KEY=a ;;
+  62) DISK_APP_KEY=b ;;
   63) DISK_APP_KEY=c ;;
+  66) DISK_APP_KEY=f ;;
+  6e) DISK_APP_KEY=n ;;
   72) DISK_APP_KEY=r ;;
   76) DISK_APP_KEY=v ;;
   77) DISK_APP_KEY=w ;;
+  78) DISK_APP_KEY=x ;;
   1b)
     stty min 0 time 1 2>/dev/null
     disk_ak_rest="$(disk_app_byte 2)"
@@ -204,6 +209,7 @@ disk_app_pane_key() {
   Write) disk_write_tab_key "$1" ;;
   Read) disk_read_tab_key "$1" ;;
   Verify) disk_verify_tab_key "$1" ;;
+  Build) disk_build_tab_key "$1" ;;
   *) return 0 ;;
   esac
 }
@@ -223,6 +229,7 @@ disk_app_run() {
   disk_app_colours
   disk_app_size
   disk_app_drive
+  disk_build_tab_refresh
   disk_app_enter
   trap 'disk_app_leave; exit 130' INT
   trap 'disk_app_leave; exit 143' TERM

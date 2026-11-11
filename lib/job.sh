@@ -7,6 +7,7 @@ disk_job_launch() {
   DISK_APP_JOB_DIR="$(mktemp -d "${TMPDIR:-/tmp}/enban-job.XXXXXX")" || return 0
   DISK_APP_JOB_KIND="$2"
   DISK_APP_JOB_WHAT="$3"
+  DISK_JOB_NOTE="${DISK_APP_JOB_DIR}/part"
   disk_job_run "$1" "${DISK_APP_JOB_DIR}" &
   DISK_APP_JOB_PID=$!
   DISK_APP_JOB=running
@@ -23,6 +24,7 @@ disk_job_verb() {
   case "${DISK_APP_JOB_KIND}" in
   write) printf 'Writing.\n' ;;
   verify) printf 'Verifying.\n' ;;
+  build) printf 'Building.\n' ;;
   *) printf 'Reading.\n' ;;
   esac
 }
@@ -44,6 +46,7 @@ disk_job_cancel() {
   # shellcheck disable=SC2086
   kill ${disk_jc_tree} 2>/dev/null || true
   wait "${DISK_APP_JOB_PID}" 2>/dev/null || true
+  disk_job_drop_part
   rm -rf "${DISK_APP_JOB_DIR}"
   DISK_APP_JOB=finished
   DISK_APP_JOB_RESULT="$(disk_job_cancelled)"
@@ -54,8 +57,15 @@ disk_job_cancelled() {
   case "${DISK_APP_JOB_KIND}" in
   write) printf 'Cancelled while writing. The disc may be unusable.\n' ;;
   verify) printf 'Cancelled while verifying. Nothing on the disc changed.\n' ;;
+  build) printf 'Cancelled while building. No image was written.\n' ;;
   *) printf 'Cancelled while reading. The image is incomplete.\n' ;;
   esac
+}
+
+disk_job_drop_part() {
+  [ -f "${DISK_JOB_NOTE}" ] || return 0
+  disk_jd_part="$(cat "${DISK_JOB_NOTE}")"
+  rm -rf "${disk_jd_part}" "${disk_jd_part}.iso" "${disk_jd_part}.stage" "${disk_jd_part}.grafts"
 }
 
 disk_job_tree() {

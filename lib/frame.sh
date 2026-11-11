@@ -105,16 +105,8 @@ disk_frame_home() {
 }
 
 disk_frame_later() {
-  disk_fl_index="$(disk_frame_tab_tile "$1")"
-  disk_fl_title="$(disk_frame_tile "${disk_fl_index}" 1)"
+  disk_fl_title="$(disk_frame_tile 5 1)"
   printf '%s\n' "$1" "" "${disk_fl_title} arrives in a coming release."
-}
-
-disk_frame_tab_tile() {
-  case "$1" in
-  Build) printf '3\n' ;;
-  *) printf '5\n' ;;
-  esac
 }
 
 disk_frame_soon() {
@@ -129,7 +121,8 @@ disk_frame_keys() {
   printf '%s\n' "  w           write, on Write"
   printf '%s\n' "  r           read, on Read"
   printf '%s\n' "  v           verify, on Verify"
-  printf '%s\n' "  c           cancel a running write, read or verify"
+  printf '%s\n' "  a f x n b   add a file or folder, remove, rename, build, on Build"
+  printf '%s\n' "  c           cancel the running job"
   printf '%s\n' "  tab         next tab"
   printf '%s\n' "  0-9         jump to that tab"
   printf '%s\n' "  ?           these keys, closed by the next key"
@@ -147,7 +140,8 @@ disk_frame_left() {
   Write) disk_frame_write ;;
   Read) disk_frame_read ;;
   Verify) disk_frame_verify ;;
-  Build | Discovery) disk_frame_later "${disk_fp_name}" ;;
+  Build) disk_frame_build ;;
+  Discovery) disk_frame_later "${disk_fp_name}" ;;
   *) disk_frame_soon "${disk_fp_name}" ;;
   esac
 }
@@ -173,7 +167,9 @@ disk_frame_disc() {
 
 disk_frame_panes() {
   disk_fs_left="$(disk_frame_left)"
+  disk_fs_name="$(disk_app_tab_name "${DISK_APP_TAB}")"
   disk_fs_right="${DISK_APP_DISC}"
+  [ "${disk_fs_name}" != Build ] || disk_fs_right="${DISK_APP_B_SIDE}"
   if [ "${DISK_APP_COLS}" -lt "${DISK_APP_WIDE}" ]; then
     printf '%s\n' "${disk_fs_left}" | disk_frame_box "${DISK_APP_COLS}"
     printf '%s\n' "${disk_fs_right}" | disk_frame_box "${DISK_APP_COLS}"

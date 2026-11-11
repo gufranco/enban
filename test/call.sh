@@ -30,6 +30,10 @@ DISK_LIB="$(cd "$(dirname "$0")/../lib" && pwd)" || exit 1
 . "${DISK_LIB}/read_tab.sh"
 # shellcheck source=SCRIPTDIR/../lib/verify_tab.sh
 . "${DISK_LIB}/verify_tab.sh"
+# shellcheck source=SCRIPTDIR/../lib/build_tab.sh
+. "${DISK_LIB}/build_tab.sh"
+# shellcheck source=SCRIPTDIR/../lib/build_view.sh
+. "${DISK_LIB}/build_view.sh"
 # shellcheck source=SCRIPTDIR/../lib/job.sh
 . "${DISK_LIB}/job.sh"
 

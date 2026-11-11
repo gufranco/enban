@@ -80,13 +80,16 @@ make install
 
 | Key | In the app |
 |:----|:-----------|
-| Arrows | Move between the six jobs on Home, or the fields on Write, Read and Verify |
+| Arrows | Move between the six jobs on Home, or the rows and fields on Write, Read, Build and Verify |
 | Enter | Open the focused job's tab, or edit the focused field |
 | Space | Turn verify or eject on or off on Write, verify on Read, or the image comparison on Verify |
 | `w` | Write the chosen image, after you type the drive's name |
 | `r` | Read the disc into the chosen new file |
 | `v` | Verify the disc, against the chosen image or alone |
-| `c` | Cancel a running write, read or verify |
+| `a`, `f` | Add a file or a folder to the disc layout on Build |
+| `x`, `n` | Remove or rename the focused entry on Build |
+| `b` | Build the layout into the chosen image file |
+| `c` | Cancel a running write, read, verify or build |
 | Tab | Next tab |
 | `0` to `9` | Switch to that tab |
 | `?` | Show the keys; the next key closes them |
@@ -139,8 +142,8 @@ Everything is POSIX `sh` with ShellCheck `-o all` at zero findings. The suites d
 <td width="50%" valign="top"><img src="screens/read.png" alt="enban: The Read tab, with its image and verify fields"><br><sub>The Read tab, with its image and verify fields</sub></td>
 </tr>
 <tr>
+<td width="50%" valign="top"><img src="screens/build.png" alt="enban: The Build tab, with the disc layout, capacity, output fields and the file system checks"><br><sub>The Build tab, with the disc layout, capacity, output fields and the file system checks</sub></td>
 <td width="50%" valign="top"><img src="screens/verify.png" alt="enban: The Verify tab, with its compare and image fields"><br><sub>The Verify tab, with its compare and image fields</sub></td>
-<td width="50%" valign="top"></td>
 </tr>
 <tr>
 <td width="50%" valign="top"><img src="screens/doctor.png" alt="enban: doctor checks every tool it needs"><br><sub>doctor checks every tool it needs</sub></td>
