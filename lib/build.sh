@@ -71,6 +71,7 @@ disk_build_label() {
     disk_error "--label takes up to 32 characters, got ${#disk_bl_label}."
     return 1
   fi
+  DISK_BUILD_NAME="${disk_bl_label}"
   DISK_BUILD_VOLUME="$(printf '%s' "${disk_bl_label}" | tr '[:lower:]' '[:upper:]' | tr -c 'A-Z0-9_' '_')"
 }
 

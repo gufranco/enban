@@ -38,15 +38,7 @@ disk_build_udf_version_fits() {
 }
 
 disk_build_udf_version_tool() {
-  disk_ua_os="$(disk_os)"
-  if [ "${disk_ua_os}" != Darwin ]; then
-    [ "${DISK_BUILD_UDF_VERSION}" = 1.02 ] && return 0
-    disk_error "--udf-version ${DISK_BUILD_UDF_VERSION} needs macOS, since genisoimage, which builds UDF on Linux, writes 1.02 only."
-    return 1
-  fi
-  case "${DISK_BUILD_UDF_VERSION}" in
-  1.02 | 1.50) return 0 ;;
-  *) DISK_BUILD_ALONE=y ;;
-  esac
+  [ "${DISK_BUILD_UDF_VERSION}" != 1.02 ] || return 0
+  DISK_BUILD_ALONE=y
   disk_build_alone_fields "--udf-version ${DISK_BUILD_UDF_VERSION}"
 }

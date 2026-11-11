@@ -874,23 +874,49 @@ player_order() {
 }
 
 bdmv_tree() {
-  mkdir -p "$1/BDMV/STREAM"
-  head -c 300000 /dev/urandom >"$1/BDMV/STREAM/00000.m2ts"
+  mkdir -p "$1/BDMV/STREAM" "$1/BDMV/PLAYLIST"
+  head -c 1500000 /dev/urandom >"$1/BDMV/STREAM/00000.m2ts"
   head -c 2048 /dev/urandom >"$1/BDMV/index.bdmv"
+  : >"$1/BDMV/PLAYLIST/00000.mpls"
+}
+
+udf_word() {
+  local value
+  value="$(od -An -tu4 -j "$2" -N 4 "$1")"
+  printf '%s' "${value//[[:space:]]/}"
 }
 
 udf_revision() {
-  local found offset revision
-  found="$(LC_ALL=C grep -obUaF -m 1 '*OSTA UDF Compliant' "$1")"
-  found="${found%%$'\n'*}"
-  offset="${found%%:*}"
-  revision="$(od -An -tx2 -j $((offset + 23)) -N 2 "$1")"
-  printf '%s' "${revision//[[:space:]]/}"
+  local sequence sector kind revision
+  sequence="$(udf_word "$1" $((256 * 2048 + 20)))"
+  for sector in $(seq "${sequence}" $((sequence + 15))); do
+    kind="$(od -An -tu2 -j $((sector * 2048)) -N 2 "$1")"
+    [[ "${kind//[[:space:]]/}" == "6" ]] || continue
+    revision="$(od -An -tx2 -j $((sector * 2048 + 240)) -N 2 "$1")"
+    printf '%s' "${revision//[[:space:]]/}"
+    return 0
+  done
+  return 1
+}
+
+udf_files() {
+  case "${ENBAN_TEST_OS}" in
+  Darwin) image_files "$1" ;;
+  *)
+    mkdir -p "${WORK}/mnt"
+    sudo mount -o loop,ro -t udf "$1" "${WORK}/mnt" || return 1
+    sized_files "${WORK}/mnt"
+    sudo umount "${WORK}/mnt"
+    ;;
+  esac
+}
+
+leftovers() {
+  find "${WORK}" -maxdepth 1 -name '.enban-build.*'
 }
 
 @test "enban build --bdmv writes the folder as UDF 2.50 and nothing else" {
   # Arrange
-  [[ "${ENBAN_TEST_OS}" == "Darwin" ]] || skip "Linux refuses --bdmv"
   local wanted
   bdmv_tree "${SRC}"
   wanted="$(sized_files "${SRC}")"
@@ -899,22 +925,23 @@ udf_revision() {
   run disk_test_run enban build "${SRC}" "${OUT}" --bdmv </dev/null
 
   # Assert
-  local listed revision
-  listed="$(image_files "${OUT}")"
+  local listed revision left
+  listed="$(udf_files "${OUT}")"
   revision="$(udf_revision "${OUT}")"
+  left="$(leftovers)"
   [[ "${status}" -eq 0 ]]
   [[ "${listed}" == "${wanted}" ]]
   [[ "${revision}" == "0250" ]]
   [[ "${lines[2]}" == "File systems  UDF 2.50" ]]
-  [[ ! -e "${OUT}.mnt" ]]
+  [[ -z "${left}" ]]
 }
 
 @test "enban build --bdmv finds BDMV among the layout entries" {
   # Arrange
-  [[ "${ENBAN_TEST_OS}" == "Darwin" ]] || skip "Linux refuses --bdmv"
   local call wanted
   bdmv_tree "${WORK}/movie"
-  call="$(layout_call BDMV "${WORK}/movie/BDMV")"
+  call="$(layout_call BDMV "${WORK}/movie/BDMV" notes.txt "${SRC}/notes.txt")"
+  cp -f "${SRC}/notes.txt" "${WORK}/movie/notes.txt"
   wanted="$(sized_files "${WORK}/movie")"
 
   # Act
@@ -922,27 +949,13 @@ udf_revision() {
 
   # Assert
   local listed
-  listed="$(image_files "${OUT}")"
+  listed="$(udf_files "${OUT}")"
   [[ "${status}" -eq 0 ]]
   [[ "${listed}" == "${wanted}" ]]
 }
 
-@test "enban build --bdmv on Linux says no tool writes UDF 2.50" {
-  # Arrange
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS builds it with newfs_udf"
-  bdmv_tree "${SRC}"
-
-  # Act
-  run disk_test_run enban build "${SRC}" "${OUT}" --bdmv </dev/null
-
-  # Assert
-  [[ "${status}" -eq 1 ]]
-  [[ "${output}" == "enban: --bdmv needs UDF 2.50, which no Linux tool writes into an image. build it on macOS." ]]
-}
-
 @test "enban build --bdmv needs a BDMV folder at the root" {
   # Arrange
-  [[ "${ENBAN_TEST_OS}" == "Darwin" ]] || skip "Linux refuses --bdmv"
   local option=--bdmv
 
   # Act
@@ -955,7 +968,6 @@ udf_revision() {
 
 @test "enban build --bdmv takes none of the other build fields" {
   # Arrange
-  [[ "${ENBAN_TEST_OS}" == "Darwin" ]] || skip "Linux refuses --bdmv"
   bdmv_tree "${SRC}"
 
   # Act
@@ -966,82 +978,40 @@ udf_revision() {
   [[ "${output}" == "enban: --bdmv writes UDF 2.50 alone, which holds a label and nothing more, so leave out --publisher." ]]
 }
 
-@test "enban build --bdmv reports a newfs_udf that fails and leaves nothing behind" {
+@test "enban build --udf-version 1.50 writes UDF 1.50 alone" {
   # Arrange
-  [[ "${ENBAN_TEST_OS}" == "Darwin" ]] || skip "Linux refuses --bdmv"
-  bdmv_tree "${SRC}"
-  disk_test_shim newfs_udf "exit 1"
+  local wanted
+  wanted="$(sized_files "${SRC}")"
 
   # Act
-  run disk_test_run enban build "${SRC}" "${OUT}" --bdmv </dev/null
+  run disk_test_run enban build "${SRC}" "${OUT}" --udf-version 1.50 </dev/null
 
   # Assert
-  local left
-  left="$(find "${WORK}" -maxdepth 1 -name '.enban-build.*')"
-  [[ "${status}" -eq 1 ]]
-  [[ "${output}" == "enban: unable to build ${OUT} from ${SRC}." ]]
-  [[ -z "${left}" ]]
-  [[ ! -e "${OUT}" ]]
-}
-
-@test "enban build --bdmv reports a copy that fails and detaches the image" {
-  # Arrange
-  [[ "${ENBAN_TEST_OS}" == "Darwin" ]] || skip "Linux refuses --bdmv"
-  bdmv_tree "${SRC}"
-  disk_test_shim cp "exit 1"
-
-  # Act
-  run disk_test_run enban build "${SRC}" "${OUT}" --bdmv </dev/null
-
-  # Assert
-  local left attached
-  left="$(find "${WORK}" -maxdepth 1 -name '.enban-build.*')"
-  attached="$(hdiutil info | grep -c -F "${WORK}" || true)"
-  [[ "${status}" -eq 1 ]]
-  [[ "${output}" == "enban: unable to build ${OUT} from ${SRC}." ]]
-  [[ -z "${left}" ]]
-  [[ "${attached}" == "0" ]]
-}
-
-@test "enban build --bdmv forces the detach of a volume that stays busy" {
-  # Arrange
-  [[ "${ENBAN_TEST_OS}" == "Darwin" ]] || skip "Linux refuses --bdmv"
-  bdmv_tree "${SRC}"
-  disk_test_shim hdiutil 'case "$1:$2" in detach:-force) exec "${REAL}" "$@" ;; detach:*) exit 16 ;; *) exec "${REAL}" "$@" ;; esac'
-
-  # Act
-  run disk_test_run enban build "${SRC}" "${OUT}" --bdmv </dev/null
-
-  # Assert
-  local revision attached
+  local revision listed
   revision="$(udf_revision "${OUT}")"
-  attached="$(hdiutil info | grep -c -F "${WORK}" || true)"
+  listed="$(udf_files "${OUT}")"
   [[ "${status}" -eq 0 ]]
-  [[ "${revision}" == "0250" ]]
-  [[ "${attached}" == "0" ]]
+  [[ "${revision}" == "0150" ]]
+  [[ "${listed}" == "${wanted}" ]]
+  [[ "${lines[2]}" == "File systems  UDF 1.50" ]]
 }
 
-@test "enban build --udf-version 1.50 keeps ISO9660 beside UDF 1.50 on macOS" {
+@test "enban build --udf-version 2.00 writes UDF 2.00 alone" {
   # Arrange
-  [[ "${ENBAN_TEST_OS}" == "Darwin" ]] || skip "Linux writes UDF 1.02 only"
-  local version=1.50
+  local version=2.00
 
   # Act
   run disk_test_run enban build "${SRC}" "${OUT}" --udf-version "${version}" </dev/null
 
   # Assert
-  local revision label
+  local revision
   revision="$(udf_revision "${OUT}")"
-  label="$(volume_id "${OUT}")"
   [[ "${status}" -eq 0 ]]
-  [[ "${revision}" == "0150" ]]
-  [[ "${label}" == "FAMILY_2009" ]]
-  [[ "${lines[2]}" == "File systems  ISO9660, Joliet, UDF 1.50" ]]
+  [[ "${revision}" == "0200" ]]
 }
 
-@test "enban build --udf-version 2.01 writes UDF alone on macOS" {
+@test "enban build --udf-version 2.01 writes UDF 2.01 alone" {
   # Arrange
-  [[ "${ENBAN_TEST_OS}" == "Darwin" ]] || skip "Linux writes UDF 1.02 only"
   local wanted
   wanted="$(sized_files "${SRC}")"
 
@@ -1051,11 +1021,108 @@ udf_revision() {
   # Assert
   local revision listed
   revision="$(udf_revision "${OUT}")"
-  listed="$(image_files "${OUT}")"
+  listed="$(udf_files "${OUT}")"
   [[ "${status}" -eq 0 ]]
   [[ "${revision}" == "0201" ]]
   [[ "${listed}" == "${wanted}" ]]
   [[ "${lines[2]}" == "File systems  UDF 2.01" ]]
+}
+
+@test "enban build --udf-version 2.60 keeps a name in another alphabet" {
+  # Arrange
+  local wanted
+  printf 'kana' >"${SRC}/写真.txt"
+  wanted="$(sized_files "${SRC}")"
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --udf-version 2.60 </dev/null
+
+  # Assert
+  local revision listed
+  revision="$(udf_revision "${OUT}")"
+  listed="$(udf_files "${OUT}")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${revision}" == "0260" ]]
+  [[ "${listed}" == "${wanted}" ]]
+}
+
+@test "enban build --udf-version 2.60 takes a label and no other field" {
+  # Arrange
+  local version=2.60
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --udf-version "${version}" --preparer Gustavo </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: --udf-version 2.60 writes UDF 2.60 alone, which holds a label and nothing more, so leave out --preparer." ]]
+}
+
+@test "a UDF image refuses a name that holds a tab" {
+  # Arrange
+  printf 'x' >"${SRC}/a${DISK_TEST_TAB:-$'\t'}b.txt"
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --udf-version 2.01 </dev/null
+
+  # Assert
+  local left
+  left="$(leftovers)"
+  [[ "${status}" -eq 1 ]]
+  [[ "${lines[0]}" == "enban: a UDF image cannot take the name a"$'\t'"b.txt, which holds a tab." ]]
+  [[ -z "${left}" ]]
+}
+
+@test "a UDF image refuses a name that holds a line break" {
+  # Arrange
+  printf 'x' >"${SRC}/a"$'\n'"b.txt"
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --udf-version 2.01 </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: a UDF image cannot take a name that holds a line break, and ${SRC} has one."* ]]
+}
+
+@test "a UDF image refuses a character outside Unicode's first plane" {
+  # Arrange
+  printf 'x' >"${SRC}/smile "$'\360\237\230\200'".txt"
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --udf-version 2.01 </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${lines[0]}" == "enban: a UDF image cannot take a name with a character outside Unicode's first plane, such as an emoji." ]]
+}
+
+@test "a UDF image takes folders and files only" {
+  # Arrange
+  mkfifo "${SRC}/pipe"
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --udf-version 2.01 </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${lines[0]}" == "enban: a UDF image takes folders and files, and ${SRC}/pipe is neither." ]]
+}
+
+@test "a UDF image reports a copy that fails and leaves nothing behind" {
+  # Arrange
+  bdmv_tree "${SRC}"
+  disk_test_shim dd 'case " $* " in *" if=/dev/zero "*|*" if='"${WORK}"'/.enban-build"*) exec "$REAL" "$@" ;; esac; exit 1'
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --bdmv </dev/null
+
+  # Assert
+  local left
+  left="$(leftovers)"
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: unable to build ${OUT} from ${SRC}." ]]
+  [[ -z "${left}" ]]
 }
 
 @test "enban build --udf-version 1.02 builds through genisoimage on Linux" {
@@ -1072,19 +1139,6 @@ udf_revision() {
   [[ "${status}" -eq 0 ]]
   [[ "${revision}" == "0102" ]]
   [[ "${lines[2]}" == "File systems  ISO9660, Joliet, UDF 1.02" ]]
-}
-
-@test "enban build on Linux refuses a UDF revision past 1.02" {
-  # Arrange
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS writes every revision"
-  local version=2.01
-
-  # Act
-  run disk_test_run enban build "${SRC}" "${OUT}" --udf-version "${version}" </dev/null
-
-  # Assert
-  [[ "${status}" -eq 1 ]]
-  [[ "${output}" == "enban: --udf-version 2.01 needs macOS, since genisoimage, which builds UDF on Linux, writes 1.02 only." ]]
 }
 
 @test "enban build refuses a UDF revision it does not know" {
@@ -1133,19 +1187,6 @@ udf_revision() {
   # Assert
   [[ "${status}" -eq 1 ]]
   [[ "${output}" == "enban: --bdmv uses UDF 2.50, the revision a Blu-ray player reads." ]]
-}
-
-@test "enban build --udf-version 2.60 takes a label and no other field on macOS" {
-  # Arrange
-  [[ "${ENBAN_TEST_OS}" == "Darwin" ]] || skip "Linux writes UDF 1.02 only"
-  local version=2.60
-
-  # Act
-  run disk_test_run enban build "${SRC}" "${OUT}" --udf-version "${version}" --preparer Gustavo </dev/null
-
-  # Assert
-  [[ "${status}" -eq 1 ]]
-  [[ "${output}" == "enban: --udf-version 2.60 writes UDF 2.60 alone, which holds a label and nothing more, so leave out --preparer." ]]
 }
 
 quoted() {

@@ -34,6 +34,8 @@ DISK_LIB="$(cd "$(dirname "$0")/../lib" && pwd)" || exit 1
 . "${DISK_LIB}/build_bdmv.sh"
 # shellcheck source=SCRIPTDIR/../lib/build_udf.sh
 . "${DISK_LIB}/build_udf.sh"
+# shellcheck source=SCRIPTDIR/../lib/udf_write.sh
+. "${DISK_LIB}/udf_write.sh"
 # shellcheck source=SCRIPTDIR/../lib/erase.sh
 . "${DISK_LIB}/erase.sh"
 # shellcheck source=SCRIPTDIR/../lib/checksum.sh

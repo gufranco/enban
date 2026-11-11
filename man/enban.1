@@ -474,15 +474,14 @@ with mkisofs from cdrtools, since hdiutil writes the files out of order.
 .TP
 .B \-\-bdmv
 Write a BDMV folder at the root as UDF 2.50 alone, which a Blu-ray player
-needs, through newfs_udf on a mounted image. macOS only, since no Linux tool
-writes UDF 2.50 into an image. It takes a label and none of the other build
-fields.
+needs. It takes a label and none of the other build fields.
 .TP
 .BI \-\-udf\-version " v"
-The UDF revision build writes: 1.02, 1.50, 2.00, 2.01, 2.50 or 2.60. macOS
-writes 1.02 and 1.50 beside ISO9660 through hdiutil, and the later revisions
-as UDF alone through newfs_udf, with a label and none of the other build
-fields. Linux writes 1.02 only, since genisoimage builds its UDF.
+The UDF revision build writes: 1.02, 1.50, 2.00, 2.01, 2.50 or 2.60. 1.02 sits
+beside ISO9660, built by hdiutil on macOS and genisoimage on Linux. 1.50 and
+later are written by enban itself as UDF alone, the same on both systems, with
+a label and none of the other build fields; 2.50 and 2.60 keep their metadata
+in a metadata partition, as Blu-ray players expect.
 .TP
 .B \-\-boot\-info\-table
 Write the disc layout into the stored copy of the boot image, as

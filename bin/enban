@@ -43,6 +43,8 @@ DISK_PROG=enban
 . "${DISK_LIB}/build_bdmv.sh"
 # shellcheck source=SCRIPTDIR/../lib/build_udf.sh
 . "${DISK_LIB}/build_udf.sh"
+# shellcheck source=SCRIPTDIR/../lib/udf_write.sh
+. "${DISK_LIB}/udf_write.sh"
 # shellcheck source=SCRIPTDIR/../lib/erase.sh
 . "${DISK_LIB}/erase.sh"
 # shellcheck source=SCRIPTDIR/../lib/checksum.sh
@@ -175,9 +177,9 @@ options:
   --boot-info-table   patch the boot image with the disc layout
   --dvd-video         build lays out VIDEO_TS for a DVD player, with UDF
   --bdmv              build writes a BDMV folder as UDF 2.50 for a Blu-ray
-                      player; macOS only
-  --udf-version V     the UDF revision build writes, 1.02 to 2.60; 2.00 and
-                      later on macOS only, as UDF alone
+                      player
+  --udf-version V     the UDF revision build writes, 1.02 to 2.60; 1.50 and
+                      later as UDF alone
   --full              erase every sector instead of the start of the disc
   --sectors N         how many sectors discovery writes; all free by default
   --csv FILE          where discovery saves its read rate
