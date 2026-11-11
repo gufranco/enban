@@ -381,3 +381,18 @@ options_everywhere() {
   [[ "${status}" -eq 0 ]]
   [[ "${options_status}" -eq 0 ]]
 }
+
+@test "enban help, man page and completions list cue and its options" {
+  # Arrange
+  local command=cue
+
+  # Act
+  run command_everywhere "${command}"
+
+  # Assert
+  local options_status
+  options_status=0
+  options_everywhere title performer pregap || options_status=$?
+  [[ "${status}" -eq 0 ]]
+  [[ "${options_status}" -eq 0 ]]
+}

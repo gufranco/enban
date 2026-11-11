@@ -43,6 +43,8 @@ DISK_PROG=enban
 . "${DISK_LIB}/discovery.sh"
 # shellcheck source=SCRIPTDIR/../lib/sector.sh
 . "${DISK_LIB}/sector.sh"
+# shellcheck source=SCRIPTDIR/../lib/cue.sh
+. "${DISK_LIB}/cue.sh"
 # shellcheck source=SCRIPTDIR/../lib/settings.sh
 . "${DISK_LIB}/settings.sh"
 # shellcheck source=SCRIPTDIR/../lib/settings_tab.sh
@@ -98,6 +100,7 @@ usage:
   enban discovery --drive DRIVE       fill a blank disc with test data, read it
   enban sector IMAGE [--lba N]        show one sector as hex and text
   enban sector --drive DRIVE          the same for the disc in the drive
+  enban cue CUE TRACK.wav...          write a CUE sheet for an audio CD
   enban doctor                        check the tools enban needs
   enban version                       print the version
   enban help                          print this page
@@ -116,6 +119,9 @@ options:
   --sectors N         how many sectors discovery writes; all free by default
   --csv FILE          where discovery saves its read rate
   --lba N             the sector sector shows; 0 by default
+  --title TEXT        the album title cue writes as CD-TEXT
+  --performer TEXT    the performer cue writes as CD-TEXT
+  --pregap SECONDS    the gap cue puts before each track after the first; 2
   --theme NAME        colours of the terminal interface, see notes
 
 notes:
@@ -145,7 +151,8 @@ notes:
   name, reads it back in a hundred stretches, compares every sector and saves
   the read rate of each stretch as CSV, under the data folder unless --csv
   names a file. sector shows the 2048 bytes of one sector and decodes a
-  primary volume descriptor.
+  primary volume descriptor. cue checks that every track is CD audio, 44100
+  Hz, 16-bit and stereo, and that the album fits the 80 minutes of a CD-R.
 
   The app draws in the terminal's alternate screen and gives the screen back
   when it ends, on q or on an interrupt. Tab and the digits switch tabs, the
@@ -192,6 +199,7 @@ examples:
   enban queue family.queue
   enban discovery --drive /dev/sr0 --speed 8
   enban sector debian.iso --lba 16
+  enban cue album.cue 01.wav 02.wav --title "Trip 2024"
   enban doctor
 USAGE
 }
@@ -222,6 +230,9 @@ disk_option_value() {
   --sectors) DISK_DISCOVERY_SECTORS="$2" ;;
   --csv) DISK_DISCOVERY_CSV="$2" ;;
   --lba) DISK_SECTOR_LBA="$2" ;;
+  --title) DISK_CUE_TITLE="$2" ;;
+  --performer) DISK_CUE_PERFORMER="$2" ;;
+  --pregap) DISK_CUE_PREGAP="$2" ;;
   --label) DISK_BUILD_LABEL="$2" ;;
   *) DISK_DRIVE="$2" ;;
   esac
@@ -243,13 +254,14 @@ disk_option_seen() {
   --full) DISK_ERASE_OPTION="$1" ;;
   --sectors | --csv) DISK_DISCOVERY_OPTION="${DISK_DISCOVERY_OPTION:-$1}" ;;
   --lba) DISK_SECTOR_OPTION="$1" ;;
+  --title | --performer | --pregap) DISK_CUE_OPTION="${DISK_CUE_OPTION:-$1}" ;;
   *) ;;
   esac
   return 0
 }
 
 disk_options() {
-  DISK_VALUE_OPTIONS="--drive --speed --fs --label --sectors --csv --lba"
+  DISK_VALUE_OPTIONS="--drive --speed --fs --label --sectors --csv --lba --title --performer --pregap"
   disk_op_room="$1"
   shift
   disk_op_left="$#"
@@ -279,6 +291,7 @@ disk_option_operand() {
   else
     DISK_OPERAND_TWO="$1"
   fi
+  DISK_OPERAND_LIST="$(printf '%s\n%s\n' "${DISK_OPERAND_LIST}" "$1" | sed '/^$/d')"
   disk_op_room=$((disk_op_room - 1))
 }
 
@@ -294,6 +307,7 @@ disk_only_for() {
   disk_option_owner "$1" "${DISK_ERASE_OPTION}" erase erase || return 1
   disk_option_owner "$1" "${DISK_DISCOVERY_OPTION}" discovery discovery || return 1
   disk_option_owner "$1" "${DISK_SECTOR_OPTION}" sector sector || return 1
+  disk_option_owner "$1" "${DISK_CUE_OPTION}" cue cue || return 1
   disk_option_owner "$1" "${DISK_VERIFY_OPTION}" "write read queue" "write, read and queue"
 }
 
@@ -437,6 +451,18 @@ disk_sector() {
   disk_sector_run
 }
 
+disk_cue() {
+  disk_options 999 "$@" || return 1
+  disk_only_for cue || return 1
+  if [ -z "${DISK_OPERAND_TWO}" ]; then
+    disk_cli_hint "cue needs a CUE file to create and at least one WAV track"
+    return 1
+  fi
+  DISK_CUE_OUT="${DISK_OPERAND}"
+  DISK_CUE_TRACKS="$(printf '%s\n' "${DISK_OPERAND_LIST}" | sed '1d')"
+  disk_cue_run
+}
+
 disk_one_source() {
   if [ -n "${DISK_OPERAND}" ] && [ -n "${DISK_DRIVE}" ]; then
     disk_cli_hint "$1 takes an image or --drive, not both"
@@ -543,6 +569,10 @@ disk_route() {
   sector)
     shift
     disk_sector "$@"
+    ;;
+  cue)
+    shift
+    disk_cue "$@"
     ;;
   '') disk_open ;;
   -*) disk_app_start "$@" ;;

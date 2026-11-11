@@ -60,6 +60,16 @@ enban \- write, read, build and verify CD, DVD and Blu-ray discs
 .RB [ \-\-lba
 .IR n ]
 .br
+.B enban cue
+.I cue track
+.IR ...
+.RB [ \-\-title
+.IR text ]
+.RB [ \-\-performer
+.IR text ]
+.RB [ \-\-pregap
+.IR seconds ]
+.br
 .B enban discovery
 .BI \-\-drive " drive"
 .RB [ \-\-sectors
@@ -227,6 +237,14 @@ or of the disc in the drive as hex and text, LBA 0 unless
 .B \-\-lba
 names another, and decode a primary volume descriptor.
 .TP
+.B cue
+Write a CUE sheet for an audio CD to
+.IR cue ,
+one track for each WAV
+.IR track ,
+with CD-TEXT titles from the file names. Every track must be CD audio, 44100 Hz,
+16-bit and stereo, and the album must fit the 80 minutes of a CD-R.
+.TP
 .B doctor
 List the tools enban needs and whether each is installed. Exits non-zero only
 when a required tool is missing.
@@ -281,6 +299,15 @@ How many sectors discovery writes; all free sectors by default.
 .TP
 .BI \-\-lba " n"
 The sector that sector shows; 0 by default.
+.TP
+.BI \-\-title " text"
+The album title cue writes as CD-TEXT.
+.TP
+.BI \-\-performer " text"
+The performer cue writes as CD-TEXT.
+.TP
+.BI \-\-pregap " seconds"
+The gap cue puts before every track after the first; 2 by default.
 .TP
 .BI \-\-csv " file"
 Where discovery saves the read rate; a new file under

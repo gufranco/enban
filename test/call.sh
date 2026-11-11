@@ -34,6 +34,8 @@ DISK_LIB="$(cd "$(dirname "$0")/../lib" && pwd)" || exit 1
 . "${DISK_LIB}/discovery.sh"
 # shellcheck source=SCRIPTDIR/../lib/sector.sh
 . "${DISK_LIB}/sector.sh"
+# shellcheck source=SCRIPTDIR/../lib/cue.sh
+. "${DISK_LIB}/cue.sh"
 # shellcheck source=SCRIPTDIR/../lib/settings.sh
 . "${DISK_LIB}/settings.sh"
 # shellcheck source=SCRIPTDIR/../lib/settings_tab.sh
