@@ -298,9 +298,8 @@ pvd_field() {
   printf '%s' "${raw%"${raw##*[! ]}"}"
 }
 
-@test "enban build records every identifier and the date on Linux, the names in capitals" {
+@test "enban build records every identifier and the date, the names in capitals" {
   # Arrange
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS builds with hdiutil, which has no such fields"
   local -a ids=(--publisher "Franco Family" --preparer Gustavo --application enban
     --system-id Linux --volume-set "Family 2009" --date 20091224180000 --iso-level 3)
 
@@ -351,17 +350,32 @@ pvd_field() {
   [[ "${lines[3]}" == "Publisher     FRANCO" ]]
 }
 
-@test "enban build on macOS refuses a field hdiutil cannot write" {
+@test "enban build on macOS needs xorriso for a field hdiutil cannot write" {
   # Arrange
-  [[ "${ENBAN_TEST_OS}" == "Darwin" ]] || skip "Linux writes it with xorriso"
-  local option=--system-id
+  [[ "${ENBAN_TEST_OS}" == "Darwin" ]] || skip "Linux always builds with xorriso"
+  local farm
+  farm="$(disk_test_farm xorriso)"
 
   # Act
-  run disk_test_run enban build "${SRC}" "${OUT}" "${option}" MACOS </dev/null
+  run disk_test_run_path "${farm}" enban build "${SRC}" "${OUT}" --fs iso9660,joliet --system-id MACOS </dev/null
 
   # Assert
   [[ "${status}" -eq 1 ]]
-  [[ "${output}" == "enban: --system-id needs xorriso, and macOS builds with hdiutil makehybrid, which has no such field." ]]
+  [[ "${output}" == "enban: --system-id on macOS needs xorriso, since hdiutil makehybrid has no such field. install it with brew install xorriso." ]]
+  [[ ! -e "${OUT}" ]]
+}
+
+@test "enban build on macOS refuses UDF with a field only xorriso writes" {
+  # Arrange
+  [[ "${ENBAN_TEST_OS}" == "Darwin" ]] || skip "Linux builds UDF with genisoimage"
+  local option=--iso-level
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" "${option}" 2 </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: --iso-level on macOS is built with xorriso, which writes no UDF. leave udf out of --fs." ]]
   [[ ! -e "${OUT}" ]]
 }
 
@@ -426,6 +440,271 @@ pvd_field() {
   # Assert
   [[ "${status}" -eq 1 ]]
   [[ "${output}" == "enban: option '--publisher' works only with build. run 'enban help' for usage." ]]
+}
+
+boot_entry() {
+  local catalog platform media count
+  catalog="$(od -An -tu4 -j $((17 * 2048 + 71)) -N 4 "$1")"
+  catalog="${catalog//[[:space:]]/}"
+  platform="$(od -An -tx1 -j $((catalog * 2048 + 1)) -N 1 "$1")"
+  media="$(od -An -tx1 -j $((catalog * 2048 + 32)) -N 2 "$1")"
+  count="$(od -An -tu2 -j $((catalog * 2048 + 38)) -N 2 "$1")"
+  printf '%s %s %s' "${platform//[[:space:]]/}" "${media//[[:space:]]/}" "${count//[[:space:]]/}"
+}
+
+boot_table() {
+  local catalog lba pvd
+  catalog="$(od -An -tu4 -j $((17 * 2048 + 71)) -N 4 "$1")"
+  catalog="${catalog//[[:space:]]/}"
+  lba="$(od -An -tu4 -j $((catalog * 2048 + 40)) -N 4 "$1")"
+  lba="${lba//[[:space:]]/}"
+  pvd="$(od -An -tu4 -j $((lba * 2048 + 8)) -N 4 "$1")"
+  printf '%s' "${pvd//[[:space:]]/}"
+}
+
+mbr_image() {
+  head -c 1048576 /dev/zero >"$1"
+  printf '\200\000\002\000\006\037\077\000\001\000\000\000\377\007\000\000' | dd of="$1" bs=1 seek=446 conv=notrunc 2>/dev/null
+  printf '\125\252' | dd of="$1" bs=1 seek=510 conv=notrunc 2>/dev/null
+}
+
+@test "enban build makes a bootable image and keeps the boot file hidden and unchanged" {
+  # Arrange
+  local wanted
+  head -c 2048 /dev/urandom >"${WORK}/boot.bin"
+  cp -f "${WORK}/boot.bin" "${WORK}/boot.orig"
+  wanted="$(sized_files "${SRC}")"
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --fs iso9660,joliet --boot "${WORK}/boot.bin" </dev/null
+
+  # Assert
+  local entry listed
+  entry="$(boot_entry "${OUT}")"
+  listed="$(image_files "${OUT}")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${entry}" == "00 8800 4" ]]
+  [[ "${listed}" == "${wanted}" ]]
+  cmp -s "${WORK}/boot.bin" "${WORK}/boot.orig"
+  [[ "${lines[3]}" == "Boot          boot.bin, no emulation, x86" ]]
+  [[ ! -e "${OUT}.boot" ]]
+}
+
+@test "enban build boots a floppy image with floppy emulation" {
+  # Arrange
+  head -c 1474560 /dev/zero >"${WORK}/floppy.img"
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --fs iso9660 --boot "${WORK}/floppy.img" --emulation floppy </dev/null
+
+  # Assert
+  local entry
+  entry="$(boot_entry "${OUT}")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${entry}" == "00 8802 1" ]]
+  [[ "${lines[3]}" == "Boot          floppy.img, floppy emulation, x86" ]]
+}
+
+@test "enban build boots a disk image with hard disk emulation" {
+  # Arrange
+  mbr_image "${WORK}/disk.img"
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --fs iso9660 --boot "${WORK}/disk.img" --emulation hard-disk </dev/null
+
+  # Assert
+  local entry
+  entry="$(boot_entry "${OUT}")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${entry}" == "00 8804 1" ]]
+  [[ "${lines[3]}" == "Boot          disk.img, hard disk emulation, x86" ]]
+}
+
+@test "enban build sets the platform, the sectors to load and the boot info table" {
+  # Arrange
+  head -c 4096 /dev/zero >"${WORK}/boot.bin"
+  local -a entry_options=(--boot "${WORK}/boot.bin" --platform mac --load-sectors 8 --boot-info-table)
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --fs iso9660 "${entry_options[@]}" </dev/null
+
+  # Assert
+  local entry table source
+  entry="$(boot_entry "${OUT}")"
+  table="$(boot_table "${OUT}")"
+  source="$(od -An -tu4 -j 8 -N 4 "${WORK}/boot.bin")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${entry}" == "02 8800 8" ]]
+  [[ "${table}" == "16" ]]
+  [[ "${source//[[:space:]]/}" == "0" ]]
+}
+
+@test "enban build boots PowerPC" {
+  # Arrange
+  head -c 2048 /dev/zero >"${WORK}/boot.bin"
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --fs iso9660 --boot "${WORK}/boot.bin" --platform ppc </dev/null
+
+  # Assert
+  local entry
+  entry="$(boot_entry "${OUT}")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${entry}" == "01 8800 4" ]]
+}
+
+@test "enban build makes a bootable UDF image for EFI on Linux" {
+  # Arrange
+  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS boots through xorriso, which writes no UDF"
+  local wanted
+  head -c 2048 /dev/zero >"${WORK}/boot.bin"
+  wanted="$(sized_files "${SRC}")"
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --boot "${WORK}/boot.bin" --platform efi </dev/null
+
+  # Assert
+  local entry listed kinds
+  entry="$(boot_entry "${OUT}")"
+  listed="$(image_files "${OUT}")"
+  kinds="$(descriptors "${OUT}")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${entry}" == "ef 8800 4" ]]
+  [[ "${listed}" == "${wanted}" ]]
+  [[ "${kinds}" == "joliet udf " ]]
+}
+
+@test "enban build on Linux refuses PowerPC with UDF" {
+  # Arrange
+  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS refuses UDF with any boot image"
+  head -c 2048 /dev/zero >"${WORK}/boot.bin"
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --boot "${WORK}/boot.bin" --platform ppc </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: --platform ppc needs xorriso, and a UDF image on Linux is built with genisoimage, which boots x86 and efi only. leave udf out of --fs." ]]
+}
+
+@test "enban build needs --boot for a boot entry option" {
+  # Arrange
+  local option=--emulation
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" "${option}" floppy </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: --emulation needs --boot FILE, the boot image." ]]
+}
+
+@test "enban build stops when the boot image is not there" {
+  # Arrange
+  local boot="${WORK}/none.bin"
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --boot "${boot}" </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: no boot image to read at ${boot}." ]]
+}
+
+@test "enban build refuses an emulation it does not know" {
+  # Arrange
+  head -c 2048 /dev/zero >"${WORK}/boot.bin"
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --boot "${WORK}/boot.bin" --emulation zip </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: --emulation takes none, floppy or hard-disk, got: zip" ]]
+}
+
+@test "enban build refuses a floppy image of the wrong size" {
+  # Arrange
+  head -c 2048 /dev/zero >"${WORK}/boot.bin"
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --boot "${WORK}/boot.bin" --emulation floppy </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: a floppy boot image holds 1228800, 1474560 or 2949120 bytes, and ${WORK}/boot.bin holds 2048." ]]
+}
+
+@test "enban build refuses a hard disk image with no master boot record" {
+  # Arrange
+  head -c 4096 /dev/zero >"${WORK}/boot.bin"
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --boot "${WORK}/boot.bin" --emulation hard-disk </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: a hard disk boot image starts with a master boot record, and ${WORK}/boot.bin has none." ]]
+}
+
+@test "enban build refuses a platform it does not know" {
+  # Arrange
+  head -c 2048 /dev/zero >"${WORK}/boot.bin"
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --boot "${WORK}/boot.bin" --platform arm </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: --platform takes x86, efi, ppc or mac, got: arm" ]]
+}
+
+@test "enban build loads sectors only with no emulation" {
+  # Arrange
+  head -c 1474560 /dev/zero >"${WORK}/floppy.img"
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --boot "${WORK}/floppy.img" --emulation floppy --load-sectors 4 </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: --load-sectors works with --emulation none; a floppy or hard disk image is loaded whole." ]]
+}
+
+@test "enban build refuses more than 65535 sectors to load" {
+  # Arrange
+  head -c 2048 /dev/zero >"${WORK}/boot.bin"
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --boot "${WORK}/boot.bin" --load-sectors 70000 </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: --load-sectors takes a whole number from 1 to 65535, got: 70000" ]]
+}
+
+@test "enban build refuses sectors to load that are not a number" {
+  # Arrange
+  head -c 2048 /dev/zero >"${WORK}/boot.bin"
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --boot "${WORK}/boot.bin" --load-sectors 4k </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: --load-sectors takes a whole number from 1 to 65535, got: 4k" ]]
+}
+
+@test "write refuses --boot, which only build takes" {
+  # Arrange
+  local option=--boot
+
+  # Act
+  run disk_test_run enban write "${OUT}" --drive /dev/sr0 "${option}" boot.bin </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: option '--boot' works only with build. run 'enban help' for usage." ]]
 }
 
 quoted() {

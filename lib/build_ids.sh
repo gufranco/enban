@@ -30,14 +30,30 @@ disk_build_ids_level() {
   esac
 }
 
-disk_build_ids_mac() {
+disk_build_mac_option() {
+  for disk_bp_pair in "--boot:${DISK_BUILD_BOOT}" "--system-id:${DISK_BUILD_SYSTEM}" "--volume-set:${DISK_BUILD_VOLSET}" "--date:${DISK_BUILD_DATE}" "--iso-level:${DISK_BUILD_LEVEL}"; do
+    [ -z "${disk_bp_pair#*:}" ] && continue
+    printf '%s\n' "${disk_bp_pair%%:*}"
+    return 0
+  done
+}
+
+disk_build_mac_tool() {
+  DISK_BUILD_XORRISO=n
   disk_bq_os="$(disk_os)"
   [ "${disk_bq_os}" = Darwin ] || return 0
-  for disk_bq_pair in "--system-id:${DISK_BUILD_SYSTEM}" "--volume-set:${DISK_BUILD_VOLSET}" "--date:${DISK_BUILD_DATE}" "--iso-level:${DISK_BUILD_LEVEL}"; do
-    [ -z "${disk_bq_pair#*:}" ] && continue
-    disk_error "${disk_bq_pair%%:*} needs xorriso, and macOS builds with hdiutil makehybrid, which has no such field."
+  disk_bq_option="$(disk_build_mac_option)"
+  [ -n "${disk_bq_option}" ] || return 0
+  if [ "${DISK_BUILD_UDF}" = y ]; then
+    disk_error "${disk_bq_option} on macOS is built with xorriso, which writes no UDF. leave udf out of --fs."
     return 1
-  done
+  fi
+  if command -v xorriso >/dev/null 2>&1; then
+    DISK_BUILD_XORRISO=y
+    return 0
+  fi
+  disk_error "${disk_bq_option} on macOS needs xorriso, since hdiutil makehybrid has no such field. install it with brew install xorriso."
+  return 1
 }
 
 disk_build_ids_udf() {
@@ -65,8 +81,6 @@ disk_build_ids_check() {
   disk_build_ids_fits --volume-set "${DISK_BUILD_VOLSET}" 128 || return 1
   disk_build_ids_date || return 1
   disk_build_ids_level || return 1
-  disk_build_ids_mac || return 1
-  disk_build_ids_udf || return 1
   disk_build_ids_case
 }
 

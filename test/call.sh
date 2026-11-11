@@ -26,6 +26,8 @@ DISK_LIB="$(cd "$(dirname "$0")/../lib" && pwd)" || exit 1
 . "${DISK_LIB}/build.sh"
 # shellcheck source=SCRIPTDIR/../lib/build_ids.sh
 . "${DISK_LIB}/build_ids.sh"
+# shellcheck source=SCRIPTDIR/../lib/build_boot.sh
+. "${DISK_LIB}/build_boot.sh"
 # shellcheck source=SCRIPTDIR/../lib/erase.sh
 . "${DISK_LIB}/erase.sh"
 # shellcheck source=SCRIPTDIR/../lib/checksum.sh

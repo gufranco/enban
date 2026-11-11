@@ -438,3 +438,63 @@ answers() {
   [[ "${status}" -eq 0 ]]
   [[ "${shown}" == *"Publisher     FRANCO"*"Done. ${OUT} is built from 1 entry."* ]]
 }
+
+@test "Enter on Boot picks the boot image and refuses a file that is not there" {
+  # Arrange
+  head -c 2048 /dev/zero >"${WORK}/boot.bin"
+  answers "${WORK}/none.bin" "${WORK}/boot.bin"
+
+  # Act
+  run on_terminal '3\033[B\033[B\033[B\033[B\033[B\033[B\n\nq'
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"> Boot       ${WORK}/boot.bin"* ]]
+  [[ "${shown}" == *"There is no file at ${WORK}/none.bin."* ]]
+}
+
+@test "Enter on Emulation steps through none, floppy and hard disk" {
+  # Arrange
+  local keys='3\033[B\033[B\033[B\033[B\033[B\033[B\033[B\n\n\nq'
+
+  # Act
+  run on_terminal "${keys}"
+
+  # Assert
+  local shown final
+  shown="$(screen)"
+  final="$(last_frame)"
+  [[ "${shown}" == *"> Emulation  floppy"*"> Emulation  hard-disk"* ]]
+  [[ "${final}" == *"> Emulation  none"* ]]
+}
+
+@test "Enter on Platform steps through x86, efi, ppc and mac" {
+  # Arrange
+  local keys='3\033[B\033[B\033[B\033[B\033[B\033[B\033[B\033[B\n\n\n\nq'
+
+  # Act
+  run on_terminal "${keys}"
+
+  # Assert
+  local shown final
+  shown="$(screen)"
+  final="$(last_frame)"
+  [[ "${shown}" == *"> Platform   efi"*"> Platform   ppc"*"> Platform   mac"* ]]
+  [[ "${final}" == *"> Platform   x86"* ]]
+}
+
+@test "b builds a bootable image from the Boot field" {
+  # Arrange
+  head -c 2048 /dev/zero >"${WORK}/boot.bin"
+  answers "${SRC}" "${OUT}" "${WORK}/boot.bin"
+
+  # Act
+  run on_terminal_in_steps '3f\033[B\n\033[B\033[B\n\033[B\033[B\033[B\033[B\nb' 'is built from' 'q'
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${status}" -eq 0 ]]
+  [[ "${shown}" == *"Boot          boot.bin, no emulation, x86"*"Done. ${OUT} is built from 1 entry."* ]]
+}

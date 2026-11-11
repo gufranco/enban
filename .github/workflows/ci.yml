@@ -218,7 +218,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Install shells and tools
-        run: brew install --formula bats-core bash dash-shell zsh parallel gum
+        run: brew install --formula bats-core bash dash-shell zsh parallel gum xorriso
       - name: Install the Homebrew toolset
         if: matrix.toolset == 'homebrew'
         run: brew install --formula coreutils findutils gnu-sed gawk grep diffutils perl

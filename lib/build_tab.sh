@@ -8,7 +8,7 @@ disk_build_tab_key() {
   disk_bk_count="$(disk_build_tab_count)"
   case "$1" in
   up) [ "${DISK_APP_B_FOCUS}" -le 0 ] || DISK_APP_B_FOCUS=$((DISK_APP_B_FOCUS - 1)) ;;
-  down) [ "${DISK_APP_B_FOCUS}" -ge $((disk_bk_count + 5)) ] || DISK_APP_B_FOCUS=$((DISK_APP_B_FOCUS + 1)) ;;
+  down) [ "${DISK_APP_B_FOCUS}" -ge $((disk_bk_count + 8)) ] || DISK_APP_B_FOCUS=$((DISK_APP_B_FOCUS + 1)) ;;
   a) disk_build_tab_add file ;;
   f) disk_build_tab_add folder ;;
   x) disk_build_tab_remove "${disk_bk_count}" ;;
@@ -116,6 +116,9 @@ disk_build_tab_edit() {
     DISK_APP_B_PUBLISHER="${DISK_APP_ANSWER}"
     ;;
   5) disk_build_tab_date ;;
+  6) disk_build_tab_boot ;;
+  7) DISK_APP_B_EMULATION="$(disk_build_tab_next_emulation "${DISK_APP_B_EMULATION}")" ;;
+  8) DISK_APP_B_PLATFORM="$(disk_build_tab_next_platform "${DISK_APP_B_PLATFORM}")" ;;
   *) return 0 ;;
   esac
   disk_build_tab_refresh
@@ -126,6 +129,32 @@ disk_build_tab_date() {
   case "${DISK_APP_ANSWER}" in
   '' | [12][0-9][0-9][0-9][01][0-9][0-3][0-9][0-2][0-9][0-5][0-9][0-5][0-9]) DISK_APP_B_DATE="${DISK_APP_ANSWER}" ;;
   *) DISK_APP_STATUS="The date must be YYYYMMDDhhmmss, such as 20091224180000." ;;
+  esac
+}
+
+disk_build_tab_boot() {
+  disk_app_ask "Boot image file, empty for none" "boot.img"
+  if [ -z "${DISK_APP_ANSWER}" ] || [ -f "${DISK_APP_ANSWER}" ]; then
+    DISK_APP_B_BOOT="${DISK_APP_ANSWER}"
+    return 0
+  fi
+  DISK_APP_STATUS="There is no file at ${DISK_APP_ANSWER}."
+}
+
+disk_build_tab_next_emulation() {
+  case "$1" in
+  none) printf 'floppy\n' ;;
+  floppy) printf 'hard-disk\n' ;;
+  *) printf 'none\n' ;;
+  esac
+}
+
+disk_build_tab_next_platform() {
+  case "$1" in
+  x86) printf 'efi\n' ;;
+  efi) printf 'ppc\n' ;;
+  ppc) printf 'mac\n' ;;
+  *) printf 'x86\n' ;;
   esac
 }
 
@@ -176,6 +205,9 @@ disk_build_tab_start() {
   DISK_BUILD_LABEL="${DISK_APP_B_LABEL}"
   DISK_BUILD_PUBLISHER="${DISK_APP_B_PUBLISHER}"
   DISK_BUILD_DATE="${DISK_APP_B_DATE}"
+  DISK_BUILD_BOOT="${DISK_APP_B_BOOT}"
+  DISK_BUILD_EMULATION="${DISK_APP_B_EMULATION}"
+  DISK_BUILD_PLATFORM="${DISK_APP_B_PLATFORM}"
   case "${DISK_APP_B_TARGET}" in
   disc) disk_build_tab_to_disc ;;
   *) disk_build_tab_to_image ;;

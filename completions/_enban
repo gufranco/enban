@@ -51,6 +51,11 @@ _enban() {
     '--volume-set[the volume set build records]:volume set:' \
     '--date[the volume dates build records, YYYYMMDDhhmmss UTC]:date:' \
     '--iso-level[the ISO 9660 level build follows]:level:(1 2 3 4)' \
+    '--boot[the El Torito boot image]:boot image:_files' \
+    '--emulation[how the boot image starts]:emulation:(none floppy hard-disk)' \
+    '--platform[the system the disc boots]:platform:(x86 efi ppc mac)' \
+    '--load-sectors[sectors the firmware loads with no emulation]:sectors:' \
+    '--boot-info-table[write the disc layout into the boot image copy]' \
     '--full[erase every sector]' \
     '--sectors[how many sectors discovery writes]:sectors:' \
     '--csv[where discovery saves its read rate]:file:_files' \

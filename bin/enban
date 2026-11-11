@@ -35,6 +35,8 @@ DISK_PROG=enban
 . "${DISK_LIB}/build.sh"
 # shellcheck source=SCRIPTDIR/../lib/build_ids.sh
 . "${DISK_LIB}/build_ids.sh"
+# shellcheck source=SCRIPTDIR/../lib/build_boot.sh
+. "${DISK_LIB}/build_boot.sh"
 # shellcheck source=SCRIPTDIR/../lib/erase.sh
 . "${DISK_LIB}/erase.sh"
 # shellcheck source=SCRIPTDIR/../lib/checksum.sh
@@ -154,11 +156,17 @@ options:
   --publisher TEXT    the publisher build records, in capitals
   --preparer TEXT     who prepared the image, in capitals
   --application TEXT  the application build records, in capitals
-  --system-id TEXT    the system build records, in capitals; Linux only
-  --volume-set TEXT   the volume set build records; Linux only
+  --system-id TEXT    the system build records, in capitals
+  --volume-set TEXT   the volume set build records
   --date STAMP        the volume dates build records, YYYYMMDDhhmmss UTC;
-                      Linux only, without UDF
-  --iso-level N       the ISO 9660 level build follows, 1 to 4; Linux only
+                      not with UDF
+  --iso-level N       the ISO 9660 level build follows, 1 to 4
+  --boot FILE         build makes the disc bootable with this El Torito image
+  --emulation MODE    how the boot image starts: none, floppy or hard-disk;
+                      none by default
+  --platform NAME     the system the disc boots: x86, efi, ppc or mac; x86
+  --load-sectors N    the 512-byte sectors the BIOS loads with no emulation; 4
+  --boot-info-table   patch the boot image with the disc layout
   --full              erase every sector instead of the start of the disc
   --sectors N         how many sectors discovery writes; all free by default
   --csv FILE          where discovery saves its read rate
@@ -304,6 +312,7 @@ disk_option_flag() {
   --opc) DISK_WRITE_OPC=y ;;
   --ignore-errors) DISK_READ_IGNORE=y ;;
   --cue) DISK_READ_CUE=y ;;
+  --boot-info-table) DISK_BUILD_INFO=y ;;
   --ignore-miscompares) DISK_VERIFY_IGNORE=y ;;
   *) return 1 ;;
   esac
@@ -332,6 +341,10 @@ disk_option_value() {
   --volume-set) DISK_BUILD_VOLSET="$2" ;;
   --date) DISK_BUILD_DATE="$2" ;;
   --iso-level) DISK_BUILD_LEVEL="$2" ;;
+  --boot) DISK_BUILD_BOOT="$2" ;;
+  --emulation) DISK_BUILD_EMULATION="$2" ;;
+  --platform) DISK_BUILD_PLATFORM="$2" ;;
+  --load-sectors) DISK_BUILD_LOAD="$2" ;;
   *) DISK_DRIVE="$2" ;;
   esac
   disk_option_seen "$1"
@@ -348,7 +361,11 @@ disk_option_seen() {
     [ -z "${DISK_VERIFY_OPTION}" ] || [ "${DISK_VERIFY_OPTION}" = "$1" ] || DISK_VERIFY_CLASH=y
     DISK_VERIFY_OPTION="$1"
     ;;
-  --fs | --label | --publisher | --preparer | --application | --system-id | --volume-set | --date | --iso-level) DISK_BUILD_OPTION="${DISK_BUILD_OPTION:-$1}" ;;
+  --fs | --label | --publisher | --preparer | --application | --system-id | --volume-set | --date | --iso-level | --boot) DISK_BUILD_OPTION="${DISK_BUILD_OPTION:-$1}" ;;
+  --emulation | --platform | --load-sectors | --boot-info-table)
+    DISK_BUILD_OPTION="${DISK_BUILD_OPTION:-$1}"
+    DISK_BOOT_OPTION="${DISK_BOOT_OPTION:-$1}"
+    ;;
   --full) DISK_ERASE_OPTION="$1" ;;
   --sectors | --csv) DISK_DISCOVERY_OPTION="${DISK_DISCOVERY_OPTION:-$1}" ;;
   --lba | --raw) DISK_SECTOR_OPTION="${DISK_SECTOR_OPTION:-$1}" ;;
@@ -366,7 +383,7 @@ disk_option_seen() {
 }
 
 disk_options() {
-  DISK_VALUE_OPTIONS="--drive --speed --copies --mode --retries --publisher --preparer --application --system-id --volume-set --date --iso-level --fs --label --sectors --csv --lba --title --performer --pregap --set"
+  DISK_VALUE_OPTIONS="--drive --speed --copies --mode --retries --publisher --preparer --application --system-id --volume-set --date --iso-level --boot --emulation --platform --load-sectors --fs --label --sectors --csv --lba --title --performer --pregap --set"
   disk_op_room="$1"
   shift
   disk_op_left="$#"

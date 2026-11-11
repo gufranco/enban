@@ -41,6 +41,8 @@ enban \- write, read, build and verify CD, DVD and Blu-ray discs
 .IR stamp ]
 .RB [ \-\-iso\-level
 .IR n ]
+.RB [ \-\-boot
+.IR file ]
 .br
 .B enban erase
 .BI \-\-drive " drive"
@@ -240,9 +242,21 @@ with genisoimage when UDF is asked for. The volume name is the folder's, or
 .BR \-\-label ,
 in the letters ISO9660 allows. It never overwrites a file.
 The publisher, preparer, application and system are recorded in capitals,
-as ISO9660 asks. macOS records the publisher, preparer and application
-only, and refuses the other identifiers, since hdiutil has no field for
-them.
+as ISO9660 asks. hdiutil has no field for the system, volume set, dates,
+ISO level or boot image, so macOS builds with xorriso when one of those is
+asked for, and then writes no UDF.
+.IP
+With
+.BR \-\-boot ,
+the image boots through El Torito. The boot image is stored hidden, the file
+itself is never changed, and
+.BR \-\-emulation ,
+.BR \-\-platform ,
+.B \-\-load\-sectors
+and
+.B \-\-boot\-info\-table
+shape the boot entry. A UDF image on Linux, built with genisoimage, boots
+x86 and efi only.
 .TP
 .B erase
 Blank a rewritable disc that holds data: CD-RW, DVD-RW, DVD+RW, DVD-RAM or
@@ -411,18 +425,47 @@ Who prepared the image, up to 128 characters.
 The application build records, up to 128 characters.
 .TP
 .BI \-\-system\-id " text"
-The system build records, up to 32 characters. Linux only.
+The system build records, up to 32 characters.
 .TP
 .BI \-\-volume\-set " text"
-The volume set build records, up to 128 characters. Linux only.
+The volume set build records, up to 128 characters.
 .TP
 .BI \-\-date " stamp"
 The creation and modification dates build records, as YYYYMMDDhhmmss in
-UTC. The time the image is built by default. Linux only, and not with UDF,
-which genisoimage builds without this option.
+UTC. The time the image is built by default. Not with UDF, which
+genisoimage builds on Linux and xorriso cannot write on macOS.
 .TP
 .BI \-\-iso\-level " n"
-The ISO9660 level build follows, 1 to 4. Linux only.
+The ISO9660 level build follows, 1 to 4.
+.TP
+.BI \-\-boot " file"
+The El Torito boot image that makes the disc bootable.
+.TP
+.BI \-\-emulation " mode"
+How the boot image starts:
+.B none
+by default,
+.B floppy
+for a 1.2, 1.44 or 2.88 MB floppy image, or
+.B hard\-disk
+for an image that starts with a master boot record.
+.TP
+.BI \-\-platform " name"
+The system the disc boots:
+.B x86
+by default,
+.BR efi ,
+.B ppc
+or
+.BR mac .
+.TP
+.BI \-\-load\-sectors " n"
+The 512-byte sectors the firmware loads with no emulation, 1 to 65535; 4 by
+default.
+.TP
+.B \-\-boot\-info\-table
+Write the disc layout into the stored copy of the boot image, as
+isolinux expects.
 .TP
 .B \-\-full
 Erase every sector of the disc instead of only its start.

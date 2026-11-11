@@ -78,7 +78,7 @@ disk_job_cancelled() {
 disk_job_drop_part() {
   [ -f "${DISK_JOB_NOTE}" ] || return 0
   disk_jd_part="$(cat "${DISK_JOB_NOTE}")"
-  rm -rf "${disk_jd_part}" "${disk_jd_part}.iso" "${disk_jd_part}.stage" "${disk_jd_part}.grafts"
+  rm -rf "${disk_jd_part}" "${disk_jd_part}.iso" "${disk_jd_part}.stage" "${disk_jd_part}.grafts" "${disk_jd_part}.boot"
 }
 
 disk_job_tree() {

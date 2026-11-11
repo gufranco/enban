@@ -121,6 +121,7 @@ disk_doctor_platform() {
   Darwin)
     disk_doctor_tool drutil "talks to the optical drive" || disk_dp_status=1
     disk_doctor_tool hdiutil "burns and builds images" || disk_dp_status=1
+    disk_doctor_optional xorriso "xorriso, needed only for bootable images and the fields hdiutil cannot write"
     ;;
   *)
     disk_doctor_tool xorriso "builds images and reads the drive" || disk_dp_status=1
