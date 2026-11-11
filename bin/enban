@@ -29,10 +29,14 @@ DISK_PROG=enban
 . "${DISK_LIB}/write.sh"
 # shellcheck source=SCRIPTDIR/../lib/read.sh
 . "${DISK_LIB}/read.sh"
+# shellcheck source=SCRIPTDIR/../lib/verify.sh
+. "${DISK_LIB}/verify.sh"
 # shellcheck source=SCRIPTDIR/../lib/write_tab.sh
 . "${DISK_LIB}/write_tab.sh"
 # shellcheck source=SCRIPTDIR/../lib/read_tab.sh
 . "${DISK_LIB}/read_tab.sh"
+# shellcheck source=SCRIPTDIR/../lib/verify_tab.sh
+. "${DISK_LIB}/verify_tab.sh"
 # shellcheck source=SCRIPTDIR/../lib/job.sh
 . "${DISK_LIB}/job.sh"
 
@@ -53,6 +57,7 @@ usage:
   enban info --drive DRIVE [--json]   describe the drive and the disc in it
   enban write IMAGE --drive DRIVE     burn an image, verify it and eject
   enban read --drive DRIVE IMAGE      copy a disc to an image and its SHA-256
+  enban verify --drive DRIVE [IMAGE]  check every sector, or compare with IMAGE
   enban doctor                        check the tools enban needs
   enban version                       print the version
   enban help                          print this page
@@ -66,13 +71,15 @@ options:
   --theme NAME        colours of the terminal interface, see notes
 
 notes:
-  info, write and the app read the drive through xorriso on Linux. Reading a
-  drive on macOS is not supported yet.
+  info, write, read, verify and the app read the drive through xorriso on
+  Linux. Reading a drive on macOS is not supported yet.
 
   write burns only a blank disc, asks for the drive's name before it starts,
   then reads the disc back and compares it with the image. read copies the
   readable sectors of a disc that holds data, never overwrites a file, reads
-  the disc again to compare and prints the SHA-256.
+  the disc again to compare and prints the SHA-256. verify reads every sector
+  of a disc that holds data, compares it with the image when one is given,
+  and names the first sector that differs or cannot be read.
 
   The app draws in the terminal's alternate screen and gives the screen back
   when it ends, on q or on an interrupt. Tab and the digits switch tabs, the
@@ -80,7 +87,9 @@ notes:
   and q quits. On Write, Enter edits a field, space turns verify or eject on
   or off, w writes after you type the drive's name, and c cancels the write.
   On Read, Enter names the new image file, space turns verify on or off,
-  r reads the disc into it, and c cancels the read.
+  r reads the disc into it, and c cancels the read. On Verify, space turns the
+  image comparison on or off, Enter names the image, v verifies the disc, and
+  c cancels the verify.
 
   --theme, else ENBAN_THEME, else KODOUGU_THEME picks the colours: kodougu,
   catppuccin-mocha, catppuccin-latte, dracula, nord, gruvbox, tokyo-night or
@@ -93,6 +102,7 @@ examples:
   enban info --drive /dev/sr0 --json
   enban write debian.iso --drive /dev/sr0 --speed 8
   enban read --drive /dev/sr0 backup.iso
+  enban verify --drive /dev/sr0 debian.iso
   enban doctor
 USAGE
 }
@@ -218,6 +228,17 @@ disk_read() {
   disk_read_run
 }
 
+disk_verify() {
+  disk_options 1 "$@" || return 1
+  disk_only_for verify || return 1
+  if [ -z "${DISK_DRIVE}" ]; then
+    disk_cli_hint "verify needs --drive"
+    return 1
+  fi
+  DISK_VERIFY_IMAGE="${DISK_OPERAND}"
+  disk_verify_run
+}
+
 disk_app_start() {
   disk_options 0 "$@" || return 1
   disk_only_for app || return 1
@@ -276,6 +297,10 @@ disk_route() {
   read)
     shift
     disk_read "$@"
+    ;;
+  verify)
+    shift
+    disk_verify "$@"
     ;;
   '') disk_open ;;
   -*) disk_app_start "$@" ;;

@@ -1,6 +1,7 @@
 complete -c enban -n __fish_use_subcommand -a info -d 'describe the drive and the disc in it'
 complete -c enban -n __fish_use_subcommand -a write -d 'burn an image, verify it and eject'
 complete -c enban -n __fish_use_subcommand -a read -d 'copy a disc to an image'
+complete -c enban -n __fish_use_subcommand -a verify -d 'check a disc, or compare it with an image'
 complete -c enban -n __fish_use_subcommand -a doctor -d 'check the tools enban needs'
 complete -c enban -n __fish_use_subcommand -a version -d 'print the version'
 complete -c enban -n __fish_use_subcommand -a help -d 'print usage'

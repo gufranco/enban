@@ -133,6 +133,7 @@ disk_app_decode() {
   3f) DISK_APP_KEY=help ;;
   63) DISK_APP_KEY=c ;;
   72) DISK_APP_KEY=r ;;
+  76) DISK_APP_KEY=v ;;
   77) DISK_APP_KEY=w ;;
   1b)
     stty min 0 time 1 2>/dev/null
@@ -202,6 +203,7 @@ disk_app_pane_key() {
   Home) disk_app_home_key "$1" ;;
   Write) disk_write_tab_key "$1" ;;
   Read) disk_read_tab_key "$1" ;;
+  Verify) disk_verify_tab_key "$1" ;;
   *) return 0 ;;
   esac
 }

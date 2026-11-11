@@ -39,17 +39,9 @@ disk_write_tab_toggle() {
 
 disk_write_tab_image() {
   [ -n "$1" ] || return 0
-  if [ ! -f "$1" ]; then
-    DISK_APP_STATUS="No image at $1."
-    return 0
-  fi
-  disk_wt_bytes="$(wc -c <"$1" | tr -d '[:space:]')"
-  if [ "${disk_wt_bytes}" -eq 0 ] || [ $((disk_wt_bytes % 2048)) -ne 0 ]; then
-    DISK_APP_STATUS="$1 is not a disc image: its size is not whole 2048-byte sectors."
-    return 0
-  fi
+  disk_job_image "$1" || return 0
   DISK_APP_W_IMAGE="$1"
-  DISK_APP_W_SECTORS=$((disk_wt_bytes / 2048))
+  DISK_APP_W_SECTORS="${DISK_APP_IMAGE_SECTORS}"
   DISK_APP_STATUS="Ready to write ${DISK_APP_W_SECTORS} sectors. Press w to write."
 }
 

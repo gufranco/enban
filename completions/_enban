@@ -6,6 +6,7 @@ _enban() {
     'info:describe the drive and the disc in it'
     'write:burn an image, verify it and eject'
     'read:copy a disc to an image'
+    'verify:check a disc, or compare it with an image'
     'doctor:check the tools enban needs'
     'version:print the version'
     'help:print usage'

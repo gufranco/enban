@@ -17,11 +17,11 @@ _enban() {
     COMPREPLY=($(compgen -W "--drive --json --speed --no-verify --no-eject --theme" -- "${cur}"))
     return
   fi
-  if [[ "${COMP_WORDS[1]}" =~ ^(write|read)$ && "${COMP_CWORD}" -gt 1 ]]; then
+  if [[ "${COMP_WORDS[1]}" =~ ^(write|read|verify)$ && "${COMP_CWORD}" -gt 1 ]]; then
     COMPREPLY=($(compgen -f -- "${cur}"))
     return
   fi
-  COMPREPLY=($(compgen -W "info write read doctor version help" -- "${cur}"))
+  COMPREPLY=($(compgen -W "info write read verify doctor version help" -- "${cur}"))
 }
 
 complete -F _enban enban

@@ -73,21 +73,23 @@ make install
 | `enban info --drive /dev/sr0` | Describe the drive and the disc: profile, blank or appendable, sessions, free sectors and write speeds. `--json` prints one object for scripts. Linux only for now |
 | `enban write image.iso --drive /dev/sr0` | Burn the image to a blank disc once you type the drive's name, read it back to compare, then eject. `--speed 8`, `--no-verify` and `--no-eject` change that. Linux only for now |
 | `enban read --drive /dev/sr0 backup.iso` | Copy the disc into a new image file, read it again to compare, and print the SHA-256. `--no-verify` skips the second read. Linux only for now |
+| `enban verify --drive /dev/sr0 debian.iso` | Read every sector of the disc and compare it with the image, naming the first sector that differs or cannot be read. Leave out the image to only check that every sector reads. Linux only for now |
 | `enban doctor` | List the tools enban needs and whether they are installed |
 | `enban version`, `enban help` | Print the version or the full usage page |
 
 | Key | In the app |
 |:----|:-----------|
-| Arrows | Move between the six jobs on Home, or the fields on Write and Read |
+| Arrows | Move between the six jobs on Home, or the fields on Write, Read and Verify |
 | Enter | Open the focused job's tab, or edit the focused field |
-| Space | Turn verify or eject on or off on Write, or verify on Read |
+| Space | Turn verify or eject on or off on Write, verify on Read, or the image comparison on Verify |
 | `w` | Write the chosen image, after you type the drive's name |
 | `r` | Read the disc into the chosen new file |
-| `c` | Cancel a running write or read |
+| `v` | Verify the disc, against the chosen image or alone |
+| `c` | Cancel a running write, read or verify |
 | Tab | Next tab |
 | `0` to `9` | Switch to that tab |
 | `?` | Show the keys; the next key closes them |
-| `q` or Ctrl+D | Quit and give the terminal back; refused while a write or read runs |
+| `q` or Ctrl+D | Quit and give the terminal back; refused while a job runs |
 
 `--theme <name>` picks the colours; `ENBAN_THEME`, then `KODOUGU_THEME`, set the same, and `NO_COLOR` turns colour off. enban follows the shared command-line contract of its family, described in [FAMILY.md](FAMILY.md).
 
@@ -134,6 +136,10 @@ Everything is POSIX `sh` with ShellCheck `-o all` at zero findings. The suites d
 <tr>
 <td width="50%" valign="top"><img src="screens/write.png" alt="enban: The Write tab, with its image, speed, verify and eject fields"><br><sub>The Write tab, with its image, speed, verify and eject fields</sub></td>
 <td width="50%" valign="top"><img src="screens/read.png" alt="enban: The Read tab, with its image and verify fields"><br><sub>The Read tab, with its image and verify fields</sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="screens/verify.png" alt="enban: The Verify tab, with its compare and image fields"><br><sub>The Verify tab, with its compare and image fields</sub></td>
+<td width="50%" valign="top"></td>
 </tr>
 <tr>
 <td width="50%" valign="top"><img src="screens/doctor.png" alt="enban: doctor checks every tool it needs"><br><sub>doctor checks every tool it needs</sub></td>

@@ -25,6 +25,10 @@ enban \- write, read, build and verify CD, DVD and Blu-ray discs
 .I image
 .RB [ \-\-no\-verify ]
 .br
+.B enban verify
+.BI \-\-drive " drive"
+.RI [ image ]
+.br
 .B enban doctor
 .br
 .B enban version
@@ -48,7 +52,12 @@ turns verify on or off,
 .B r
 reads the disc into it, and
 .B c
-cancels the read. Without a terminal the app never opens.
+cancels the read. On Verify, space turns the image comparison on or off,
+Enter names the image,
+.B v
+verifies the disc, and
+.B c
+cancels the verify. Without a terminal the app never opens.
 .SH COMMANDS
 .TP
 .B info
@@ -74,6 +83,13 @@ Copy the readable sectors of the disc into
 read the disc again to compare, and print the SHA-256 of the copy. It refuses
 a disc that holds no data and never overwrites a file.
 .TP
+.B verify
+Read every sector of a disc that holds data and, when
+.I image
+is given, compare the disc with it. Prints how many sectors were readable,
+how many differ and how many could not be read, and exits non-zero naming the
+first sector that differs or cannot be read.
+.TP
 .B doctor
 List the tools enban needs and whether each is installed. Exits non-zero only
 when a required tool is missing.
@@ -86,7 +102,7 @@ Print the usage page.
 .SH OPTIONS
 .TP
 .BI \-\-drive " drive"
-The drive info, write and the app use, such as
+The drive info, write, read, verify and the app use, such as
 .IR /dev/sr0 .
 .TP
 .B \-\-json

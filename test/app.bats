@@ -423,9 +423,9 @@ teardown() {
   [[ "${shown}" == *"> Discovery test"* ]]
 }
 
-@test "the Verify and Discovery tabs name the job that arrives there" {
+@test "the Build and Discovery tabs name the job that arrives there" {
   # Arrange
-  local keys="4"
+  local keys="3"
 
   # Act
   run on_terminal "${keys}5q"
@@ -434,7 +434,7 @@ teardown() {
   local shown final
   shown="$(screen)"
   final="$(last_frame)"
-  [[ "${shown}" == *"Verify disc arrives in a coming release."* ]]
+  [[ "${shown}" == *"Build image from files arrives in a coming release."* ]]
   [[ "${final}" == *"Discovery test arrives in a coming release."* ]]
 }
 

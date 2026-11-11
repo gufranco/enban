@@ -238,14 +238,14 @@ write_everywhere() {
   [[ "${status}" -eq 0 ]]
 }
 
-read_everywhere() {
+command_everywhere() {
   local page
   page="$(disk_test_run enban help)" || return 1
-  grep -q -- '^  enban read ' <<<"${page}" || return 1
-  grep -q -- '^\.B enban read$' "${REPO_DIR}/man/enban.1" || return 2
-  grep -q -- ' read ' "${REPO_DIR}/completions/enban.bash" || return 3
-  grep -q -- "'read:" "${REPO_DIR}/completions/_enban" || return 4
-  grep -q -- '-a read ' "${REPO_DIR}/completions/enban.fish" || return 5
+  grep -q -- "^  enban $1 " <<<"${page}" || return 1
+  grep -q -- "^\\.B enban $1\$" "${REPO_DIR}/man/enban.1" || return 2
+  grep -q -- " $1 " "${REPO_DIR}/completions/enban.bash" || return 3
+  grep -q -- "'$1:" "${REPO_DIR}/completions/_enban" || return 4
+  grep -q -- "-a $1 " "${REPO_DIR}/completions/enban.fish" || return 5
 }
 
 @test "enban help, man page and completions list read" {
@@ -253,7 +253,18 @@ read_everywhere() {
   local command=read
 
   # Act
-  run read_everywhere "${command}"
+  run command_everywhere "${command}"
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+}
+
+@test "enban help, man page and completions list verify" {
+  # Arrange
+  local command=verify
+
+  # Act
+  run command_everywhere "${command}"
 
   # Assert
   [[ "${status}" -eq 0 ]]

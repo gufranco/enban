@@ -22,6 +22,7 @@ disk_job_run() {
 disk_job_verb() {
   case "${DISK_APP_JOB_KIND}" in
   write) printf 'Writing.\n' ;;
+  verify) printf 'Verifying.\n' ;;
   *) printf 'Reading.\n' ;;
   esac
 }
@@ -39,15 +40,54 @@ disk_job_poll() {
 }
 
 disk_job_cancel() {
-  disk_jc_children="$(pgrep -P "${DISK_APP_JOB_PID}" 2>/dev/null || true)"
+  disk_jc_tree="$(disk_job_tree "${DISK_APP_JOB_PID}")"
   # shellcheck disable=SC2086
-  kill "${DISK_APP_JOB_PID}" ${disk_jc_children} 2>/dev/null || true
+  kill ${disk_jc_tree} 2>/dev/null || true
   wait "${DISK_APP_JOB_PID}" 2>/dev/null || true
   rm -rf "${DISK_APP_JOB_DIR}"
   DISK_APP_JOB=finished
-  DISK_APP_JOB_RESULT="Cancelled while writing. The disc may be unusable."
-  [ "${DISK_APP_JOB_KIND}" = write ] || DISK_APP_JOB_RESULT="Cancelled while reading. The image is incomplete."
+  DISK_APP_JOB_RESULT="$(disk_job_cancelled)"
   DISK_APP_STATUS="Cancelled."
+}
+
+disk_job_cancelled() {
+  case "${DISK_APP_JOB_KIND}" in
+  write) printf 'Cancelled while writing. The disc may be unusable.\n' ;;
+  verify) printf 'Cancelled while verifying. Nothing on the disc changed.\n' ;;
+  *) printf 'Cancelled while reading. The image is incomplete.\n' ;;
+  esac
+}
+
+disk_job_tree() {
+  disk_jt_all="$1"
+  disk_jt_level="$1"
+  disk_jt_depth=0
+  while [ -n "${disk_jt_level}" ] && [ "${disk_jt_depth}" -lt "${DISK_JOB_DEPTH}" ]; do
+    # shellcheck disable=SC2086
+    disk_jt_level="$(disk_job_children ${disk_jt_level})"
+    disk_jt_all="${disk_jt_all} ${disk_jt_level}"
+    disk_jt_depth=$((disk_jt_depth + 1))
+  done
+  printf '%s\n' "${disk_jt_all}"
+}
+
+disk_job_children() {
+  for disk_jh_pid in "$@"; do
+    pgrep -P "${disk_jh_pid}" 2>/dev/null || :
+  done | tr '\n' ' ' | sed 's/ *$//'
+}
+
+disk_job_image() {
+  if [ ! -f "$1" ]; then
+    DISK_APP_STATUS="No image at $1."
+    return 1
+  fi
+  disk_ji_bytes="$(wc -c <"$1" | tr -d '[:space:]')"
+  if [ "${disk_ji_bytes}" -eq 0 ] || [ $((disk_ji_bytes % 2048)) -ne 0 ]; then
+    DISK_APP_STATUS="$1 is not a disc image: its size is not whole 2048-byte sectors."
+    return 1
+  fi
+  DISK_APP_IMAGE_SECTORS=$((disk_ji_bytes / 2048))
 }
 
 disk_job_busy() {

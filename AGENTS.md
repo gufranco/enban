@@ -29,7 +29,8 @@ Guidance for anyone, human or agent, changing enban. What enban is and how to us
 - `enban info --json` prints one JSON object with the drive, profile, status, sessions, free sectors and write speeds.
 - `enban write` burns only a blank disc with room for the image, writes only after the drive's name is typed, verifies by reading back exactly the image's sectors, because cdrecord pads the end of a track, and ejects unless told not to.
 - `enban read` copies the readable sectors that `xorriso -toc` reports, refuses a disc with no data and an existing file, reads again to compare unless told not to, and prints the SHA-256 with `sha256sum`, which doctor checks on Linux.
-- The Write and Read tabs run the same steps as `enban write` and `enban read` in a background subshell, which writes its log and exit status to a temporary folder. While a job runs, the app reads keys with a half-second timeout so it can redraw and notice the end of the job, refuses to quit, and cancels on `c`. A field is edited by handing the screen to one gum input, or to a plain line when gum is missing.
+- `enban verify` reads the sectors `xorriso -toc` reports, or exactly the image's sectors when an image is given, streams them through `cmp -l` without a temporary copy, and counts the sectors read from the `records in` line of `dd`; it names the first sector that differs, then the first that could not be read.
+- The Write, Read and Verify tabs run the same steps as their commands in a background subshell, which writes its log and exit status to a temporary folder. While a job runs, the app reads keys with a half-second timeout so it can redraw and notice the end of the job, refuses to quit, refuses to start a second job, and cancels on `c` by killing the job's whole process tree, since a reader inside a pipeline is a grandchild of the job. A field is edited by handing the screen to one gum input, or to a plain line when gum is missing.
 
 ## Domain rules
 
