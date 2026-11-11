@@ -514,3 +514,16 @@ teardown() {
   [[ "${shown}" == *"Tools"*"> Mount"* ]]
   [[ "${shown}" != *"Erase disc"* ]]
 }
+
+@test "the key list fills the screen without the disc pane" {
+  # Arrange
+  local keys='?'
+
+  # Act
+  run on_terminal_in_steps "${keys}" 'jump to that tab' 'xq'
+
+  # Assert
+  local shown
+  shown="$(screen)"
+  [[ "${shown}" == *"q           quit and restore the terminal"* ]]
+}

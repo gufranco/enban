@@ -174,6 +174,10 @@ disk_frame_panes() {
   [ "${disk_fs_name}" != Build ] || disk_fs_right="${DISK_APP_B_SIDE}"
   disk_fs_room=$((DISK_APP_ROWS - 6))
   [ "${disk_fs_room}" -ge 3 ] || disk_fs_room=3
+  if [ "${DISK_APP_HELP}" -eq 1 ]; then
+    printf '%s\n' "${disk_fs_left}" | disk_frame_wrap $((DISK_APP_COLS - 4)) | disk_frame_clip "${disk_fs_room}" | disk_frame_box "${DISK_APP_COLS}"
+    return 0
+  fi
   if [ "${DISK_APP_COLS}" -lt "${DISK_APP_WIDE}" ]; then
     disk_frame_stacked "${disk_fs_room}"
     return 0
