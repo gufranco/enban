@@ -14,14 +14,14 @@ _enban() {
     return
   fi
   if [[ "${cur}" == -* ]]; then
-    COMPREPLY=($(compgen -W "--drive --json --speed --no-verify --no-eject --theme" -- "${cur}"))
+    COMPREPLY=($(compgen -W "--drive --json --speed --no-verify --no-eject --fs --label --theme" -- "${cur}"))
     return
   fi
-  if [[ "${COMP_WORDS[1]}" =~ ^(write|read|verify)$ && "${COMP_CWORD}" -gt 1 ]]; then
+  if [[ "${COMP_WORDS[1]}" =~ ^(write|read|verify|build)$ && "${COMP_CWORD}" -gt 1 ]]; then
     COMPREPLY=($(compgen -f -- "${cur}"))
     return
   fi
-  COMPREPLY=($(compgen -W "info write read verify doctor version help" -- "${cur}"))
+  COMPREPLY=($(compgen -W "info write read verify build doctor version help" -- "${cur}"))
 }
 
 complete -F _enban enban

@@ -31,6 +31,8 @@ DISK_PROG=enban
 . "${DISK_LIB}/read.sh"
 # shellcheck source=SCRIPTDIR/../lib/verify.sh
 . "${DISK_LIB}/verify.sh"
+# shellcheck source=SCRIPTDIR/../lib/build.sh
+. "${DISK_LIB}/build.sh"
 # shellcheck source=SCRIPTDIR/../lib/write_tab.sh
 . "${DISK_LIB}/write_tab.sh"
 # shellcheck source=SCRIPTDIR/../lib/read_tab.sh
@@ -58,6 +60,7 @@ usage:
   enban write IMAGE --drive DRIVE     burn an image, verify it and eject
   enban read --drive DRIVE IMAGE      copy a disc to an image and its SHA-256
   enban verify --drive DRIVE [IMAGE]  check every sector, or compare with IMAGE
+  enban build FOLDER IMAGE            make an image from a folder
   enban doctor                        check the tools enban needs
   enban version                       print the version
   enban help                          print this page
@@ -68,6 +71,8 @@ options:
   --speed N           write at N times, such as 8; the drive picks by default
   --no-verify         write or read without the second pass that compares
   --no-eject          leave the disc in the drive when the write ends
+  --fs LIST           file systems build writes; iso9660,joliet,udf by default
+  --label NAME        the volume name build writes; the folder's by default
   --theme NAME        colours of the terminal interface, see notes
 
 notes:
@@ -79,7 +84,9 @@ notes:
   readable sectors of a disc that holds data, never overwrites a file, reads
   the disc again to compare and prints the SHA-256. verify reads every sector
   of a disc that holds data, compares it with the image when one is given,
-  and names the first sector that differs or cannot be read.
+  and names the first sector that differs or cannot be read. build makes a new
+  image from a folder on macOS and Linux, with ISO9660 always and Joliet and
+  UDF unless --fs leaves them out. UDF on Linux needs genisoimage.
 
   The app draws in the terminal's alternate screen and gives the screen back
   when it ends, on q or on an interrupt. Tab and the digits switch tabs, the
@@ -103,6 +110,7 @@ examples:
   enban write debian.iso --drive /dev/sr0 --speed 8
   enban read --drive /dev/sr0 backup.iso
   enban verify --drive /dev/sr0 debian.iso
+  enban build ~/Photos/2009 family.iso --label "Family 2009"
   enban doctor
 USAGE
 }
@@ -120,6 +128,8 @@ disk_option_flag() {
 disk_option_value() {
   case "$1" in
   --speed) DISK_WRITE_SPEED="$2" ;;
+  --fs) DISK_BUILD_FS="$2" ;;
+  --label) DISK_BUILD_LABEL="$2" ;;
   *) DISK_DRIVE="$2" ;;
   esac
   disk_option_seen "$1"
@@ -129,13 +139,14 @@ disk_option_seen() {
   case "$1" in
   --speed | --no-eject) DISK_WRITE_OPTION="${DISK_WRITE_OPTION:-$1}" ;;
   --no-verify) DISK_VERIFY_OPTION="$1" ;;
+  --fs | --label) DISK_BUILD_OPTION="${DISK_BUILD_OPTION:-$1}" ;;
   *) ;;
   esac
   return 0
 }
 
 disk_options() {
-  DISK_VALUE_OPTIONS="--drive --speed"
+  DISK_VALUE_OPTIONS="--drive --speed --fs --label"
   disk_op_room="$1"
   shift
   disk_op_left="$#"
@@ -160,7 +171,11 @@ disk_option_operand() {
     disk_cli_hint "unexpected argument '$1'"
     return 1
   fi
-  DISK_OPERAND="$1"
+  if [ -z "${DISK_OPERAND}" ]; then
+    DISK_OPERAND="$1"
+  else
+    DISK_OPERAND_TWO="$1"
+  fi
   disk_op_room=$((disk_op_room - 1))
 }
 
@@ -171,6 +186,10 @@ disk_only_for() {
   fi
   if [ "$1" != write ] && [ -n "${DISK_WRITE_OPTION}" ]; then
     disk_cli_hint "option '${DISK_WRITE_OPTION}' works only with write"
+    return 1
+  fi
+  if [ "$1" != build ] && [ -n "${DISK_BUILD_OPTION}" ]; then
+    disk_cli_hint "option '${DISK_BUILD_OPTION}' works only with build"
     return 1
   fi
   case "$1:${DISK_VERIFY_OPTION}" in
@@ -239,6 +258,18 @@ disk_verify() {
   disk_verify_run
 }
 
+disk_build() {
+  disk_options 2 "$@" || return 1
+  disk_only_for build || return 1
+  if [ -z "${DISK_OPERAND_TWO}" ]; then
+    disk_cli_hint "build needs a folder and an image file to create"
+    return 1
+  fi
+  DISK_BUILD_SOURCE="${DISK_OPERAND}"
+  DISK_BUILD_OUT="${DISK_OPERAND_TWO}"
+  disk_build_run
+}
+
 disk_app_start() {
   disk_options 0 "$@" || return 1
   disk_only_for app || return 1
@@ -301,6 +332,10 @@ disk_route() {
   verify)
     shift
     disk_verify "$@"
+    ;;
+  build)
+    shift
+    disk_build "$@"
     ;;
   '') disk_open ;;
   -*) disk_app_start "$@" ;;

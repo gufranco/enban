@@ -29,6 +29,13 @@ enban \- write, read, build and verify CD, DVD and Blu-ray discs
 .BI \-\-drive " drive"
 .RI [ image ]
 .br
+.B enban build
+.I folder image
+.RB [ \-\-fs
+.IR list ]
+.RB [ \-\-label
+.IR name ]
+.br
 .B enban doctor
 .br
 .B enban version
@@ -90,6 +97,18 @@ is given, compare the disc with it. Prints how many sectors were readable,
 how many differ and how many could not be read, and exits non-zero naming the
 first sector that differs or cannot be read.
 .TP
+.B build
+Make a new
+.I image
+from the files in
+.IR folder ,
+with ISO9660 always and Joliet and UDF unless
+.B \-\-fs
+leaves them out. macOS builds with hdiutil; Linux builds with xorriso, and
+with genisoimage when UDF is asked for. The volume name is the folder's, or
+.BR \-\-label ,
+in the letters ISO9660 allows. It never overwrites a file.
+.TP
 .B doctor
 List the tools enban needs and whether each is installed. Exits non-zero only
 when a required tool is missing.
@@ -118,6 +137,14 @@ Write or read without the second pass that compares the disc and the image.
 .TP
 .B \-\-no\-eject
 Leave the disc in the drive when the write ends.
+.TP
+.BI \-\-fs " list"
+The file systems build writes, from iso9660, joliet and udf, separated by
+commas; iso9660 is required. All three by default.
+.TP
+.BI \-\-label " name"
+The volume name build writes, up to 32 characters. The folder's name by
+default.
 .TP
 .BI \-\-theme " name"
 Colours of the terminal interface:

@@ -7,6 +7,7 @@ _enban() {
     'write:burn an image, verify it and eject'
     'read:copy a disc to an image'
     'verify:check a disc, or compare it with an image'
+    'build:make an image from a folder'
     'doctor:check the tools enban needs'
     'version:print the version'
     'help:print usage'
@@ -23,6 +24,8 @@ _enban() {
     '--speed[write at this many times the base speed]:speed:' \
     '--no-verify[skip the second pass that compares]' \
     '--no-eject[leave the disc in the drive]' \
+    '--fs[file systems build writes]:file systems:(iso9660,joliet,udf iso9660,joliet iso9660,udf iso9660)' \
+    '--label[the volume name build writes]:label:' \
     '*:image:_files' \
     '--theme[colours of the terminal interface]:theme:(kodougu catppuccin-mocha catppuccin-latte dracula nord gruvbox tokyo-night mono)'
 }

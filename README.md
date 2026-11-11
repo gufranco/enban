@@ -49,7 +49,7 @@ hdiutil            ok       /usr/bin/hdiutil
 | [`gum`](https://github.com/charmbracelet/gum) | The family look for doctor, version and help | `brew install gum` |
 | POSIX `sh`, `stty`, `dd`, `od`, `awk` | The app and its key reading | Preinstalled on macOS and Linux |
 | `drutil` and `hdiutil` | The drive and images on macOS | Preinstalled |
-| `xorriso` and `cdrskin`, optionally `cdrdao` | The drive and images on Linux | `apt install xorriso cdrskin cdrdao` |
+| `xorriso` and `cdrskin`, optionally `cdrdao` and `genisoimage` | The drive and images on Linux; genisoimage only for UDF images | `apt install xorriso cdrskin cdrdao genisoimage` |
 
 ### Install
 
@@ -74,6 +74,7 @@ make install
 | `enban write image.iso --drive /dev/sr0` | Burn the image to a blank disc once you type the drive's name, read it back to compare, then eject. `--speed 8`, `--no-verify` and `--no-eject` change that. Linux only for now |
 | `enban read --drive /dev/sr0 backup.iso` | Copy the disc into a new image file, read it again to compare, and print the SHA-256. `--no-verify` skips the second read. Linux only for now |
 | `enban verify --drive /dev/sr0 debian.iso` | Read every sector of the disc and compare it with the image, naming the first sector that differs or cannot be read. Leave out the image to only check that every sector reads. Linux only for now |
+| `enban build ~/Photos/2009 family.iso` | Make an image from a folder with ISO9660, Joliet and UDF, named after the folder. `--fs iso9660,joliet` leaves UDF out, and `--label "Family 2009"` names the volume. Works on macOS and Linux |
 | `enban doctor` | List the tools enban needs and whether they are installed |
 | `enban version`, `enban help` | Print the version or the full usage page |
 

@@ -269,3 +269,37 @@ command_everywhere() {
   # Assert
   [[ "${status}" -eq 0 ]]
 }
+
+@test "enban help, man page and completions list build" {
+  # Arrange
+  local command=build
+
+  # Act
+  run command_everywhere "${command}"
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+}
+
+options_everywhere() {
+  local page option
+  page="$(disk_test_run enban help)" || return 1
+  for option in "$@"; do
+    grep -q -- "^  --${option} " <<<"${page}" || return 2
+    grep -qF -- "\\-\\-${option//-/\\-}" "${REPO_DIR}/man/enban.1" || return 3
+    grep -q -- "--${option}" "${REPO_DIR}/completions/enban.bash" || return 4
+    grep -q -- "'--${option}\[" "${REPO_DIR}/completions/_enban" || return 5
+    grep -q -- "-l ${option} " "${REPO_DIR}/completions/enban.fish" || return 6
+  done
+}
+
+@test "enban help, man page and completions list --fs and --label" {
+  # Arrange
+  local first=fs
+
+  # Act
+  run options_everywhere "${first}" label
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+}
