@@ -1,5 +1,19 @@
 # Changelog
 
+# [1.5.0](https://github.com/gufranco/enban/compare/v1.4.0...v1.5.0) (2026-11-11)
+
+
+### Bug Fixes
+
+* keep a frame inside the terminal height ([2dbda54](https://github.com/gufranco/enban/commit/2dbda54d2c0539d2ef23b5b8c5a698a7e9d1770f))
+
+
+### Features
+
+* list the kinds of disc a drive handles ([fb5de8e](https://github.com/gufranco/enban/commit/fb5de8e6b6f90aaebca59906a9f4b5beb7e34ffd))
+* open the drive and image tools on Tools ([2376a8e](https://github.com/gufranco/enban/commit/2376a8e86123b7bb19a9d33bc1b38698222b5e62))
+* print the checksums of an image or disc ([d579aa0](https://github.com/gufranco/enban/commit/d579aa0bdc41115748b146ffc5c86d2f4adb7eb4))
+
 # [1.4.0](https://github.com/gufranco/enban/compare/v1.3.0...v1.4.0) (2026-11-11)
 
 
