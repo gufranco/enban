@@ -104,7 +104,9 @@ make install
 | `?` | Show the keys; the next key closes them |
 | `q` or Ctrl+D | Quit and give the terminal back; refused while a job runs |
 
-`--theme <name>` picks the colours; `ENBAN_THEME`, then `KODOUGU_THEME`, set the same, and `NO_COLOR` turns colour off. enban follows the shared command-line contract of its family, described in [FAMILY.md](FAMILY.md).
+`--theme <name>` picks the colours; `ENBAN_THEME`, then `KODOUGU_THEME`, set the same, and `NO_COLOR` turns colour off.
+
+Defaults can live in a settings file, `~/.config/enban/settings` or `ENBAN_CONFIG/settings`, one `name=value` per line: `write_verify`, `write_eject` and `read_verify` take `yes` or `no`, `write_speed` takes `auto` or a number, `build_fs` a list such as `iso9660,joliet`, `queue_wait` seconds, and `theme` a theme name. An option, then an `ENBAN_` variable, wins over the file, and `--verify` or `--eject` turn back on what the file turned off. enban follows the shared command-line contract of its family, described in [FAMILY.md](FAMILY.md).
 
 <a id="how-it-works"></a>
 

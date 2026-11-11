@@ -41,6 +41,8 @@ DISK_PROG=enban
 . "${DISK_LIB}/queue.sh"
 # shellcheck source=SCRIPTDIR/../lib/discovery.sh
 . "${DISK_LIB}/discovery.sh"
+# shellcheck source=SCRIPTDIR/../lib/settings.sh
+. "${DISK_LIB}/settings.sh"
 # shellcheck source=SCRIPTDIR/../lib/write_tab.sh
 . "${DISK_LIB}/write_tab.sh"
 # shellcheck source=SCRIPTDIR/../lib/read_tab.sh
@@ -94,7 +96,9 @@ options:
   --drive DRIVE       the drive to read, such as /dev/sr0; else ENBAN_DRIVE
   --json              print the result of info as one JSON object, for scripts
   --speed N           write at N times, such as 8; the drive picks by default
+  --verify            compare the disc after write, read or queue; the default
   --no-verify         write, read or queue without the pass that compares
+  --eject             open the tray when the write ends; the default
   --no-eject          leave the disc in the drive when the write ends
   --fs LIST           file systems build writes; iso9660,joliet,udf by default
   --label NAME        the volume name build writes; the folder's by default
@@ -155,6 +159,12 @@ notes:
   mono. KODOUGU_ACCENT=#RRGGBB replaces only the accent, and NO_COLOR turns
   colour off.
 
+  Defaults can live in ENBAN_CONFIG/settings, ~/.config/enban/settings by
+  default, one name=value per line: write_verify, write_eject and read_verify
+  take yes or no, write_speed auto or a number, build_fs a list such as
+  iso9660,joliet, queue_wait seconds and theme a theme name. Options, then
+  ENBAN_ variables, win over the file.
+
 examples:
   enban --drive /dev/sr0
   enban --theme nord
@@ -174,7 +184,15 @@ USAGE
 disk_option_flag() {
   case "$1" in
   --json) DISK_JSON=y ;;
-  --no-verify) DISK_WRITE_VERIFY=n ;;
+  --verify)
+    DISK_WRITE_VERIFY=y
+    DISK_READ_VERIFY=y
+    ;;
+  --no-verify)
+    DISK_WRITE_VERIFY=n
+    DISK_READ_VERIFY=n
+    ;;
+  --eject) DISK_WRITE_EJECT=y ;;
   --no-eject) DISK_WRITE_EJECT=n ;;
   --full) DISK_ERASE_FULL=y ;;
   *) return 1 ;;
@@ -197,8 +215,14 @@ disk_option_value() {
 disk_option_seen() {
   case "$1" in
   --speed) DISK_SPEED_OPTION="$1" ;;
-  --no-eject) DISK_WRITE_OPTION="$1" ;;
-  --no-verify) DISK_VERIFY_OPTION="$1" ;;
+  --eject | --no-eject)
+    [ -z "${DISK_WRITE_OPTION}" ] || [ "${DISK_WRITE_OPTION}" = "$1" ] || DISK_EJECT_CLASH=y
+    DISK_WRITE_OPTION="$1"
+    ;;
+  --verify | --no-verify)
+    [ -z "${DISK_VERIFY_OPTION}" ] || [ "${DISK_VERIFY_OPTION}" = "$1" ] || DISK_VERIFY_CLASH=y
+    DISK_VERIFY_OPTION="$1"
+    ;;
   --fs | --label) DISK_BUILD_OPTION="${DISK_BUILD_OPTION:-$1}" ;;
   --full) DISK_ERASE_OPTION="$1" ;;
   --sectors | --csv) DISK_DISCOVERY_OPTION="${DISK_DISCOVERY_OPTION:-$1}" ;;
@@ -244,6 +268,8 @@ disk_option_operand() {
 disk_only_for() {
   disk_of_json=""
   [ "${DISK_JSON}" != y ] || disk_of_json=--json
+  disk_option_pair "${DISK_VERIFY_CLASH}" verify || return 1
+  disk_option_pair "${DISK_EJECT_CLASH}" eject || return 1
   disk_option_owner "$1" "${disk_of_json}" info info || return 1
   disk_option_owner "$1" "${DISK_SPEED_OPTION}" "write discovery" "write and discovery" || return 1
   disk_option_owner "$1" "${DISK_WRITE_OPTION}" write write || return 1
@@ -251,6 +277,12 @@ disk_only_for() {
   disk_option_owner "$1" "${DISK_ERASE_OPTION}" erase erase || return 1
   disk_option_owner "$1" "${DISK_DISCOVERY_OPTION}" discovery discovery || return 1
   disk_option_owner "$1" "${DISK_VERIFY_OPTION}" "write read queue" "write, read and queue"
+}
+
+disk_option_pair() {
+  [ -n "$1" ] || return 0
+  disk_cli_hint "options '--$2' and '--no-$2' cannot be used together"
+  return 1
 }
 
 disk_option_owner() {
@@ -491,4 +523,5 @@ disk_open() {
   return 1
 }
 
+disk_settings_load
 disk_main "$@"

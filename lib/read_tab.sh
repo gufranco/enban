@@ -51,7 +51,7 @@ disk_read_tab_start() {
     return 0
   fi
   DISK_READ_OUT="${DISK_APP_R_OUT}"
-  DISK_WRITE_VERIFY="${DISK_APP_R_VERIFY}"
+  DISK_READ_VERIFY="${DISK_APP_R_VERIFY}"
   disk_job_launch disk_read_run read "${DISK_DRIVE} into ${DISK_APP_R_OUT}"
 }
 

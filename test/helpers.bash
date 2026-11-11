@@ -19,6 +19,9 @@ disk_test_path() {
   fi
 }
 
+export ENBAN_CONFIG="${BATS_TMPDIR:-/tmp}/enban-test-no-config"
+export ENBAN_DATA="${BATS_TMPDIR:-/tmp}/enban-test-no-data"
+
 disk_test_shim() {
   local name="$1"
   local body="$2"

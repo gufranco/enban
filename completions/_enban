@@ -28,6 +28,8 @@ _enban() {
     '--speed[write at this many times the base speed]:speed:' \
     '--no-verify[skip the second pass that compares]' \
     '--no-eject[leave the disc in the drive]' \
+    '--verify[compare the disc after the job]' \
+    '--eject[open the tray when the write ends]' \
     '--fs[file systems build writes]:file systems:(iso9660,joliet,udf iso9660,joliet iso9660,udf iso9660)' \
     '--label[the volume name build writes]:label:' \
     '--full[erase every sector]' \

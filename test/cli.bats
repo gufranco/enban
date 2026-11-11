@@ -355,3 +355,14 @@ options_everywhere() {
   [[ "${status}" -eq 0 ]]
   [[ "${options_status}" -eq 0 ]]
 }
+
+@test "enban help, man page and completions list --verify and --eject" {
+  # Arrange
+  local first=verify
+
+  # Act
+  run options_everywhere "${first}" eject
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+}

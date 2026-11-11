@@ -233,7 +233,17 @@ disk_app_home_key() {
   esac
 }
 
+disk_app_defaults() {
+  DISK_APP_W_VERIFY="${DISK_WRITE_VERIFY}"
+  DISK_APP_W_EJECT="${DISK_WRITE_EJECT}"
+  DISK_APP_W_SPEED="${DISK_WRITE_SPEED}"
+  DISK_APP_R_VERIFY="${DISK_READ_VERIFY}"
+  DISK_APP_B_FS="${DISK_BUILD_FS}"
+  DISK_APP_Q_VERIFY="${DISK_WRITE_VERIFY}"
+}
+
 disk_app_run() {
+  disk_app_defaults
   disk_app_colours
   disk_app_size
   disk_app_drive

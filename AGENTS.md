@@ -44,6 +44,7 @@ Guidance for anyone, human or agent, changing enban. What enban is and how to us
 
 ## Domain rules
 
+- Settings resolve as option, then `ENBAN_` variable, then `ENBAN_CONFIG/settings`, then the built-in default. The file is read before the options are parsed and only fills what no variable set; a line enban cannot use is named in a warning and skipped, so a broken file never stops a job.
 - No loop redirects a numbered file descriptor such as `done 9<file`: bashcov traces through a pipe whose descriptor number varies, so the redirect can swallow the trace and the loop's lines count as never run. Loops that must read stdin inside walk a file by line number instead.
 - Keys are read with `dd` one byte at a time and decoded from hex, because a command substitution strips the newline Enter sends.
 - Ctrl+D arrives as byte `04` inside a terminal, never as an empty read, so both mean the end of the session.

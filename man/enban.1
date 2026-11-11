@@ -231,6 +231,14 @@ image.
 .B \-\-no\-eject
 Leave the disc in the drive when the write ends.
 .TP
+.B \-\-verify
+Compare the disc after write, read or queue, the default unless the settings
+file turns it off.
+.TP
+.B \-\-eject
+Open the tray when the write ends, the default unless the settings file turns
+it off.
+.TP
 .BI \-\-fs " list"
 The file systems build writes, from iso9660, joliet and udf, separated by
 commas; iso9660 is required. All three by default.
@@ -265,6 +273,11 @@ The default is
 .BR kodougu .
 .SH ENVIRONMENT
 .TP
+.B ENBAN_CONFIG
+The folder that holds the settings file,
+.I ~/.config/enban
+by default.
+.TP
 .B ENBAN_DRIVE
 The drive when
 .B \-\-drive
@@ -296,6 +309,26 @@ A colour such as #CBA6F7 that replaces the accent of the theme.
 .TP
 .B NO_COLOR
 Turns colour off in every theme.
+.SH FILES
+.TP
+.I ENBAN_CONFIG/settings
+Defaults, one
+.I name=value
+per line:
+.BR write_verify ,
+.B write_eject
+and
+.B read_verify
+take yes or no,
+.B write_speed
+auto or a number,
+.B build_fs
+a list such as iso9660,joliet,
+.B queue_wait
+seconds and
+.B theme
+a theme name. Lines starting with # are skipped, and a line enban cannot use
+is named in a warning. Options, then ENBAN_ variables, win over the file.
 .SH EXIT STATUS
 0 on success, 1 on any failure or refusal.
 .SH SEE ALSO

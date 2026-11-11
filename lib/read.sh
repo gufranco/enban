@@ -39,7 +39,7 @@ disk_read_verify() {
 disk_read_done() {
   disk_rd_digest="$(sha256sum "${DISK_READ_OUT}")"
   disk_rd_text="read into ${DISK_READ_OUT}"
-  [ "${DISK_WRITE_VERIFY}" != y ] || disk_rd_text="${disk_rd_text} and verified"
+  [ "${DISK_READ_VERIFY}" != y ] || disk_rd_text="${disk_rd_text} and verified"
   disk_rd_line="Done. ${DISK_DRIVE} is ${disk_rd_text}."
   printf 'Sectors  %s\nSHA-256  %s\n' "${DISK_DRIVE_READABLE}" "${disk_rd_digest%% *}"
   if disk_ui_out; then
@@ -52,7 +52,7 @@ disk_read_done() {
 disk_read_run() {
   disk_read_check || return 1
   disk_read_copy || return 1
-  if [ "${DISK_WRITE_VERIFY}" = y ]; then
+  if [ "${DISK_READ_VERIFY}" = y ]; then
     disk_read_verify || return 1
   fi
   disk_read_done
