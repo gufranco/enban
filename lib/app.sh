@@ -43,12 +43,53 @@ disk_app_pill() {
 disk_app_size() {
   disk_az_size="$(stty size 2>/dev/null)" || disk_az_size=""
   case "${disk_az_size}" in
-  [0-9]*' '[0-9]*) ;;
-  *) disk_az_size="24 80" ;;
+  [0-9]*' '[0-9]*)
+    DISK_APP_ROWS="${disk_az_size% *}"
+    DISK_APP_COLS="${disk_az_size#* }"
+    ;;
+  *)
+    DISK_APP_ROWS=24
+    DISK_APP_COLS=80
+    ;;
   esac
-  DISK_APP_ROWS="${disk_az_size% *}"
-  DISK_APP_COLS="${disk_az_size#* }"
   [ "${DISK_APP_COLS}" -ge 60 ] || DISK_APP_COLS=60
+  DISK_APP_PANE_LEFT="${DISK_APP_COLS}"
+  [ "${DISK_APP_COLS}" -lt "${DISK_APP_WIDE}" ] || DISK_APP_PANE_LEFT=$((DISK_APP_COLS * 3 / 5))
+  DISK_APP_GRID=1
+  [ "${DISK_APP_PANE_LEFT}" -lt 70 ] || DISK_APP_GRID=2
+}
+
+disk_app_drive() {
+  disk_ad_status=3
+  if [ -n "${DISK_DRIVE}" ]; then
+    disk_ad_status=0
+    disk_drive_read "${DISK_DRIVE}" 2>/dev/null || disk_ad_status="$?"
+  fi
+  disk_app_drive_note "${disk_ad_status}"
+  DISK_APP_DISC="$(disk_frame_disc)"
+}
+
+disk_app_drive_note() {
+  case "$1" in
+  0)
+    DISK_APP_DRIVE_NOTE=""
+    disk_an_profile="$(disk_drive_short_profile)"
+    disk_an_free="$(disk_drive_free_text)"
+    DISK_APP_STATUS="${disk_an_profile} loaded, ${disk_an_free} free."
+    ;;
+  2)
+    DISK_APP_DRIVE_NOTE="Reading a drive is not supported on macOS yet."
+    DISK_APP_STATUS="${DISK_APP_DRIVE_NOTE}"
+    ;;
+  3)
+    DISK_APP_DRIVE_NOTE="$(printf '%s\n' "No drive chosen." "Start enban with --drive DRIVE," "or set ENBAN_DRIVE.")"
+    DISK_APP_STATUS="No drive chosen."
+    ;;
+  *)
+    DISK_APP_DRIVE_NOTE="Unable to read the drive."
+    DISK_APP_STATUS="Unable to read the drive ${DISK_DRIVE}."
+    ;;
+  esac
 }
 
 disk_app_enter() {
@@ -80,6 +121,8 @@ disk_app_key() {
   case "${disk_ak_hex}" in
   '' | 04) DISK_APP_KEY=eof ;;
   0a | 0d) DISK_APP_KEY=enter ;;
+  09) DISK_APP_KEY=tab ;;
+  3f) DISK_APP_KEY=help ;;
   1b)
     stty min 0 time 1 2>/dev/null
     disk_ak_rest="$(disk_app_byte 2)"
@@ -103,19 +146,39 @@ disk_app_escape() {
 }
 
 disk_app_act() {
+  if [ "${DISK_APP_HELP}" -eq 1 ]; then
+    DISK_APP_HELP=0
+    case "$1" in
+    q | eof) return 1 ;;
+    *) return 0 ;;
+    esac
+  fi
   case "$1" in
   q | eof) return 1 ;;
   [0-9]) [ "$1" -ge "$2" ] || DISK_APP_TAB="$1" ;;
-  right) DISK_APP_TAB=$(((DISK_APP_TAB + 1) % $2)) ;;
-  left) DISK_APP_TAB=$(((DISK_APP_TAB + $2 - 1) % $2)) ;;
-  *) ;;
+  tab) DISK_APP_TAB=$(((DISK_APP_TAB + 1) % $2)) ;;
+  help) DISK_APP_HELP=1 ;;
+  *) disk_app_home_key "$1" ;;
   esac
   return 0
+}
+
+disk_app_home_key() {
+  [ "${DISK_APP_TAB}" -eq 0 ] || return 0
+  case "$1" in
+  up) [ "${DISK_APP_FOCUS}" -lt "${DISK_APP_GRID}" ] || DISK_APP_FOCUS=$((DISK_APP_FOCUS - DISK_APP_GRID)) ;;
+  down) [ $((DISK_APP_FOCUS + DISK_APP_GRID)) -gt 5 ] || DISK_APP_FOCUS=$((DISK_APP_FOCUS + DISK_APP_GRID)) ;;
+  left) [ "${DISK_APP_GRID}" -eq 1 ] || DISK_APP_FOCUS=$((DISK_APP_FOCUS - DISK_APP_FOCUS % 2)) ;;
+  right) [ "${DISK_APP_GRID}" -eq 1 ] || DISK_APP_FOCUS=$((DISK_APP_FOCUS - DISK_APP_FOCUS % 2 + 1)) ;;
+  enter) DISK_APP_TAB="$(disk_frame_tile "${DISK_APP_FOCUS}" 3)" ;;
+  *) return 0 ;;
+  esac
 }
 
 disk_app_run() {
   disk_app_colours
   disk_app_size
+  disk_app_drive
   disk_app_enter
   trap 'disk_app_leave; exit 130' INT
   trap 'disk_app_leave; exit 143' TERM

@@ -1,10 +1,16 @@
-.TH ENBAN 1 "2026-11-10" "enban" "User Commands"
+.TH ENBAN 1 "2026-11-11" "enban" "User Commands"
 .SH NAME
 enban \- write, read, build and verify CD, DVD and Blu-ray discs
 .SH SYNOPSIS
 .B enban
+.RB [ \-\-drive
+.IR drive ]
 .RB [ \-\-theme
 .IR name ]
+.br
+.B enban info
+.BI \-\-drive " drive"
+.RB [ \-\-json ]
 .br
 .B enban doctor
 .br
@@ -16,9 +22,20 @@ enban \- write, read, build and verify CD, DVD and Blu-ray discs
 opens a full-screen app on a terminal. It draws in the terminal's alternate
 screen, reads keys itself and gives the screen back when it ends, on
 .B q
-or on an interrupt. Digits switch tabs, and the left and right arrows move
-between them. Without a terminal the app never opens.
+or on an interrupt. Tab and the digits switch tabs, the arrows move between
+the jobs on Home and Enter opens one, and
+.B ?
+shows the keys. The right pane describes the disc in the chosen drive.
+Without a terminal the app never opens.
 .SH COMMANDS
+.TP
+.B info
+Describe the drive and the disc in it: vendor, product and revision, the disc
+profile, whether the disc is blank, appendable or closed, its sessions, the
+free sectors and the write speeds the drive offers. On Linux it reads the drive
+through
+.BR xorriso .
+Reading a drive on macOS is not supported yet, so info stops there.
 .TP
 .B doctor
 List the tools enban needs and whether each is installed. Exits non-zero only
@@ -30,6 +47,13 @@ Print the version and the platform.
 .B help
 Print the usage page.
 .SH OPTIONS
+.TP
+.BI \-\-drive " drive"
+The drive info and the app read, such as
+.IR /dev/sr0 .
+.TP
+.B \-\-json
+Print the result of info as one JSON object, for scripts.
 .TP
 .BI \-\-theme " name"
 Colours of the terminal interface:
@@ -45,6 +69,11 @@ or
 The default is
 .BR kodougu .
 .SH ENVIRONMENT
+.TP
+.B ENBAN_DRIVE
+The drive when
+.B \-\-drive
+is not given.
 .TP
 .B ENBAN_THEME
 The theme when

@@ -15,12 +15,12 @@
 
 </div>
 
-`enban`, 円盤, is Japanese for a disc. It aims at the jobs a disc burner does: write an image, write files, read a disc to an image, build an image, verify a disc against an image, and stress-test a drive. Today it ships the app itself: the full-screen frame, its tabs and its keys. The jobs arrive in the coming releases, each as a tab and as a plain command for scripts.
+`enban`, 円盤, is Japanese for a disc. It aims at the jobs a disc burner does: write an image, write files, read a disc to an image, build an image, verify a disc against an image, and stress-test a drive. Today it ships the app itself, with its full-screen frame, tabs and keys, and `enban info`, which describes the drive and the disc in it on Linux. The burning jobs arrive in the coming releases, each as a tab and as a plain command for scripts.
 
 ---
 
 <p align="center">
-  <img src="screens/hero.gif" alt="enban opening its full-screen app, switching tabs and quitting" width="800">
+  <img src="screens/hero.gif" alt="enban opening its full-screen app, moving between the jobs on Home, showing its keys, opening a job's tab and quitting" width="800">
 </p>
 
 ```console
@@ -69,14 +69,18 @@ make install
 
 | Command | Purpose |
 |:--------|:--------|
-| `enban` | Open the full-screen app on a terminal |
+| `enban --drive /dev/sr0` | Open the full-screen app on a terminal, with the disc in that drive on the right; `ENBAN_DRIVE` sets the drive too |
+| `enban info --drive /dev/sr0` | Describe the drive and the disc: profile, blank or appendable, sessions, free sectors and write speeds. `--json` prints one object for scripts. Linux only for now |
 | `enban doctor` | List the tools enban needs and whether they are installed |
 | `enban version`, `enban help` | Print the version or the full usage page |
 
 | Key | In the app |
 |:----|:-----------|
+| Arrows | Move between the six jobs on Home |
+| Enter | Open the focused job's tab |
+| Tab | Next tab |
 | `0` to `9` | Switch to that tab |
-| Left and right arrows | Previous or next tab |
+| `?` | Show the keys; the next key closes them |
 | `q` or Ctrl+D | Quit and give the terminal back |
 
 `--theme <name>` picks the colours; `ENBAN_THEME`, then `KODOUGU_THEME`, set the same, and `NO_COLOR` turns colour off. enban follows the shared command-line contract of its family, described in [FAMILY.md](FAMILY.md).
@@ -96,7 +100,8 @@ graph LR
     D -->|yes| E["restore the screen, cursor and echo"]
 ```
 
-- The frame is drawn with escape sequences in the theme's colours. A frame takes about 24 ms on the owner's Mac, against a budget of 250 ms; drawing each box through gum took 524 ms in the mockups.
+- The frame is drawn with escape sequences in the theme's colours. A full frame at 140 columns, with both panes, took 77 ms on the owner's Mac while other test suites ran, against a budget of 250 ms; drawing each box through gum took 524 ms in the mockups.
+- Below 100 columns the jobs and the disc pane stack, and the six jobs become one list.
 - Keys are read one byte at a time with `dd` and decoded from hex, so arrows, Escape, Enter and Ctrl+D are told apart.
 - The terminal is restored on `q`, on Ctrl+D and on an interrupt. GNU `stty` on macOS reports a false failure when echo is turned back on, so enban checks `stty -a` itself and warns only when typing is really still hidden.
 - Without a terminal the app never opens; enban names the problem and exits 1.
@@ -117,8 +122,8 @@ Everything is POSIX `sh` with ShellCheck `-o all` at zero findings. The suites d
 
 <table>
 <tr>
-<td width="50%" valign="top"><img src="screens/home.png" alt="enban: The home tab"><br><sub>The home tab</sub></td>
-<td width="50%" valign="top"><img src="screens/keys.png" alt="enban: The keys tab"><br><sub>The keys tab</sub></td>
+<td width="50%" valign="top"><img src="screens/home.png" alt="enban: Home, with the six jobs and the disc pane"><br><sub>Home, with the six jobs and the disc pane</sub></td>
+<td width="50%" valign="top"><img src="screens/keys.png" alt="enban: The key list that ? opens"><br><sub>The key list that ? opens</sub></td>
 </tr>
 <tr>
 <td width="50%" valign="top"><img src="screens/doctor.png" alt="enban: doctor checks every tool it needs"><br><sub>doctor checks every tool it needs</sub></td>

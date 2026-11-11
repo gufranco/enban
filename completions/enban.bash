@@ -9,11 +9,15 @@ _enban() {
     COMPREPLY=($(compgen -W "kodougu catppuccin-mocha catppuccin-latte dracula nord gruvbox tokyo-night mono" -- "${cur}"))
     return
   fi
-  if [[ "${cur}" == -* ]]; then
-    COMPREPLY=($(compgen -W "--theme" -- "${cur}"))
+  if [[ "${prev}" == "--drive" ]]; then
+    COMPREPLY=($(compgen -f -- "${cur}"))
     return
   fi
-  COMPREPLY=($(compgen -W "doctor version help" -- "${cur}"))
+  if [[ "${cur}" == -* ]]; then
+    COMPREPLY=($(compgen -W "--drive --json --theme" -- "${cur}"))
+    return
+  fi
+  COMPREPLY=($(compgen -W "info doctor version help" -- "${cur}"))
 }
 
 complete -F _enban enban

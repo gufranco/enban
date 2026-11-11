@@ -12,11 +12,19 @@ Sleep 400ms
 Enter
 Sleep 2s
 Screenshot home.png
-Sleep 1s
-Type "1"
+Sleep 600ms
+Down
+Sleep 600ms
+Right
+Sleep 800ms
+Type "?"
 Sleep 1500ms
 Screenshot keys.png
-Type "0"
+Type "x"
+Sleep 800ms
+Enter
+Sleep 1500ms
+Tab
 Sleep 1s
 Type "q"
 Sleep 1s

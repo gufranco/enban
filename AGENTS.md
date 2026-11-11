@@ -9,10 +9,10 @@ Guidance for anyone, human or agent, changing enban. What enban is and how to us
 | Path | Holds |
 |:-----|:------|
 | [`bin/enban`](bin/enban) | The entry point: usage and command routing |
-| [`lib/`](lib) | The modules. [`lib/state.sh`](lib/state.sh) declares every global; [`lib/app.sh`](lib/app.sh) runs the full-screen loop and [`lib/frame.sh`](lib/frame.sh) draws each frame |
+| [`lib/`](lib) | The modules. [`lib/state.sh`](lib/state.sh) declares every global; [`lib/app.sh`](lib/app.sh) runs the full-screen loop, [`lib/frame.sh`](lib/frame.sh) draws each frame and [`lib/drive.sh`](lib/drive.sh) reads the drive and the disc |
 | [`man/enban.1`](man/enban.1) | The man page |
 | [`completions/`](completions) | bash, zsh and fish completions |
-| [`test/`](test) | The `bats` suite, its helpers, the pseudo-terminal driver in [`test/app.bats`](test/app.bats) and the Linux container script |
+| [`test/`](test) | The `bats` suite, its helpers, the pseudo-terminal driver in [`test/app.bats`](test/app.bats), the stand-in drive in [`test/drive.sh`](test/drive.sh) and the Linux container script |
 | [`scripts/`](scripts) | Coverage, the coverage gate, the Linux coverage run and the name check, which `make` runs |
 | [`.github/scripts/`](.github/scripts) | The toolset helper and the release version stamp, which only CI and the release run |
 
@@ -26,6 +26,7 @@ Guidance for anyone, human or agent, changing enban. What enban is and how to us
 
 - enban is the family's first full-screen member: a bare `enban` on a terminal opens the app, never a menu.
 - The app restores the screen, cursor and echo on `q`, Ctrl+D and an interrupt, and warns when echo is still off afterwards.
+- `enban info --json` prints one JSON object with the drive, profile, status, sessions, free sectors and write speeds.
 
 ## Domain rules
 
@@ -34,6 +35,7 @@ Guidance for anyone, human or agent, changing enban. What enban is and how to us
 - After Escape the app waits a tenth of a second for the rest of an arrow sequence.
 - GNU `stty` on macOS reports a false failure on `stty echo icanon`; the app checks `stty -a` instead of trusting the exit status.
 - Tests drive the app through `script`, and send keys only once the first frame is on screen, because keys typed before the terminal leaves line mode can be lost.
+- On Linux the drive is read through `xorriso -toc` and `-list_speeds`, parsing only their result lines on stdout. No optical drive runs on a CI runner, so [`test/drive.sh`](test/drive.sh) is the stand-in drive: it runs the real xorriso on a `stdio:` image file and replaces only the two things a file cannot report, the `Media current` profile and code and the `-list_speeds` lines, written in libisoburn's own formats.
 
 ## Release
 
@@ -44,3 +46,4 @@ Guidance for anyone, human or agent, changing enban. What enban is and how to us
 
 - The README is in English only; the Japanese, Simplified Chinese and Hong Kong Traditional Chinese READMEs are not written yet (as of 2026-11-10).
 - v1.0.0 ships the app frame, its tabs and its keys, but no disc job, so it has no Homebrew formula yet (as of 2026-11-11).
+- `enban info` stops on macOS: the drive is read through `drutil`, and no `drutil -xml` output from a real drive has been captured to build the parser and its stand-in from (as of 2026-11-11).

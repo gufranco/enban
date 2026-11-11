@@ -181,3 +181,31 @@ theme_everywhere() {
   # Assert
   [[ "${status}" -eq 0 ]]
 }
+
+info_everywhere() {
+  local page option
+  page="$(disk_test_run enban help)" || return 1
+  grep -q -- '^  enban info ' <<<"${page}" || return 1
+  grep -q -- '^\.B enban info$' "${REPO_DIR}/man/enban.1" || return 2
+  grep -q -- '-W "info ' "${REPO_DIR}/completions/enban.bash" || return 3
+  grep -q -- "'info:" "${REPO_DIR}/completions/_enban" || return 4
+  grep -q -- '-a info ' "${REPO_DIR}/completions/enban.fish" || return 5
+  for option in drive json; do
+    grep -q -- "^  --${option} " <<<"${page}" || return 6
+    grep -qF -- "\\-\\-${option}" "${REPO_DIR}/man/enban.1" || return 7
+    grep -q -- "--${option}" "${REPO_DIR}/completions/enban.bash" || return 8
+    grep -q -- "'--${option}\[" "${REPO_DIR}/completions/_enban" || return 9
+    grep -q -- "-l ${option} " "${REPO_DIR}/completions/enban.fish" || return 10
+  done
+}
+
+@test "enban help, man page and completions list info with --drive and --json" {
+  # Arrange
+  local command=info
+
+  # Act
+  run info_everywhere "${command}"
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+}

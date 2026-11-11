@@ -157,3 +157,53 @@ disk_doctor() {
   disk_doctor_report "${disk_dr_status}"
   return "${disk_dr_status}"
 }
+
+disk_cli_is_option() {
+  case "$1" in
+  --* | -?*) return 0 ;;
+  *) return 1 ;;
+  esac
+}
+
+disk_cli_option() {
+  DISK_CLI_USED=0
+  case "$1" in
+  --*=*) disk_cli_assign "$1" ;;
+  --?*)
+    disk_option_flag "$1" && return 0
+    if ! disk_cli_takes_value "$1"; then
+      disk_cli_hint "unknown option '$1'"
+      return 1
+    fi
+    if [ "$2" -lt 1 ]; then
+      disk_cli_hint "option '$1' needs a value"
+      return 1
+    fi
+    DISK_CLI_USED=1
+    disk_option_value "$1" "$3"
+    ;;
+  *)
+    disk_cli_hint "unknown option '$1'"
+    return 1
+    ;;
+  esac
+}
+
+disk_cli_takes_value() {
+  case " ${DISK_VALUE_OPTIONS} " in
+  *" $1 "*) return 0 ;;
+  *) return 1 ;;
+  esac
+}
+
+disk_cli_assign() {
+  if ! disk_cli_takes_value "${1%%=*}"; then
+    if disk_option_flag "${1%%=*}"; then
+      disk_cli_hint "option '${1%%=*}' takes no value"
+    else
+      disk_cli_hint "unknown option '${1%%=*}'"
+    fi
+    return 1
+  fi
+  disk_option_value "${1%%=*}" "${1#*=}"
+}

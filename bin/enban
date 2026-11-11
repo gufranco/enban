@@ -23,6 +23,8 @@ DISK_PROG=enban
 . "${DISK_LIB}/app.sh"
 # shellcheck source=SCRIPTDIR/../lib/frame.sh
 . "${DISK_LIB}/frame.sh"
+# shellcheck source=SCRIPTDIR/../lib/drive.sh
+. "${DISK_LIB}/drive.sh"
 
 disk_usage() {
   if disk_ui_out; then
@@ -37,18 +39,25 @@ disk_usage_text() {
 enban - write, read, build and verify CD, DVD and Blu-ray discs
 
 usage:
-  enban                               open the full-screen app on a terminal
+  enban [--drive DRIVE]               open the full-screen app on a terminal
+  enban info --drive DRIVE [--json]   describe the drive and the disc in it
   enban doctor                        check the tools enban needs
   enban version                       print the version
   enban help                          print this page
 
 options:
+  --drive DRIVE       the drive to read, such as /dev/sr0; else ENBAN_DRIVE
+  --json              print the result of info as one JSON object, for scripts
   --theme NAME        colours of the terminal interface, see notes
 
 notes:
+  info and the app read the drive through xorriso on Linux. Reading a drive
+  on macOS is not supported yet.
+
   The app draws in the terminal's alternate screen and gives the screen back
-  when it ends, on q or on an interrupt. Digits switch tabs, the left and
-  right arrows move between them, and q quits.
+  when it ends, on q or on an interrupt. Tab and the digits switch tabs, the
+  arrows move between the jobs on Home and Enter opens one, ? shows the keys,
+  and q quits.
 
   --theme, else ENBAN_THEME, else KODOUGU_THEME picks the colours: kodougu,
   catppuccin-mocha, catppuccin-latte, dracula, nord, gruvbox, tokyo-night or
@@ -56,10 +65,61 @@ notes:
   colour off.
 
 examples:
-  enban
+  enban --drive /dev/sr0
   enban --theme nord
+  enban info --drive /dev/sr0 --json
   enban doctor
 USAGE
+}
+
+disk_option_flag() {
+  case "$1" in
+  --json) DISK_JSON=y ;;
+  *) return 1 ;;
+  esac
+  return 0
+}
+
+disk_option_value() {
+  DISK_DRIVE="$2"
+  return 0
+}
+
+disk_options() {
+  DISK_VALUE_OPTIONS="--drive"
+  disk_op_left="$#"
+  while [ "${disk_op_left}" -gt 0 ]; do
+    disk_op_arg="$1"
+    shift
+    disk_op_left=$((disk_op_left - 1))
+    if ! disk_cli_is_option "${disk_op_arg}"; then
+      disk_cli_hint "unexpected argument '${disk_op_arg}'"
+      return 1
+    fi
+    disk_cli_option "${disk_op_arg}" "${disk_op_left}" "${1:-}" || return 1
+    if [ "${DISK_CLI_USED}" -eq 1 ]; then
+      shift
+      disk_op_left=$((disk_op_left - 1))
+    fi
+  done
+}
+
+disk_info() {
+  disk_options "$@" || return 1
+  if [ -z "${DISK_DRIVE}" ]; then
+    disk_cli_hint "info needs --drive"
+    return 1
+  fi
+  disk_drive_report "${DISK_DRIVE}"
+}
+
+disk_app_start() {
+  disk_options "$@" || return 1
+  if [ "${DISK_JSON}" = y ]; then
+    disk_cli_hint "option '--json' works only with info"
+    return 1
+  fi
+  disk_open
 }
 
 disk_main() {
@@ -103,11 +163,12 @@ disk_route() {
   help | -h | --help) disk_usage ;;
   version | -V | --version) disk_cli_version ;;
   doctor) disk_doctor ;;
-  '') disk_open ;;
-  -*)
-    disk_cli_hint "unknown option '$1'"
-    return 1
+  info)
+    shift
+    disk_info "$@"
     ;;
+  '') disk_open ;;
+  -*) disk_app_start "$@" ;;
   *)
     disk_cli_hint "unknown command '$1'"
     return 1

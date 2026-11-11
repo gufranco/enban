@@ -34,6 +34,12 @@ disk_test_shim() {
   export SHIMS
 }
 
+disk_test_drive() {
+  local state="${WORK:?}/drive.state"
+  printf 'code=%s\nname=%s\nblocks=%s\nspeeds=%s\n' "$1" "$2" "$3" "${*:4}" >"${state}"
+  disk_test_shim xorriso "exec sh $(printf '%q' "${ENBAN_TESTS_DIR}/drive.sh") \"\${REAL}\" $(printf '%q' "${state}") \"\$@\""
+}
+
 disk_test_path_without_shims() {
   if [[ "${ENBAN_TEST_OS}" == "Darwin" ]]; then
     printf '%s:%s\n' "${ENBAN_TESTS_DIR}/shim" "${PATH}"

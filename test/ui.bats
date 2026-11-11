@@ -6,7 +6,7 @@ source "${BATS_TEST_DIRNAME:-.}/helpers.bash"
 
 setup() {
   WORK="$(mktemp -d "${BATS_TMPDIR:-/tmp}/enban-ui.XXXXXX")"
-  unset KODOUGU_THEME KODOUGU_ACCENT ENBAN_THEME NO_COLOR
+  unset KODOUGU_THEME KODOUGU_ACCENT ENBAN_THEME ENBAN_DRIVE NO_COLOR
   export ENBAN_TEST_GUM=1
   export ENBAN_TEST_GUM_LOG="${WORK}/gum.log"
   export ENBAN_TEST_GUM_ANSWERS="${WORK}/answers"

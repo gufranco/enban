@@ -39,3 +39,21 @@ disk_os() {
   fi
   printf '%s\n' "${DISK_OS}"
 }
+
+disk_json_string() {
+  printf '%s' "$1" | awk '
+    BEGIN { for (i = 1; i < 32; i++) code[sprintf("%c", i)] = sprintf("\\u%04x", i) }
+    function escape(s,   r, c, i) {
+      r = ""
+      for (i = 1; i <= length(s); i++) {
+        c = substr(s, i, 1)
+        if (c == "\\") r = r "\\\\"
+        else if (c == "\"") r = r "\\\""
+        else if (c in code) r = r code[c]
+        else r = r c
+      }
+      return r
+    }
+    { out = out (NR > 1 ? "\\n" : "") escape($0) }
+    END { printf "\"%s\"", out }'
+}

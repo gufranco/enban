@@ -3,6 +3,7 @@
 _enban() {
   local -a commands
   commands=(
+    'info:describe the drive and the disc in it'
     'doctor:check the tools enban needs'
     'version:print the version'
     'help:print usage'
@@ -14,6 +15,8 @@ _enban() {
   fi
 
   _arguments \
+    '--drive[the drive to read]:drive:_files' \
+    '--json[print the result as one JSON object]' \
     '--theme[colours of the terminal interface]:theme:(kodougu catppuccin-mocha catppuccin-latte dracula nord gruvbox tokyo-night mono)'
 }
 
