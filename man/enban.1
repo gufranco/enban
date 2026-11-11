@@ -122,7 +122,16 @@ starts it after each drive's name is typed. On Discovery, Enter sets the
 sectors or the speed and
 .B t
 starts the test after the drive's name is typed; the tab draws the read rate
-of the last run and compares the last five runs.
+of the last run and compares the last five runs. On Log,
+.B f
+filters by level,
+.B /
+searches and
+.B s
+saves a copy; the session log is kept in
+.I ENBAN_DATA/logs
+when enban quits. On Settings, space and Enter change a default and save the
+settings file at once.
 Without a terminal the app never opens.
 .SH COMMANDS
 .TP
@@ -284,7 +293,8 @@ The drive when
 is not given.
 .TP
 .B ENBAN_DATA
-The folder where discovery keeps its CSV files and its list of runs,
+The folder where discovery keeps its CSV files and its list of runs, and
+where each day's log is kept,
 .I ~/.local/share/enban
 by default.
 .TP

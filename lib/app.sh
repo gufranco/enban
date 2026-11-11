@@ -76,18 +76,22 @@ disk_app_drive_note() {
     disk_an_profile="$(disk_drive_short_profile)"
     disk_an_free="$(disk_drive_free_text)"
     DISK_APP_STATUS="${disk_an_profile} loaded, ${disk_an_free} free."
+    disk_log_add INFO "Found ${DISK_DRIVE}, ${DISK_DRIVE_VENDOR} ${DISK_DRIVE_PRODUCT} ${DISK_DRIVE_REVISION}, ${disk_an_profile}"
     ;;
   2)
     DISK_APP_DRIVE_NOTE="Reading a drive is not supported on macOS yet."
     DISK_APP_STATUS="${DISK_APP_DRIVE_NOTE}"
+    disk_log_add WARN "${DISK_APP_DRIVE_NOTE}"
     ;;
   3)
     DISK_APP_DRIVE_NOTE="$(printf '%s\n' "No drive chosen." "Start enban with --drive DRIVE," "or set ENBAN_DRIVE.")"
     DISK_APP_STATUS="No drive chosen."
+    disk_log_add WARN "No drive chosen."
     ;;
   *)
     DISK_APP_DRIVE_NOTE="Unable to read the drive."
     DISK_APP_STATUS="Unable to read the drive ${DISK_DRIVE}."
+    disk_log_add ERROR "${DISK_APP_STATUS}"
     ;;
   esac
 }
@@ -130,6 +134,7 @@ disk_app_decode() {
   0a | 0d) DISK_APP_KEY=enter ;;
   09) DISK_APP_KEY=tab ;;
   20) DISK_APP_KEY=space ;;
+  2f) DISK_APP_KEY=slash ;;
   3f) DISK_APP_KEY=help ;;
   61) DISK_APP_KEY=a ;;
   62) DISK_APP_KEY=b ;;
@@ -210,7 +215,6 @@ disk_app_may_quit() {
 
 disk_app_pane_key() {
   case "$(disk_app_tab_name "${DISK_APP_TAB}")" in
-  Home) disk_app_home_key "$1" ;;
   Write) disk_write_tab_key "$1" ;;
   Read) disk_read_tab_key "$1" ;;
   Verify) disk_verify_tab_key "$1" ;;
@@ -218,7 +222,9 @@ disk_app_pane_key() {
   Tools) disk_tools_tab_key "$1" ;;
   Queue) disk_queue_tab_key "$1" ;;
   Discovery) disk_discovery_tab_key "$1" ;;
-  *) return 0 ;;
+  Settings) disk_settings_tab_key "$1" ;;
+  Log) disk_log_tab_key "$1" ;;
+  *) disk_app_home_key "$1" ;;
   esac
 }
 
@@ -246,11 +252,12 @@ disk_app_run() {
   disk_app_defaults
   disk_app_colours
   disk_app_size
+  disk_log_open
   disk_app_drive
   disk_build_tab_refresh
   disk_app_enter
-  trap 'disk_app_leave; exit 130' INT
-  trap 'disk_app_leave; exit 143' TERM
+  trap 'disk_app_leave; disk_log_close; exit 130' INT
+  trap 'disk_app_leave; disk_log_close; exit 143' TERM
   disk_ar_count="$(disk_app_tab_count)"
   while [ "${DISK_APP_FRAMES}" -lt "${DISK_APP_FRAME_LIMIT}" ]; do
     disk_frame_draw
@@ -259,6 +266,7 @@ disk_app_run() {
     disk_app_act "${DISK_APP_KEY}" "${disk_ar_count}" || break
   done
   disk_app_leave
+  disk_log_close
   trap - INT TERM
   return 0
 }

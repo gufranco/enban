@@ -104,10 +104,6 @@ disk_frame_home() {
     }'
 }
 
-disk_frame_soon() {
-  printf '%s\n' "$1" "" "This tab arrives in a coming release."
-}
-
 disk_frame_keys() {
   printf '%s\n' "Keys" ""
   printf '%s\n' "  arrows      move between the jobs on Home"
@@ -119,6 +115,7 @@ disk_frame_keys() {
   printf '%s\n' "  a f x n b   add a file or folder, remove, rename, build, on Build"
   printf '%s\n' "  a x J K o s add, remove, move, save and start the queue, on Queue"
   printf '%s\n' "  t           start the test, on Discovery"
+  printf '%s\n' "  f / s       filter, search and save the log, on Log"
   printf '%s\n' "  c           cancel the running job"
   printf '%s\n' "  esc         back to the tool list, on Tools"
   printf '%s\n' "  tab         next tab"
@@ -134,7 +131,6 @@ disk_frame_left() {
   fi
   disk_fp_name="$(disk_app_tab_name "${DISK_APP_TAB}")"
   case "${disk_fp_name}" in
-  Home) disk_frame_home ;;
   Write) disk_frame_write ;;
   Read) disk_frame_read ;;
   Verify) disk_frame_verify ;;
@@ -142,7 +138,9 @@ disk_frame_left() {
   Tools) disk_frame_tools ;;
   Queue) disk_frame_queue ;;
   Discovery) disk_frame_discovery ;;
-  *) disk_frame_soon "${disk_fp_name}" ;;
+  Settings) disk_frame_settings ;;
+  Log) disk_frame_log ;;
+  *) disk_frame_home ;;
   esac
 }
 

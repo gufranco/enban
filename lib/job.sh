@@ -12,6 +12,7 @@ disk_job_launch() {
   DISK_APP_JOB_PID=$!
   DISK_APP_JOB=running
   DISK_APP_STATUS="$(disk_job_verb) Press c to cancel."
+  disk_log_add INFO "Started ${DISK_APP_JOB_KIND}: ${DISK_APP_JOB_WHAT}"
 }
 
 disk_job_run() {
@@ -43,6 +44,7 @@ disk_job_poll() {
   disk_app_drive
   DISK_APP_STATUS="The ${DISK_APP_JOB_KIND} failed; the result says why."
   [ "${disk_jp_status}" -ne 0 ] || DISK_APP_STATUS="$(printf '%s\n' "${DISK_APP_JOB_RESULT}" | sed -n '$p')"
+  disk_log_job_end "${disk_jp_status}"
 }
 
 disk_job_cancel() {
@@ -55,6 +57,7 @@ disk_job_cancel() {
   DISK_APP_JOB=finished
   DISK_APP_JOB_RESULT="$(disk_job_cancelled)"
   DISK_APP_STATUS="Cancelled."
+  disk_log_add WARN "Cancelled ${DISK_APP_JOB_KIND}: ${DISK_APP_JOB_WHAT}"
 }
 
 disk_job_cancelled() {

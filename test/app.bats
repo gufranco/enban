@@ -133,20 +133,6 @@ teardown() {
   [[ "${shown}" == *"Read disc to image"*"> Image      none chosen, press Enter"* ]]
 }
 
-@test "the arrows and enter do nothing on a tab still to come" {
-  # Arrange
-  local keys='8\033[B\nq'
-
-  # Act
-  run on_terminal "${keys}"
-
-  # Assert
-  local shown
-  shown="$(last_frame)"
-  [[ "${status}" -eq 0 ]]
-  [[ "${shown}" == *"Log"*"This tab arrives in a coming release."* ]]
-}
-
 @test "? shows the keys and the next key closes them" {
   # Arrange
   local keys='?xq'
@@ -422,19 +408,6 @@ teardown() {
   shown="$(last_frame)"
   [[ "${status}" -eq 0 ]]
   [[ "${shown}" == *"> Discovery test"* ]]
-}
-
-@test "the Settings tab says it arrives in a coming release" {
-  # Arrange
-  local keys="9q"
-
-  # Act
-  run on_terminal "${keys}"
-
-  # Assert
-  local final
-  final="$(last_frame)"
-  [[ "${final}" == *"Settings"*"This tab arrives in a coming release."* ]]
 }
 
 @test "a wide terminal shows the drive and its disc in the header" {

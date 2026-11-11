@@ -43,6 +43,12 @@ DISK_PROG=enban
 . "${DISK_LIB}/discovery.sh"
 # shellcheck source=SCRIPTDIR/../lib/settings.sh
 . "${DISK_LIB}/settings.sh"
+# shellcheck source=SCRIPTDIR/../lib/settings_tab.sh
+. "${DISK_LIB}/settings_tab.sh"
+# shellcheck source=SCRIPTDIR/../lib/log.sh
+. "${DISK_LIB}/log.sh"
+# shellcheck source=SCRIPTDIR/../lib/log_tab.sh
+. "${DISK_LIB}/log_tab.sh"
 # shellcheck source=SCRIPTDIR/../lib/write_tab.sh
 . "${DISK_LIB}/write_tab.sh"
 # shellcheck source=SCRIPTDIR/../lib/read_tab.sh
@@ -152,7 +158,9 @@ notes:
   speed and copies, v turns the verify on or off, o saves the queue to a file
   and s starts it after you type each drive's name. On Discovery, Enter sets
   the sectors or the speed and t starts the test after you type the drive's
-  name.
+  name. On Log, f filters by level, / searches and s saves a copy; the
+  session log is kept in ENBAN_DATA/logs when enban quits. On Settings, space
+  and Enter change a default and save the settings file at once.
 
   --theme, else ENBAN_THEME, else KODOUGU_THEME picks the colours: kodougu,
   catppuccin-mocha, catppuccin-latte, dracula, nord, gruvbox, tokyo-night or

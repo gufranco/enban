@@ -76,5 +76,13 @@ Type "7"
 Sleep 1500ms
 Screenshot tools.png
 Sleep 600ms
+Type "8"
+Sleep 1500ms
+Screenshot log.png
+Sleep 600ms
+Type "9"
+Sleep 1500ms
+Screenshot settings.png
+Sleep 600ms
 Type "q"
 Sleep 1s

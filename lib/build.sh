@@ -86,7 +86,8 @@ disk_build_make() {
     return 0
   fi
   rm -f "${disk_bm_part}" "${disk_bm_part}.iso"
-  disk_error "unable to build ${DISK_BUILD_OUT} from ${DISK_BUILD_SOURCE}."
+  disk_bm_from="${DISK_BUILD_SOURCE:-the layout}"
+  disk_error "unable to build ${DISK_BUILD_OUT} from ${disk_bm_from}."
   return 1
 }
 

@@ -34,6 +34,12 @@ DISK_LIB="$(cd "$(dirname "$0")/../lib" && pwd)" || exit 1
 . "${DISK_LIB}/discovery.sh"
 # shellcheck source=SCRIPTDIR/../lib/settings.sh
 . "${DISK_LIB}/settings.sh"
+# shellcheck source=SCRIPTDIR/../lib/settings_tab.sh
+. "${DISK_LIB}/settings_tab.sh"
+# shellcheck source=SCRIPTDIR/../lib/log.sh
+. "${DISK_LIB}/log.sh"
+# shellcheck source=SCRIPTDIR/../lib/log_tab.sh
+. "${DISK_LIB}/log_tab.sh"
 # shellcheck source=SCRIPTDIR/../lib/write_tab.sh
 . "${DISK_LIB}/write_tab.sh"
 # shellcheck source=SCRIPTDIR/../lib/read_tab.sh
