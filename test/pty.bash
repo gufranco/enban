@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2154
 
+APP_TIME_LIMIT=120
+
 start_app() {
   local -a shell_words
-  local search_path command_line
+  local search_path command_line limit_tool
   read -r -a shell_words <<<"${ENBAN_TEST_SHELL:-sh}"
   search_path="${APP_PATH:-}"
   [[ -n "${search_path}" ]] || search_path="$(disk_test_path)"
@@ -11,7 +13,8 @@ start_app() {
   Darwin) PATH="${search_path}" script -q /dev/null "${shell_words[@]}" "${REPO_DIR}/bin/enban" "$@" ;;
   *)
     command_line="$(printf '%q ' "${shell_words[@]}" "${REPO_DIR}/bin/enban" "$@")"
-    PATH="${search_path}" script -qec "${command_line}" /dev/null
+    limit_tool="$(command -v timeout)"
+    PATH="${search_path}" "${limit_tool}" "${APP_TIME_LIMIT}" script -qec "${command_line}" /dev/null
     ;;
   esac
 }
