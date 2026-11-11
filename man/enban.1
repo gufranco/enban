@@ -35,6 +35,12 @@ enban \- write, read, build and verify CD, DVD and Blu-ray discs
 .IR list ]
 .RB [ \-\-label
 .IR name ]
+.RB [ \-\-publisher
+.IR text ]
+.RB [ \-\-date
+.IR stamp ]
+.RB [ \-\-iso\-level
+.IR n ]
 .br
 .B enban erase
 .BI \-\-drive " drive"
@@ -233,6 +239,10 @@ leaves them out. macOS builds with hdiutil; Linux builds with xorriso, and
 with genisoimage when UDF is asked for. The volume name is the folder's, or
 .BR \-\-label ,
 in the letters ISO9660 allows. It never overwrites a file.
+The publisher, preparer, application and system are recorded in capitals,
+as ISO9660 asks. macOS records the publisher, preparer and application
+only, and refuses the other identifiers, since hdiutil has no field for
+them.
 .TP
 .B erase
 Blank a rewritable disc that holds data: CD-RW, DVD-RW, DVD+RW, DVD-RAM or
@@ -390,6 +400,29 @@ commas; iso9660 is required. All three by default.
 .BI \-\-label " name"
 The volume name build writes, up to 32 characters. The folder's name by
 default.
+.TP
+.BI \-\-publisher " text"
+The publisher build records, up to 128 characters.
+.TP
+.BI \-\-preparer " text"
+Who prepared the image, up to 128 characters.
+.TP
+.BI \-\-application " text"
+The application build records, up to 128 characters.
+.TP
+.BI \-\-system\-id " text"
+The system build records, up to 32 characters. Linux only.
+.TP
+.BI \-\-volume\-set " text"
+The volume set build records, up to 128 characters. Linux only.
+.TP
+.BI \-\-date " stamp"
+The creation and modification dates build records, as YYYYMMDDhhmmss in
+UTC. The time the image is built by default. Linux only, and not with UDF,
+which genisoimage builds without this option.
+.TP
+.BI \-\-iso\-level " n"
+The ISO9660 level build follows, 1 to 4. Linux only.
 .TP
 .B \-\-full
 Erase every sector of the disc instead of only its start.

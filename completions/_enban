@@ -44,6 +44,13 @@ _enban() {
     '--eject[open the tray when the write ends]' \
     '--fs[file systems build writes]:file systems:(iso9660,joliet,udf iso9660,joliet iso9660,udf iso9660)' \
     '--label[the volume name build writes]:label:' \
+    '--publisher[the publisher build records]:publisher:' \
+    '--preparer[who prepared the image]:preparer:' \
+    '--application[the application build records]:application:' \
+    '--system-id[the system build records]:system:' \
+    '--volume-set[the volume set build records]:volume set:' \
+    '--date[the volume dates build records, YYYYMMDDhhmmss UTC]:date:' \
+    '--iso-level[the ISO 9660 level build follows]:level:(1 2 3 4)' \
     '--full[erase every sector]' \
     '--sectors[how many sectors discovery writes]:sectors:' \
     '--csv[where discovery saves its read rate]:file:_files' \

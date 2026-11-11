@@ -11,6 +11,7 @@ disk_build_check() {
   fi
   disk_build_fs "${DISK_BUILD_FS}" || return 1
   disk_build_label || return 1
+  disk_build_ids_check || return 1
   disk_build_tools
 }
 
@@ -102,6 +103,9 @@ disk_build_hybrid() {
   [ "${DISK_BUILD_ISO}" = n ] || set -- "$@" -iso
   [ "${DISK_BUILD_JOLIET}" = n ] || set -- "$@" -joliet
   [ "${DISK_BUILD_UDF}" = n ] || set -- "$@" -udf
+  [ -z "${DISK_BUILD_PUBLISHER}" ] || set -- "$@" -publisher "${DISK_BUILD_PUBLISHER}"
+  [ -z "${DISK_BUILD_PREPARER}" ] || set -- "$@" -preparer "${DISK_BUILD_PREPARER}"
+  [ -z "${DISK_BUILD_APPLICATION}" ] || set -- "$@" -application "${DISK_BUILD_APPLICATION}"
   rm -f "${disk_bh_part}"
   disk_bh_status=0
   hdiutil makehybrid "$@" -o "${disk_bh_part}.iso" "${disk_bh_from}" >/dev/null 2>&1 || disk_bh_status=1
@@ -128,6 +132,13 @@ disk_build_mkisofs() {
   set -- -quiet -R -V "${DISK_BUILD_VOLUME}" -graft-points
   [ "${DISK_BUILD_JOLIET}" = n ] || set -- "$@" -J
   [ "${DISK_BUILD_UDF}" = n ] || set -- "$@" -udf
+  [ -z "${DISK_BUILD_PUBLISHER}" ] || set -- "$@" -publisher "${DISK_BUILD_PUBLISHER}"
+  [ -z "${DISK_BUILD_PREPARER}" ] || set -- "$@" -p "${DISK_BUILD_PREPARER}"
+  [ -z "${DISK_BUILD_APPLICATION}" ] || set -- "$@" -A "${DISK_BUILD_APPLICATION}"
+  [ -z "${DISK_BUILD_SYSTEM}" ] || set -- "$@" -sysid "${DISK_BUILD_SYSTEM}"
+  [ -z "${DISK_BUILD_VOLSET}" ] || set -- "$@" -volset "${DISK_BUILD_VOLSET}"
+  [ -z "${DISK_BUILD_LEVEL}" ] || set -- "$@" -iso-level "${DISK_BUILD_LEVEL}"
+  [ -z "${DISK_BUILD_DATE}" ] || set -- "$@" "--modification-date=${DISK_BUILD_DATE}00"
   set -- "$@" -o "${disk_bk_part}" -path-list "${disk_bk_part}.grafts"
   printf '%s\n' "${disk_bk_grafts}" >"${disk_bk_part}.grafts"
   disk_bk_status=0
@@ -161,6 +172,7 @@ disk_build_done() {
   disk_bd_names="$(disk_build_names)"
   printf 'Files         %s\nSectors       %s\n' "${disk_bd_files}" $((disk_bd_bytes / 2048))
   printf 'File systems  %s\n' "${disk_bd_names}"
+  disk_build_ids_rows
   disk_bd_from="${DISK_BUILD_SOURCE}"
   [ -z "${DISK_BUILD_LAYOUT}" ] || disk_bd_from="$(disk_build_entries)"
   disk_bd_line="Done. ${DISK_BUILD_OUT} is built from ${disk_bd_from}."

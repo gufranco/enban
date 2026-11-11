@@ -304,6 +304,17 @@ options_everywhere() {
   [[ "${status}" -eq 0 ]]
 }
 
+@test "enban help, man page and completions list the build identifiers" {
+  # Arrange
+  local first=publisher
+
+  # Act
+  run options_everywhere "${first}" preparer application system-id volume-set date iso-level
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+}
+
 @test "enban help, man page and completions list erase and --full" {
   # Arrange
   local command=erase

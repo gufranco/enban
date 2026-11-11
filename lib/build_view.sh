@@ -39,6 +39,8 @@ disk_frame_build() {
   disk_job_row $((disk_fb_count + 2)) "${DISK_APP_B_FOCUS}" "Image" "${DISK_APP_B_OUT:-none chosen, press Enter}"
   disk_fb_target="$(disk_build_target_text)"
   disk_job_row $((disk_fb_count + 3)) "${DISK_APP_B_FOCUS}" "Target" "${disk_fb_target}"
+  disk_job_row $((disk_fb_count + 4)) "${DISK_APP_B_FOCUS}" "Publisher" "${DISK_APP_B_PUBLISHER:-none}"
+  disk_job_row $((disk_fb_count + 5)) "${DISK_APP_B_FOCUS}" "Date" "${DISK_APP_B_DATE:-when it is built}"
   printf '%s\n' "" "a file   f folder   x remove   n rename   b build"
 }
 

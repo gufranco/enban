@@ -397,3 +397,44 @@ answers() {
   shown="$(last_frame)"
   [[ "${shown}" == *"> Target     the disc in stdio:${WORK}/disc.iso"* ]]
 }
+
+@test "Enter on Publisher names who publishes the disc" {
+  # Arrange
+  answers "Franco Family"
+
+  # Act
+  run on_terminal '3\033[B\033[B\033[B\033[B\nq'
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"> Publisher  Franco Family"* ]]
+}
+
+@test "Enter on Date takes YYYYMMDDhhmmss and refuses anything else" {
+  # Arrange
+  answers 20091224180000 "Christmas 2009"
+
+  # Act
+  run on_terminal '3\033[B\033[B\033[B\033[B\033[B\n\nq'
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"> Date       20091224180000"* ]]
+  [[ "${shown}" == *"The date must be YYYYMMDDhhmmss, such as 20091224180000."* ]]
+}
+
+@test "b records the publisher in the image it builds" {
+  # Arrange
+  answers "${SRC}" "${OUT}" Franco
+
+  # Act
+  run on_terminal_in_steps '3f\033[B\033[B\033[B\n\033[B\033[B\nb' 'is built from' 'q'
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${status}" -eq 0 ]]
+  [[ "${shown}" == *"Publisher     FRANCO"*"Done. ${OUT} is built from 1 entry."* ]]
+}

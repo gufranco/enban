@@ -291,6 +291,143 @@ volume_id() {
   [[ "${output}" == "enban: option '--fs' works only with build. run 'enban help' for usage." ]]
 }
 
+pvd_field() {
+  local raw
+  dd if="$1" of="${WORK}/field.bin" bs=1 skip=$((16 * 2048 + $2)) count="$3" 2>/dev/null
+  raw="$(tr -d '\000' <"${WORK}/field.bin")"
+  printf '%s' "${raw%"${raw##*[! ]}"}"
+}
+
+@test "enban build records every identifier and the date on Linux, the names in capitals" {
+  # Arrange
+  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS builds with hdiutil, which has no such fields"
+  local -a ids=(--publisher "Franco Family" --preparer Gustavo --application enban
+    --system-id Linux --volume-set "Family 2009" --date 20091224180000 --iso-level 3)
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --fs iso9660,joliet "${ids[@]}" </dev/null
+
+  # Assert
+  local publisher preparer application system volset created level
+  publisher="$(pvd_field "${OUT}" 318 128)"
+  preparer="$(pvd_field "${OUT}" 446 128)"
+  application="$(pvd_field "${OUT}" 574 128)"
+  system="$(pvd_field "${OUT}" 8 32)"
+  volset="$(pvd_field "${OUT}" 190 128)"
+  created="$(pvd_field "${OUT}" 813 14)"
+  [[ "${status}" -eq 0 ]]
+  [[ "${publisher}" == "FRANCO FAMILY" ]]
+  [[ "${preparer}" == "GUSTAVO" ]]
+  [[ "${application}" == "ENBAN" ]]
+  [[ "${system}" == "LINUX" ]]
+  [[ "${volset}" == "Family 2009" ]]
+  [[ "${created}" == "20091224180000" ]]
+  [[ "${lines[3]}" == "Publisher     FRANCO FAMILY" ]]
+  [[ "${lines[4]}" == "Preparer      GUSTAVO" ]]
+  [[ "${lines[5]}" == "Application   ENBAN" ]]
+  [[ "${lines[6]}" == "System        LINUX" ]]
+  [[ "${lines[7]}" == "Volume set    Family 2009" ]]
+  [[ "${lines[8]}" == "Date          20091224180000 UTC" ]]
+  [[ "${lines[9]}" == "ISO level     3" ]]
+}
+
+@test "enban build records the publisher, preparer and application on macOS, in capitals" {
+  # Arrange
+  [[ "${ENBAN_TEST_OS}" == "Darwin" ]] || skip "Linux records every field"
+  local -a ids=(--publisher Franco --preparer Gustavo --application enban)
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" "${ids[@]}" </dev/null
+
+  # Assert
+  local publisher preparer application
+  publisher="$(pvd_field "${OUT}" 318 128)"
+  preparer="$(pvd_field "${OUT}" 446 128)"
+  application="$(pvd_field "${OUT}" 574 128)"
+  [[ "${status}" -eq 0 ]]
+  [[ "${publisher}" == "FRANCO" ]]
+  [[ "${preparer}" == "GUSTAVO" ]]
+  [[ "${application}" == "ENBAN" ]]
+  [[ "${lines[3]}" == "Publisher     FRANCO" ]]
+}
+
+@test "enban build on macOS refuses a field hdiutil cannot write" {
+  # Arrange
+  [[ "${ENBAN_TEST_OS}" == "Darwin" ]] || skip "Linux writes it with xorriso"
+  local option=--system-id
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" "${option}" MACOS </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: --system-id needs xorriso, and macOS builds with hdiutil makehybrid, which has no such field." ]]
+  [[ ! -e "${OUT}" ]]
+}
+
+@test "enban build on Linux refuses a date with UDF" {
+  # Arrange
+  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS refuses --date for every build"
+  local option=--date
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" "${option}" 20091224180000 </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: --date needs xorriso, and a UDF image on Linux is built with genisoimage. leave udf out of --fs or leave out --date." ]]
+  [[ ! -e "${OUT}" ]]
+}
+
+@test "enban build refuses a publisher longer than 128 characters" {
+  # Arrange
+  local publisher
+  publisher="$(printf 'p%.0s' {1..129})"
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --publisher "${publisher}" </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: --publisher takes up to 128 characters, got 129." ]]
+}
+
+@test "enban build refuses a date that is not YYYYMMDDhhmmss" {
+  # Arrange
+  local date=2009-12-24
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --date "${date}" </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: --date takes YYYYMMDDhhmmss in UTC, such as 20091224180000, got: 2009-12-24" ]]
+}
+
+@test "enban build refuses an ISO level outside 1 to 4" {
+  # Arrange
+  local level=5
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --iso-level "${level}" </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: --iso-level takes 1, 2, 3 or 4, got: 5" ]]
+}
+
+@test "write refuses --publisher, which only build takes" {
+  # Arrange
+  local option=--publisher
+
+  # Act
+  run disk_test_run enban write "${OUT}" --drive /dev/sr0 "${option}" Franco </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: option '--publisher' works only with build. run 'enban help' for usage." ]]
+}
+
 quoted() {
   local text="$1"
   printf "'%s'" "${text//\'/\'\\\'\'}"
