@@ -1,5 +1,12 @@
 # Changelog
 
+# [1.2.0](https://github.com/gufranco/enban/compare/v1.1.0...v1.2.0) (2026-11-11)
+
+
+### Features
+
+* verify a disc from the CLI and the app ([7fb940c](https://github.com/gufranco/enban/commit/7fb940c4c2aa1125575a61a77deb2c2389bf603f))
+
 # [1.1.0](https://github.com/gufranco/enban/compare/v1.0.0...v1.1.0) (2026-11-11)
 
 
