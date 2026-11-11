@@ -77,12 +77,15 @@ make install
 
 | Key | In the app |
 |:----|:-----------|
-| Arrows | Move between the six jobs on Home |
-| Enter | Open the focused job's tab |
+| Arrows | Move between the six jobs on Home, or the fields on Write |
+| Enter | Open the focused job's tab, or edit the focused field |
+| Space | Turn verify or eject on or off on Write |
+| `w` | Write the chosen image, after you type the drive's name |
+| `c` | Cancel a running write |
 | Tab | Next tab |
 | `0` to `9` | Switch to that tab |
 | `?` | Show the keys; the next key closes them |
-| `q` or Ctrl+D | Quit and give the terminal back |
+| `q` or Ctrl+D | Quit and give the terminal back; refused while a write runs |
 
 `--theme <name>` picks the colours; `ENBAN_THEME`, then `KODOUGU_THEME`, set the same, and `NO_COLOR` turns colour off. enban follows the shared command-line contract of its family, described in [FAMILY.md](FAMILY.md).
 
@@ -125,6 +128,10 @@ Everything is POSIX `sh` with ShellCheck `-o all` at zero findings. The suites d
 <tr>
 <td width="50%" valign="top"><img src="screens/home.png" alt="enban: Home, with the six jobs and the disc pane"><br><sub>Home, with the six jobs and the disc pane</sub></td>
 <td width="50%" valign="top"><img src="screens/keys.png" alt="enban: The key list that ? opens"><br><sub>The key list that ? opens</sub></td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="screens/write.png" alt="enban: The Write tab, with its image, speed, verify and eject fields"><br><sub>The Write tab, with its image, speed, verify and eject fields</sub></td>
+<td width="50%" valign="top"></td>
 </tr>
 <tr>
 <td width="50%" valign="top"><img src="screens/doctor.png" alt="enban: doctor checks every tool it needs"><br><sub>doctor checks every tool it needs</sub></td>

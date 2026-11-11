@@ -27,6 +27,8 @@ DISK_PROG=enban
 . "${DISK_LIB}/drive.sh"
 # shellcheck source=SCRIPTDIR/../lib/write.sh
 . "${DISK_LIB}/write.sh"
+# shellcheck source=SCRIPTDIR/../lib/write_tab.sh
+. "${DISK_LIB}/write_tab.sh"
 
 disk_usage() {
   if disk_ui_out; then
@@ -66,7 +68,8 @@ notes:
   The app draws in the terminal's alternate screen and gives the screen back
   when it ends, on q or on an interrupt. Tab and the digits switch tabs, the
   arrows move between the jobs on Home and Enter opens one, ? shows the keys,
-  and q quits.
+  and q quits. On Write, Enter edits a field, space turns verify or eject on
+  or off, w writes after you type the drive's name, and c cancels the write.
 
   --theme, else ENBAN_THEME, else KODOUGU_THEME picks the colours: kodougu,
   catppuccin-mocha, catppuccin-latte, dracula, nord, gruvbox, tokyo-night or

@@ -27,7 +27,9 @@ case " $* " in
 *" -as cdrecord "*)
   fail_write="$(value fail_write)"
   corrupt="$(value corrupt)"
+  slow="$(value slow)"
   file="$(disc_file "$@")"
+  [ "${slow}" != 1 ] || sleep 30
   if [ "${fail_write}" = 1 ]; then
     printf 'xorriso : FAILURE : -as cdrecord: Job could not be performed properly.\n' >&2
     exit 5
@@ -36,6 +38,11 @@ case " $* " in
   if [ "${corrupt}" = 1 ]; then
     printf 'X' | dd of="${file}" bs=1 seek=4096 conv=notrunc 2>/dev/null
   fi
+  ;;
+*" -eject all "*)
+  fail_eject="$(value fail_eject)"
+  [ "${fail_eject}" != 1 ] || exit 5
+  "${real}" "$@"
   ;;
 *" -list_speeds "*)
   "${real}" "$@" >/dev/null || exit "$?"

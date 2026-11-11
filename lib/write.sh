@@ -61,6 +61,7 @@ disk_write_verify() {
 
 disk_write_eject() {
   xorriso -outdev "${DISK_DRIVE}" -eject all >/dev/null 2>&1 && return 0
+  DISK_WRITE_EJECT=n
   disk_warning "the disc is written, but ${DISK_DRIVE} did not open its tray."
 }
 
@@ -81,10 +82,18 @@ disk_write_done() {
 }
 
 disk_write_run() {
+  disk_write_check || return 1
+  disk_write_confirm || return 1
+  disk_write_go
+}
+
+disk_write_check() {
   disk_write_image "${DISK_WRITE_IMAGE}" || return 1
   disk_drive_read "${DISK_DRIVE}" write || return 1
-  disk_write_fits "${DISK_WRITE_IMAGE}" || return 1
-  disk_write_confirm || return 1
+  disk_write_fits "${DISK_WRITE_IMAGE}"
+}
+
+disk_write_go() {
   disk_write_burn || return 1
   if [ "${DISK_WRITE_VERIFY}" = y ]; then
     disk_write_verify || return 1

@@ -118,21 +118,45 @@ disk_app_byte() {
 
 disk_app_key() {
   disk_ak_hex="$(disk_app_byte 1)"
-  case "${disk_ak_hex}" in
+  case "${DISK_APP_JOB}:${disk_ak_hex}" in
+  running:) DISK_APP_KEY=tick ;;
+  *) disk_app_decode "${disk_ak_hex}" ;;
+  esac
+}
+
+disk_app_decode() {
+  case "$1" in
   '' | 04) DISK_APP_KEY=eof ;;
   0a | 0d) DISK_APP_KEY=enter ;;
   09) DISK_APP_KEY=tab ;;
+  20) DISK_APP_KEY=space ;;
   3f) DISK_APP_KEY=help ;;
+  63) DISK_APP_KEY=c ;;
+  77) DISK_APP_KEY=w ;;
   1b)
     stty min 0 time 1 2>/dev/null
     disk_ak_rest="$(disk_app_byte 2)"
     stty min 1 time 0 2>/dev/null
     disk_app_escape "${disk_ak_rest}"
     ;;
-  3[0-9]) DISK_APP_KEY="${disk_ak_hex#3}" ;;
+  3[0-9]) DISK_APP_KEY="${1#3}" ;;
   71) DISK_APP_KEY=q ;;
   *) DISK_APP_KEY=other ;;
   esac
+}
+
+disk_app_ask() {
+  stty echo icanon min 1 time 0 2>/dev/null
+  printf '\033[H\033[2J\033[?25h'
+  DISK_APP_ANSWER=""
+  if disk_ui_prompts; then
+    DISK_APP_ANSWER="$(disk_ui_input "$1" "$2")" || DISK_APP_ANSWER=""
+  else
+    printf '%s: ' "$1"
+    IFS= read -r DISK_APP_ANSWER || DISK_APP_ANSWER=""
+  fi
+  printf '\033[?25l'
+  stty -echo -icanon min 1 time 0 2>/dev/null
 }
 
 disk_app_escape() {
@@ -154,17 +178,33 @@ disk_app_act() {
     esac
   fi
   case "$1" in
-  q | eof) return 1 ;;
+  q | eof)
+    disk_app_may_quit
+    return
+    ;;
   [0-9]) [ "$1" -ge "$2" ] || DISK_APP_TAB="$1" ;;
   tab) DISK_APP_TAB=$(((DISK_APP_TAB + 1) % $2)) ;;
   help) DISK_APP_HELP=1 ;;
-  *) disk_app_home_key "$1" ;;
+  tick) disk_write_tab_poll ;;
+  *) disk_app_pane_key "$1" ;;
   esac
   return 0
 }
 
+disk_app_may_quit() {
+  [ "${DISK_APP_JOB}" = running ] || return 1
+  DISK_APP_STATUS="A write is running. Press c to cancel it first."
+}
+
+disk_app_pane_key() {
+  case "$(disk_app_tab_name "${DISK_APP_TAB}")" in
+  Home) disk_app_home_key "$1" ;;
+  Write) disk_write_tab_key "$1" ;;
+  *) return 0 ;;
+  esac
+}
+
 disk_app_home_key() {
-  [ "${DISK_APP_TAB}" -eq 0 ] || return 0
   case "$1" in
   up) [ "${DISK_APP_FOCUS}" -lt "${DISK_APP_GRID}" ] || DISK_APP_FOCUS=$((DISK_APP_FOCUS - DISK_APP_GRID)) ;;
   down) [ $((DISK_APP_FOCUS + DISK_APP_GRID)) -gt 5 ] || DISK_APP_FOCUS=$((DISK_APP_FOCUS + DISK_APP_GRID)) ;;
@@ -185,12 +225,20 @@ disk_app_run() {
   disk_ar_count="$(disk_app_tab_count)"
   while [ "${DISK_APP_FRAMES}" -lt "${DISK_APP_FRAME_LIMIT}" ]; do
     disk_frame_draw
+    disk_app_wait_mode
     disk_app_key
     disk_app_act "${DISK_APP_KEY}" "${disk_ar_count}" || break
   done
   disk_app_leave
   trap - INT TERM
   return 0
+}
+
+disk_app_wait_mode() {
+  case "${DISK_APP_JOB}" in
+  running) stty min 0 time 5 2>/dev/null ;;
+  *) stty min 1 time 0 2>/dev/null ;;
+  esac
 }
 
 disk_app_tab_name() {

@@ -3,6 +3,8 @@
 
 # shellcheck source=test/helpers.bash
 source "${BATS_TEST_DIRNAME:-.}/helpers.bash"
+# shellcheck source=test/pty.bash
+source "${BATS_TEST_DIRNAME:-.}/pty.bash"
 
 setup() {
   WORK="$(mktemp -d "${BATS_TMPDIR:-/tmp}/enban-app.XXXXXX")"
@@ -14,46 +16,6 @@ setup() {
 
 teardown() {
   rm -rf "${WORK}"
-}
-
-start_app() {
-  local -a shell_words
-  local search_path command_line
-  read -r -a shell_words <<<"${ENBAN_TEST_SHELL:-sh}"
-  search_path="$(disk_test_path)"
-  case "${ENBAN_TEST_OS}" in
-  Darwin) PATH="${search_path}" script -q /dev/null "${shell_words[@]}" "${REPO_DIR}/bin/enban" "$@" ;;
-  *)
-    command_line="$(printf '%q ' "${shell_words[@]}" "${REPO_DIR}/bin/enban" "$@")"
-    PATH="${search_path}" script -qec "${command_line}" /dev/null
-    ;;
-  esac
-}
-
-send_when_drawn() {
-  disk_test_wait_for "${WORK}/out" 'What would you like to do' 100 || return 0
-  printf '%b' "$1"
-}
-
-on_terminal() {
-  local keys="$1"
-  local status=0
-  shift
-  : >"${WORK}/out"
-  set -o pipefail
-  send_when_drawn "${keys}" | start_app "$@" >"${WORK}/out" 2>&1 || status="$?"
-  cat "${WORK}/out"
-  return "${status}"
-}
-
-screen() {
-  LC_ALL=C sed 's/\x1b\[[0-9;?]*[A-Za-z]//g' "${WORK}/out"
-}
-
-last_frame() {
-  local all
-  all="$(cat "${WORK}/out")"
-  printf '%s\n' "${all##*$'\033[H\033[2J'}" | LC_ALL=C sed 's/\x1b\[[0-9;?]*[A-Za-z]//g'
 }
 
 @test "enban opens in the alternate screen and gives it back on q" {
@@ -109,7 +71,7 @@ last_frame() {
   local shown
   shown="$(last_frame)"
   [[ "${status}" -eq 0 ]]
-  [[ "${shown}" == *"Write image to disc arrives in a coming release."* ]]
+  [[ "${shown}" == *"Write image to disc"*"> Image      none chosen, press Enter"* ]]
 }
 
 @test "Tab past the last tab comes back to Home" {

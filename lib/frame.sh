@@ -49,8 +49,20 @@ disk_frame_box() {
   disk_fb_bottom="$(disk_app_ink "${DISK_APP_C_ACCENT}" "$(printf '\342\225\260%s\342\225\257' "${disk_fb_rule}")")"
   disk_fb_side="$(disk_app_ink "${DISK_APP_C_ACCENT}" "$(printf '\342\224\202')")"
   awk -v w=$(($1 - 4)) -v top="${disk_fb_top}" -v bottom="${disk_fb_bottom}" -v side="${disk_fb_side}" '
+    function row(s) { printf "%s %s %s\n", side, sprintf("%-" w "s", s), side }
     BEGIN { print top }
-    { printf "%s %s %s\n", side, sprintf("%-" w "s", substr($0, 1, w)), side }
+    {
+      line = $0
+      while (length(line) > w) {
+        cut = w
+        while (cut > 1 && substr(line, cut + 1, 1) != " ") cut--
+        if (cut == 1) cut = w
+        row(substr(line, 1, cut))
+        line = substr(line, cut + 1)
+        sub(/^ +/, "", line)
+      }
+      row(line)
+    }
     END { print bottom }'
 }
 
@@ -96,7 +108,6 @@ disk_frame_later() {
 
 disk_frame_tab_tile() {
   case "$1" in
-  Write) printf '0\n' ;;
   Read) printf '2\n' ;;
   Build) printf '3\n' ;;
   Verify) printf '4\n' ;;
@@ -111,7 +122,10 @@ disk_frame_soon() {
 disk_frame_keys() {
   printf '%s\n' "Keys" ""
   printf '%s\n' "  arrows      move between the jobs on Home"
-  printf '%s\n' "  enter       open the job"
+  printf '%s\n' "  enter       open the job, or edit the field"
+  printf '%s\n' "  space       turn the field on or off"
+  printf '%s\n' "  w           write, on Write"
+  printf '%s\n' "  c           cancel a running write"
   printf '%s\n' "  tab         next tab"
   printf '%s\n' "  0-9         jump to that tab"
   printf '%s\n' "  ?           these keys, closed by the next key"
@@ -126,7 +140,8 @@ disk_frame_left() {
   disk_fp_name="$(disk_app_tab_name "${DISK_APP_TAB}")"
   case "${disk_fp_name}" in
   Home) disk_frame_home ;;
-  Write | Read | Build | Verify | Discovery) disk_frame_later "${disk_fp_name}" ;;
+  Write) disk_frame_write ;;
+  Read | Build | Verify | Discovery) disk_frame_later "${disk_fp_name}" ;;
   *) disk_frame_soon "${disk_fp_name}" ;;
   esac
 }

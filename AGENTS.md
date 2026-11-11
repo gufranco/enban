@@ -28,6 +28,7 @@ Guidance for anyone, human or agent, changing enban. What enban is and how to us
 - The app restores the screen, cursor and echo on `q`, Ctrl+D and an interrupt, and warns when echo is still off afterwards.
 - `enban info --json` prints one JSON object with the drive, profile, status, sessions, free sectors and write speeds.
 - `enban write` burns only a blank disc with room for the image, writes only after the drive's name is typed, verifies by reading back exactly the image's sectors, because cdrecord pads the end of a track, and ejects unless told not to.
+- The Write tab runs the same steps as `enban write` in a background subshell and writes its log and exit status to a temporary folder. While a write runs, the app reads keys with a half-second timeout so it can redraw and notice the end of the job, refuses to quit, and cancels on `c`. A field is edited by handing the screen to one gum input, or to a plain line when gum is missing.
 
 ## Domain rules
 

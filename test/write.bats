@@ -300,3 +300,33 @@ image_on_disc() {
   [[ "${status}" -eq 1 ]]
   [[ "${output}" == "enban: option '--json' works only with info. run 'enban help' for usage." ]]
 }
+
+@test "enban write says so when the tray does not open" {
+  # Arrange
+  linux_only
+  blank_dvd
+  disk_test_drive_flag fail_eject
+
+  # Act
+  run write_typing disc.iso "${IMAGE}" --drive "${DRIVE}"
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+  [[ "${output}" == *"enban: warning: the disc is written, but ${DRIVE} did not open its tray."* ]]
+  [[ "${output}" == *"Done. ${DRIVE} is written and verified." ]]
+}
+
+@test "enban write draws its result with gum" {
+  # Arrange
+  linux_only
+  blank_dvd
+  export ENBAN_TEST_GUM=1 ENBAN_TEST_GUM_LOG="${WORK}/gum.log"
+
+  # Act
+  run write_typing disc.iso "${IMAGE}" --drive "${DRIVE}"
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+  [[ "${output}" == *"Done. ${DRIVE} is written, verified and ejected."* ]]
+  grep -qF -- "Done. ${DRIVE} is written, verified and ejected." "${WORK}/gum.log"
+}
