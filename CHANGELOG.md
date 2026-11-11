@@ -1,5 +1,13 @@
 # Changelog
 
+# [1.7.0](https://github.com/gufranco/enban/compare/v1.6.0...v1.7.0) (2026-11-11)
+
+
+### Features
+
+* keep a session log and edit settings ([9b84ce4](https://github.com/gufranco/enban/commit/9b84ce4da60054b42dd08b12cbf72852996dad3c))
+* keep defaults in a settings file ([cac7578](https://github.com/gufranco/enban/commit/cac757800396c980f883b0832b9634108a53c158))
+
 # [1.6.0](https://github.com/gufranco/enban/compare/v1.5.0...v1.6.0) (2026-11-11)
 
 
