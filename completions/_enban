@@ -54,6 +54,8 @@ _enban() {
     '--raw[show raw 2352-byte sectors]' \
     '--finalize[close the whole disc]' \
     '--test[simulate the burn and write nothing]' \
+    '--copies[how many copies write writes]:copies:' \
+    '--delete-image[delete the image after the last copy]' \
     '--set[the region to set]:region:(1 2 3 4 5 6 7 8)' \
     '*:image:_files' \
     '--theme[colours of the terminal interface]:theme:(kodougu catppuccin-mocha catppuccin-latte dracula nord gruvbox tokyo-night mono)'

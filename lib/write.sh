@@ -85,7 +85,57 @@ disk_write_done() {
 disk_write_run() {
   disk_write_check || return 1
   disk_write_confirm || return 1
-  disk_write_go
+  disk_write_copies
+}
+
+disk_write_copies_ok() {
+  case "${DISK_WRITE_COPIES}" in
+  '' | *[!0-9]* | 0)
+    disk_error "--copies must be a whole number from 1 to 100, got: ${DISK_WRITE_COPIES}"
+    return 1
+    ;;
+  *) : ;;
+  esac
+  if [ "${DISK_WRITE_COPIES}" -gt 100 ]; then
+    disk_error "--copies must be a whole number from 1 to 100, got: ${DISK_WRITE_COPIES}"
+    return 1
+  fi
+  [ "${DISK_WRITE_COPIES}" -eq 1 ] || [ "${DISK_WRITE_EJECT}" = y ] && return 0
+  disk_error "--copies opens the tray between copies, so it cannot run with --no-eject."
+  return 1
+}
+
+disk_write_next() {
+  disk_say "Copy $1 of ${DISK_WRITE_COPIES}: waiting for a blank disc in ${DISK_DRIVE}."
+  if ! disk_queue_wait "${DISK_DRIVE}"; then
+    disk_error "no blank disc arrived in ${DISK_QUEUE_WAIT} seconds, so copy $1 of ${DISK_WRITE_COPIES} was not written."
+    return 1
+  fi
+  disk_write_fits "${DISK_WRITE_IMAGE}"
+}
+
+disk_write_copies() {
+  disk_wy_copy=1
+  while [ "${disk_wy_copy}" -le "${DISK_WRITE_COPIES}" ]; do
+    [ "${disk_wy_copy}" -eq 1 ] || disk_write_next "${disk_wy_copy}" || return 1
+    disk_write_go || return 1
+    disk_wy_copy=$((disk_wy_copy + 1))
+  done
+  disk_write_delete
+}
+
+disk_write_delete() {
+  [ "${DISK_WRITE_DELETE}" = y ] || return 0
+  if [ "${DISK_WRITE_TEST}" = y ]; then
+    disk_say "Kept ${DISK_WRITE_IMAGE}, since a test write burns nothing."
+    return 0
+  fi
+  if rm -f "${DISK_WRITE_IMAGE}"; then
+    disk_say "Deleted ${DISK_WRITE_IMAGE}, as asked."
+    return 0
+  fi
+  disk_error "every copy is written, but ${DISK_WRITE_IMAGE} could not be deleted."
+  return 1
 }
 
 disk_write_check() {

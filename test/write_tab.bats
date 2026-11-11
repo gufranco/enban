@@ -271,3 +271,48 @@ image_on_disc() {
   # Assert
   [[ "${output}" == "read|1|A read is running. Press c on its tab to cancel it first." ]]
 }
+
+@test "Enter on Copies sets how many copies to write" {
+  # Arrange
+  answers 3
+  local keys
+  keys="1$(printf '\\033[B%.0s' {1..5})\\nq"
+
+  # Act
+  run on_terminal "${keys}"
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"> Copies     3"* ]]
+}
+
+@test "the Copies field refuses a count out of range" {
+  # Arrange
+  answers 0
+  local keys
+  keys="1$(printf '\\033[B%.0s' {1..5})\\nq"
+
+  # Act
+  run on_terminal "${keys}"
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"> Copies     1"* ]]
+  [[ "${shown}" == *"The copies must be a whole number from 1 to 100."* ]]
+}
+
+@test "space turns Delete on" {
+  # Arrange
+  local keys
+  keys="1$(printf '\\033[B%.0s' {1..6}) q"
+
+  # Act
+  run on_terminal "${keys}"
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"> Delete     [x] the image, after the last copy"* ]]
+}

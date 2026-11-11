@@ -415,6 +415,18 @@ Show raw 2352-byte sectors: of a BIN image, or of the disc through READ CD.
 .B \-\-finalize
 Close the whole disc instead of only the session.
 .TP
+.BI \-\-copies " n"
+Write
+.I n
+copies, 1 to 100: after each one the tray opens and enban waits for a blank
+disc, up to
+.B ENBAN_QUEUE_WAIT
+seconds. It cannot run with
+.BR \-\-no\-eject .
+.TP
+.B \-\-delete\-image
+Delete the image once every copy is written. A test write keeps it.
+.TP
 .B \-\-test
 Run the burn of write or discovery as a test, with the laser off: the drive goes
 through every step and nothing is written, so nothing is verified or read back.

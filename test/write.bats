@@ -371,3 +371,111 @@ image_on_disc() {
   [[ "${status}" -eq 1 ]]
   [[ "${output}" == "enban: option '--test' works only with write and discovery. run 'enban help' for usage." ]]
 }
+
+@test "enban write --copies writes each copy on a fresh blank disc" {
+  # Arrange
+  linux_only
+  blank_dvd
+  disk_test_drive_flag swap
+
+  # Act
+  run write_typing disc.iso "${IMAGE}" --drive "${DRIVE}" --copies 2 --no-verify
+
+  # Assert
+  dd if="${DISC}.1" of="${WORK}/first.iso" bs=2048 count=1024 2>/dev/null
+  dd if="${DISC}.2" of="${WORK}/second.iso" bs=2048 count=1024 2>/dev/null
+  [[ "${status}" -eq 0 ]]
+  [[ "${output}" == *"Copy 2 of 2: waiting for a blank disc in ${DRIVE}."* ]]
+  cmp -s "${WORK}/first.iso" "${IMAGE}"
+  cmp -s "${WORK}/second.iso" "${IMAGE}"
+}
+
+@test "enban write --copies stops when no blank disc arrives" {
+  # Arrange
+  linux_only
+  blank_dvd
+
+  # Act
+  ENBAN_QUEUE_WAIT=1 run write_typing disc.iso "${IMAGE}" --drive "${DRIVE}" --copies 2 --no-verify
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == *"enban: no blank disc arrived in 1 seconds, so copy 2 of 2 was not written." ]]
+}
+
+@test "enban write --copies takes 1 to 100 and needs the tray to open" {
+  # Arrange
+  local drive="${DRIVE}"
+
+  # Act
+  run disk_test_run enban write "${IMAGE}" --drive "${drive}" --copies 101 </dev/null
+
+  # Assert
+  local zero eject
+  zero="$(disk_test_run enban write "${IMAGE}" --drive "${drive}" --copies 0 </dev/null 2>&1 || true)"
+  eject="$(disk_test_run enban write "${IMAGE}" --drive "${drive}" --copies 2 --no-eject </dev/null 2>&1 || true)"
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: --copies must be a whole number from 1 to 100, got: 101" ]]
+  [[ "${zero}" == "enban: --copies must be a whole number from 1 to 100, got: 0" ]]
+  [[ "${eject}" == "enban: --copies opens the tray between copies, so it cannot run with --no-eject." ]]
+}
+
+@test "enban write --delete-image removes the image once it is written" {
+  # Arrange
+  linux_only
+  blank_dvd
+
+  # Act
+  run write_typing disc.iso "${IMAGE}" --drive "${DRIVE}" --delete-image --no-eject
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+  [[ ! -e "${IMAGE}" ]]
+  [[ "${output}" == *"Deleted ${IMAGE}, as asked." ]]
+}
+
+@test "enban write --delete-image keeps the image of a test write" {
+  # Arrange
+  linux_only
+  blank_dvd
+
+  # Act
+  run write_typing disc.iso "${IMAGE}" --drive "${DRIVE}" --delete-image --test
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+  [[ -e "${IMAGE}" ]]
+  [[ "${output}" == *"Kept ${IMAGE}, since a test write burns nothing." ]]
+}
+
+@test "enban write says when the image cannot be deleted" {
+  # Arrange
+  linux_only
+  local user
+  user="$(id -u)"
+  [[ "${user}" != 0 ]] || skip "root deletes from a read-only folder"
+  blank_dvd
+  mkdir -p "${WORK}/kept"
+  cp "${IMAGE}" "${WORK}/kept/image.iso"
+  chmod 555 "${WORK}/kept"
+
+  # Act
+  run write_typing disc.iso "${WORK}/kept/image.iso" --drive "${DRIVE}" --delete-image --no-eject
+
+  # Assert
+  chmod 755 "${WORK}/kept"
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == *"enban: every copy is written, but ${WORK}/kept/image.iso could not be deleted." ]]
+}
+
+@test "--copies and --delete-image work only with write" {
+  # Arrange
+  mkdir -p "${WORK}/files"
+
+  # Act
+  run disk_test_run enban build "${WORK}/files" "${WORK}/out.iso" --copies 2 </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: option '--copies' works only with write. run 'enban help' for usage." ]]
+}

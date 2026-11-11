@@ -159,6 +159,9 @@ options:
   --raw               sector shows raw 2352-byte sectors
   --finalize          close finalizes the whole disc, not only the session
   --test              write and discovery simulate the burn and write nothing
+  --copies N          write writes N copies, 1 to 100, waiting for a blank
+                      disc between them
+  --delete-image      write deletes the image once every copy is written
   --set N             the region, 1 to 8, that region sets
   --theme NAME        colours of the terminal interface, see notes
 
@@ -279,6 +282,7 @@ disk_option_flag() {
   --finalize) DISK_CLOSE_FINALIZE=y ;;
   --raw) DISK_SECTOR_RAW=y ;;
   --test) DISK_WRITE_TEST=y ;;
+  --delete-image) DISK_WRITE_DELETE=y ;;
   *) return 1 ;;
   esac
   disk_option_seen "$1"
@@ -287,6 +291,7 @@ disk_option_flag() {
 disk_option_value() {
   case "$1" in
   --speed) DISK_WRITE_SPEED="$2" ;;
+  --copies) DISK_WRITE_COPIES="$2" ;;
   --fs) DISK_BUILD_FS="$2" ;;
   --sectors) DISK_DISCOVERY_SECTORS="$2" ;;
   --csv) DISK_DISCOVERY_CSV="$2" ;;
@@ -318,6 +323,7 @@ disk_option_seen() {
   --lba | --raw) DISK_SECTOR_OPTION="${DISK_SECTOR_OPTION:-$1}" ;;
   --finalize) DISK_RAW_OPTION="$1:close" ;;
   --test) DISK_TEST_OPTION="$1" ;;
+  --copies | --delete-image) DISK_COPIES_OPTION="${DISK_COPIES_OPTION:-$1}" ;;
   --set) DISK_RAW_OPTION="$1:region" ;;
   --title | --performer | --pregap) DISK_CUE_OPTION="${DISK_CUE_OPTION:-$1}" ;;
   *) ;;
@@ -326,7 +332,7 @@ disk_option_seen() {
 }
 
 disk_options() {
-  DISK_VALUE_OPTIONS="--drive --speed --fs --label --sectors --csv --lba --title --performer --pregap --set"
+  DISK_VALUE_OPTIONS="--drive --speed --copies --fs --label --sectors --csv --lba --title --performer --pregap --set"
   disk_op_room="$1"
   shift
   disk_op_left="$#"
@@ -368,6 +374,7 @@ disk_only_for() {
   disk_option_owner "$1" "${disk_of_json}" info info || return 1
   disk_option_owner "$1" "${DISK_SPEED_OPTION}" "write discovery" "write and discovery" || return 1
   disk_option_owner "$1" "${DISK_TEST_OPTION}" "write discovery" "write and discovery" || return 1
+  disk_option_owner "$1" "${DISK_COPIES_OPTION}" write write || return 1
   disk_option_owner "$1" "${DISK_WRITE_OPTION}" write write || return 1
   disk_option_owner "$1" "${DISK_BUILD_OPTION}" build build || return 1
   disk_option_owner "$1" "${DISK_ERASE_OPTION}" erase erase || return 1
@@ -416,6 +423,7 @@ disk_write() {
     return 1
   fi
   disk_speed_ok || return 1
+  disk_write_copies_ok || return 1
   DISK_WRITE_IMAGE="${DISK_OPERAND}"
   case "${DISK_WRITE_IMAGE}" in
   *.cue | *.CUE) disk_audio_run ;;
