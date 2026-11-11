@@ -27,6 +27,7 @@ disk_audio_burn() {
   set -- -v "dev=${DISK_DRIVE}" -dao
   [ -z "${DISK_WRITE_SPEED}" ] || set -- "$@" "speed=${DISK_WRITE_SPEED}"
   [ "${DISK_WRITE_EJECT}" = n ] || set -- "$@" -eject
+  [ "${DISK_WRITE_TEST}" = n ] || set -- "$@" -dummy
   disk_ab_status=0
   cdrskin "$@" "cuefile=${DISK_WRITE_IMAGE}" >"${disk_ab_log}" 2>&1 || disk_ab_status=1
   disk_ab_reason="$(sed -n 's/^cdrskin: FATAL : //p' "${disk_ab_log}" | sed -n '1p')"
@@ -38,6 +39,10 @@ disk_audio_burn() {
 
 disk_audio_go() {
   disk_audio_burn || return 1
+  if [ "${DISK_WRITE_TEST}" = y ]; then
+    disk_write_tested
+    return 0
+  fi
   disk_ag_line="Done. ${DISK_DRIVE} is written as an audio CD."
   [ "${DISK_WRITE_EJECT}" = n ] || disk_ag_line="Done. ${DISK_DRIVE} is written as an audio CD and ejected."
   disk_raw_done "${disk_ag_line}"

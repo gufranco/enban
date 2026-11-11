@@ -342,3 +342,32 @@ image_on_disc() {
   [[ "${output}" == *"Done. ${DRIVE} is written, verified and ejected."* ]]
   grep -qF -- "Done. ${DRIVE} is written, verified and ejected." "${WORK}/gum.log"
 }
+
+@test "enban write --test runs the burn as a test and writes nothing" {
+  # Arrange
+  linux_only
+  blank_dvd
+
+  # Act
+  run write_typing disc.iso "${IMAGE}" --drive "${DRIVE}" --test
+
+  # Assert
+  local burned
+  burned="$(sed -n 's/^burn=//p' "${WORK}/drive.state")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${burned}" == *" -dummy "* ]]
+  [[ ! -s "${DISC}" ]]
+  [[ "${output}" == *"Done. the test write to ${DRIVE} ran to the end, and nothing was written." ]]
+}
+
+@test "--test works only with write and discovery" {
+  # Arrange
+  mkdir -p "${WORK}/files"
+
+  # Act
+  run disk_test_run enban build "${WORK}/files" "${WORK}/out.iso" --test </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: option '--test' works only with write and discovery. run 'enban help' for usage." ]]
+}

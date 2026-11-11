@@ -7,7 +7,7 @@ disk_write_tab_key() {
   disk_job_key write "$1" && return 0
   case "$1" in
   up) [ "${DISK_APP_W_FIELD}" -le 0 ] || DISK_APP_W_FIELD=$((DISK_APP_W_FIELD - 1)) ;;
-  down) [ "${DISK_APP_W_FIELD}" -ge 3 ] || DISK_APP_W_FIELD=$((DISK_APP_W_FIELD + 1)) ;;
+  down) [ "${DISK_APP_W_FIELD}" -ge 4 ] || DISK_APP_W_FIELD=$((DISK_APP_W_FIELD + 1)) ;;
   enter) disk_write_tab_edit ;;
   space) disk_write_tab_toggle ;;
   w) disk_write_tab_start ;;
@@ -33,6 +33,7 @@ disk_write_tab_toggle() {
   case "${DISK_APP_W_FIELD}" in
   2) DISK_APP_W_VERIFY="$(disk_job_flip "${DISK_APP_W_VERIFY}")" ;;
   3) DISK_APP_W_EJECT="$(disk_job_flip "${DISK_APP_W_EJECT}")" ;;
+  4) DISK_APP_W_TEST="$(disk_job_flip "${DISK_APP_W_TEST}")" ;;
   *) return 0 ;;
   esac
 }
@@ -67,6 +68,7 @@ disk_write_tab_start() {
   DISK_WRITE_SPEED="${DISK_APP_W_SPEED}"
   DISK_WRITE_VERIFY="${DISK_APP_W_VERIFY}"
   DISK_WRITE_EJECT="${DISK_APP_W_EJECT}"
+  DISK_WRITE_TEST="${DISK_APP_W_TEST}"
   disk_job_launch disk_write_tab_steps write "${DISK_APP_W_IMAGE} to ${DISK_DRIVE}"
 }
 
@@ -79,11 +81,13 @@ disk_frame_write() {
   disk_job_pane write && return 0
   disk_fw_verify="$(disk_job_box "${DISK_APP_W_VERIFY}")"
   disk_fw_eject="$(disk_job_box "${DISK_APP_W_EJECT}")"
+  disk_fw_test="$(disk_job_box "${DISK_APP_W_TEST}")"
   disk_fw_auto="chosen by the drive"
   printf '%s\n' "Write image to disc" ""
   disk_job_row 0 "${DISK_APP_W_FIELD}" "Image" "${DISK_APP_W_IMAGE:-none chosen, press Enter}"
   disk_job_row 1 "${DISK_APP_W_FIELD}" "Speed" "${DISK_APP_W_SPEED:-${disk_fw_auto}}"
   disk_job_row 2 "${DISK_APP_W_FIELD}" "Verify" "${disk_fw_verify}"
   disk_job_row 3 "${DISK_APP_W_FIELD}" "Eject" "${disk_fw_eject}"
+  disk_job_row 4 "${DISK_APP_W_FIELD}" "Test mode" "${disk_fw_test}"
   printf '%s\n' "" "enter edit   space toggle   w write"
 }

@@ -41,6 +41,7 @@ disk_write_burn() {
   disk_wb_log="$(mktemp "${TMPDIR:-/tmp}/enban-write.XXXXXX")" || return 1
   set -- -as cdrecord -v "dev=${DISK_DRIVE}" -dao
   [ -z "${DISK_WRITE_SPEED}" ] || set -- "$@" "speed=${DISK_WRITE_SPEED}"
+  [ "${DISK_WRITE_TEST}" = n ] || set -- "$@" -dummy
   disk_wb_status=0
   xorriso "$@" "${DISK_WRITE_IMAGE}" >"${disk_wb_log}" 2>&1 || disk_wb_status="$?"
   disk_wb_reason="$(sed -n 's/^xorriso : FAILURE : //p' "${disk_wb_log}" | sed -n '1p')"
@@ -94,8 +95,16 @@ disk_write_check() {
   disk_speeds_recall
 }
 
+disk_write_tested() {
+  disk_raw_done "Done. the test write to ${DISK_DRIVE} ran to the end, and nothing was written."
+}
+
 disk_write_go() {
   disk_write_burn || return 1
+  if [ "${DISK_WRITE_TEST}" = y ]; then
+    disk_write_tested
+    return 0
+  fi
   disk_speeds_keep
   if [ "${DISK_WRITE_VERIFY}" = y ]; then
     disk_write_verify || return 1

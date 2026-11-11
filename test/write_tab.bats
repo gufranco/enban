@@ -221,7 +221,7 @@ image_on_disc() {
 
 @test "the fields stop at the top and the bottom of the form" {
   # Arrange
-  local keys='1\033[A\033[B\033[B\033[B\033[B\033[B \033[A \nq'
+  local keys='1\033[A\033[B\033[B\033[B\033[B\033[B\033[B \033[A \nq'
 
   # Act
   run on_terminal "${keys}"
@@ -229,8 +229,9 @@ image_on_disc() {
   # Assert
   local shown
   shown="$(last_frame)"
-  [[ "${shown}" == *"> Verify     [x] on"* ]]
-  [[ "${shown}" == *"  Eject      [ ] off"* ]]
+  [[ "${shown}" == *"  Verify     [x] on"* ]]
+  [[ "${shown}" == *"> Eject      [x] on"* ]]
+  [[ "${shown}" == *"  Test mode  [x] on"* ]]
 }
 
 @test "space on a field with nothing to turn leaves it alone" {

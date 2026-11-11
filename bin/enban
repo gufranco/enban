@@ -158,6 +158,7 @@ options:
   --pregap SECONDS    the gap cue puts before each track after the first; 2
   --raw               sector shows raw 2352-byte sectors
   --finalize          close finalizes the whole disc, not only the session
+  --test              write and discovery simulate the burn and write nothing
   --set N             the region, 1 to 8, that region sets
   --theme NAME        colours of the terminal interface, see notes
 
@@ -277,6 +278,7 @@ disk_option_flag() {
   --full) DISK_ERASE_FULL=y ;;
   --finalize) DISK_CLOSE_FINALIZE=y ;;
   --raw) DISK_SECTOR_RAW=y ;;
+  --test) DISK_WRITE_TEST=y ;;
   *) return 1 ;;
   esac
   disk_option_seen "$1"
@@ -315,6 +317,7 @@ disk_option_seen() {
   --sectors | --csv) DISK_DISCOVERY_OPTION="${DISK_DISCOVERY_OPTION:-$1}" ;;
   --lba | --raw) DISK_SECTOR_OPTION="${DISK_SECTOR_OPTION:-$1}" ;;
   --finalize) DISK_RAW_OPTION="$1:close" ;;
+  --test) DISK_TEST_OPTION="$1" ;;
   --set) DISK_RAW_OPTION="$1:region" ;;
   --title | --performer | --pregap) DISK_CUE_OPTION="${DISK_CUE_OPTION:-$1}" ;;
   *) ;;
@@ -364,6 +367,7 @@ disk_only_for() {
   disk_option_pair "${DISK_EJECT_CLASH}" eject || return 1
   disk_option_owner "$1" "${disk_of_json}" info info || return 1
   disk_option_owner "$1" "${DISK_SPEED_OPTION}" "write discovery" "write and discovery" || return 1
+  disk_option_owner "$1" "${DISK_TEST_OPTION}" "write discovery" "write and discovery" || return 1
   disk_option_owner "$1" "${DISK_WRITE_OPTION}" write write || return 1
   disk_option_owner "$1" "${DISK_BUILD_OPTION}" build build || return 1
   disk_option_owner "$1" "${DISK_ERASE_OPTION}" erase erase || return 1

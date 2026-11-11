@@ -58,6 +58,7 @@ disk_discovery_write() {
   disk_dw_log="$(mktemp "${TMPDIR:-/tmp}/enban-discovery.XXXXXX")" || return 1
   set -- -as cdrecord -v "dev=${DISK_DRIVE}" -dao
   [ -z "${DISK_WRITE_SPEED}" ] || set -- "$@" "speed=${DISK_WRITE_SPEED}"
+  [ "${DISK_WRITE_TEST}" = n ] || set -- "$@" -dummy
   disk_dw_status=0
   disk_discovery_pattern 0 "${DISK_DISCOVERY_COUNT}" | xorriso "$@" "tsize=$((DISK_DISCOVERY_COUNT * 2048))" - >"${disk_dw_log}" 2>&1 || disk_dw_status="$?"
   disk_dw_reason="$(sed -n 's/^xorriso : FAILURE : //p' "${disk_dw_log}" | sed -n '1p')"
@@ -151,6 +152,10 @@ disk_discovery_verdict() {
 
 disk_discovery_go() {
   disk_discovery_write || return 1
+  if [ "${DISK_WRITE_TEST}" = y ]; then
+    disk_raw_done "Done. the test write of ${DISK_DISCOVERY_COUNT} sectors to ${DISK_DRIVE} ran to the end. nothing was written, so nothing was read back."
+    return 0
+  fi
   disk_discovery_read || return 1
   disk_discovery_done
 }

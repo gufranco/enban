@@ -132,3 +132,20 @@ burner() {
   [[ "${status}" -eq 1 ]]
   [[ "${output}" == "enban: stopped: the disc in ${DRIVE} is not blank." ]]
 }
+
+@test "enban write --test burns an audio CD as a test" {
+  # Arrange
+  linux_only
+  disk_test_drive 0009 "CD-R" 359847 7056
+  burner
+
+  # Act
+  run disk_test_run enban write "${CUE}" --drive "${DRIVE}" --no-eject --test <<<"disc.iso"
+
+  # Assert
+  local sent
+  sent="$(cat "${WORK}/cdrskin.log")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${sent}" == "-v dev=${DRIVE} -dao -dummy cuefile=${CUE}" ]]
+  [[ "${output}" == *"Done. the test write to ${DRIVE} ran to the end, and nothing was written." ]]
+}

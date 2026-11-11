@@ -14,7 +14,7 @@ _enban() {
     return
   fi
   if [[ "${cur}" == -* ]]; then
-    COMPREPLY=($(compgen -W "--drive --json --speed --verify --no-verify --eject --no-eject --fs --label --full --sectors --csv --lba --title --performer --pregap --raw --finalize --set --theme" -- "${cur}"))
+    COMPREPLY=($(compgen -W "--drive --json --speed --verify --no-verify --eject --no-eject --fs --label --full --sectors --csv --lba --title --performer --pregap --raw --finalize --test --set --theme" -- "${cur}"))
     return
   fi
   if [[ "${COMP_WORDS[1]}" =~ ^(write|read|verify|build|checksum|queue|sector|cue|convert|label|layerbreak|mount|unmount)$ && "${COMP_CWORD}" -gt 1 ]]; then

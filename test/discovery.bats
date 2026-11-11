@@ -258,3 +258,18 @@ pattern_line() {
   [[ "${status}" -eq 1 ]]
   [[ "${output}" == "enban: discovery needs --drive. run 'enban help' for usage." ]]
 }
+
+@test "enban discovery --test writes nothing and reads nothing back" {
+  # Arrange
+  linux_only
+  blank_disc 128
+
+  # Act
+  run disk_test_run enban discovery --drive "${DRIVE}" --csv "${CSV}" --test <<<"disc.iso"
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+  [[ ! -s "${DISC}" ]]
+  [[ ! -e "${CSV}" ]]
+  [[ "${output}" == *"Done. the test write of 128 sectors to ${DRIVE} ran to the end. nothing was written, so nothing was read back." ]]
+}
