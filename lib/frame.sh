@@ -172,19 +172,47 @@ disk_frame_panes() {
   disk_fs_name="$(disk_app_tab_name "${DISK_APP_TAB}")"
   disk_fs_right="${DISK_APP_DISC}"
   [ "${disk_fs_name}" != Build ] || disk_fs_right="${DISK_APP_B_SIDE}"
+  disk_fs_room=$((DISK_APP_ROWS - 6))
+  [ "${disk_fs_room}" -ge 3 ] || disk_fs_room=3
   if [ "${DISK_APP_COLS}" -lt "${DISK_APP_WIDE}" ]; then
-    printf '%s\n' "${disk_fs_left}" | disk_frame_box "${DISK_APP_COLS}"
-    printf '%s\n' "${disk_fs_right}" | disk_frame_box "${DISK_APP_COLS}"
+    disk_frame_stacked "${disk_fs_room}"
     return 0
   fi
+  disk_frame_beside "${disk_fs_room}"
+}
+
+disk_frame_stacked() {
+  disk_fk_right="$(printf '%s\n' "${disk_fs_right}" | disk_frame_wrap $((DISK_APP_COLS - 4)) | disk_frame_clip $(($1 / 2)))"
+  disk_fk_lines="$(printf '%s\n' "${disk_fk_right}" | awk 'END { print NR }')"
+  disk_fk_room=$(($1 - disk_fk_lines - 2))
+  [ "${disk_fk_room}" -ge 3 ] || disk_fk_room=3
+  printf '%s\n' "${disk_fs_left}" | disk_frame_wrap $((DISK_APP_COLS - 4)) | disk_frame_clip "${disk_fk_room}" | disk_frame_box "${DISK_APP_COLS}"
+  printf '%s\n' "${disk_fk_right}" | disk_frame_box "${DISK_APP_COLS}"
+}
+
+disk_frame_beside() {
   disk_fs_rwidth=$((DISK_APP_COLS - DISK_APP_PANE_LEFT - 1))
-  disk_fs_left="$(printf '%s\n' "${disk_fs_left}" | disk_frame_wrap $((DISK_APP_PANE_LEFT - 4)))"
-  disk_fs_right="$(printf '%s\n' "${disk_fs_right}" | disk_frame_wrap $((disk_fs_rwidth - 4)))"
+  disk_fs_left="$(printf '%s\n' "${disk_fs_left}" | disk_frame_wrap $((DISK_APP_PANE_LEFT - 4)) | disk_frame_clip "$1")"
+  disk_fs_right="$(printf '%s\n' "${disk_fs_right}" | disk_frame_wrap $((disk_fs_rwidth - 4)) | disk_frame_clip "$1")"
   disk_fs_lines="$(printf '%s\n' "${disk_fs_left}" | awk 'END { print NR }')"
   disk_fs_height="$(printf '%s\n' "${disk_fs_right}" | awk -v n="${disk_fs_lines}" 'END { print (NR > n ? NR : n) }')"
   disk_fs_lbox="$(disk_frame_padded "${disk_fs_left}" "${disk_fs_height}" | disk_frame_box "${DISK_APP_PANE_LEFT}")"
   disk_fs_rbox="$(disk_frame_padded "${disk_fs_right}" "${disk_fs_height}" | disk_frame_box "${disk_fs_rwidth}")"
   disk_frame_join "${disk_fs_lbox}" "${disk_fs_rbox}"
+}
+
+disk_frame_clip() {
+  awk -v room="$1" '
+    { line[NR] = $0; if (focus == "" && $0 ~ /^> /) focus = NR }
+    END {
+      if (NR <= room) { for (i = 1; i <= NR; i++) print line[i]; exit }
+      print line[1]
+      rest = room - 1
+      first = (focus == "" ? 2 : focus - int(rest / 2))
+      if (first > NR - rest + 1) first = NR - rest + 1
+      if (first < 2) first = 2
+      for (i = first; i < first + rest; i++) print line[i]
+    }'
 }
 
 disk_frame_padded() {

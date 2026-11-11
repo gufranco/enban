@@ -48,6 +48,7 @@ teardown() {
 
 @test "a digit switches to that tab" {
   # Arrange
+  disk_test_shim stty "case \"\$1\" in size) printf '50 80\\n' ;; *) exec \"\${REAL}\" \"\$@\" ;; esac"
   local keys="3q"
 
   # Act
@@ -479,4 +480,37 @@ teardown() {
   shown="$(last_frame)"
   bottoms="$(grep -c "$(printf '\342\225\260').*$(printf '\342\225\260')" <<<"${shown}" || true)"
   [[ "${bottoms}" -eq 1 ]]
+}
+
+@test "a frame never grows past the terminal and keeps the focus in view" {
+  # Arrange
+  disk_test_shim stty "case \"\$1\" in size) printf '20 140\\n' ;; *) exec \"\${REAL}\" \"\$@\" ;; esac"
+  local keys
+  keys="7$(printf '\\033[B%.0s' {1..14})q"
+
+  # Act
+  run on_terminal "${keys}"
+
+  # Assert
+  local shown rows
+  shown="$(last_frame)"
+  rows="$(awk '/q quit/ { print NR; exit }' <<<"${shown}")"
+  [[ "${rows}" -le 20 ]]
+  [[ "${shown}" == *"enban"*"> Mount"* ]]
+}
+
+@test "a clipped pane keeps its title above the focus" {
+  # Arrange
+  disk_test_shim stty "case \"\$1\" in size) printf '14 140\\n' ;; *) exec \"\${REAL}\" \"\$@\" ;; esac"
+  local keys
+  keys="7$(printf '\\033[B%.0s' {1..14})q"
+
+  # Act
+  run on_terminal "${keys}"
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"Tools"*"> Mount"* ]]
+  [[ "${shown}" != *"Erase disc"* ]]
 }
