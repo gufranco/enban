@@ -43,6 +43,7 @@ enban \- write, read, build and verify CD, DVD and Blu-ray discs
 .IR n ]
 .RB [ \-\-boot
 .IR file ]
+.RB [ \-\-dvd\-video ]
 .br
 .B enban erase
 .BI \-\-drive " drive"
@@ -462,6 +463,11 @@ or
 .BI \-\-load\-sectors " n"
 The 512-byte sectors the firmware loads with no emulation, 1 to 65535; 4 by
 default.
+.TP
+.B \-\-dvd\-video
+Lay out the VIDEO_TS folder at the root in the order a DVD player reads it,
+with UDF, which a player needs. Linux builds it with genisoimage and macOS
+with mkisofs from cdrtools, since hdiutil writes the files out of order.
 .TP
 .B \-\-boot\-info\-table
 Write the disc layout into the stored copy of the boot image, as

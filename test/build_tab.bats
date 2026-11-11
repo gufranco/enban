@@ -498,3 +498,16 @@ answers() {
   [[ "${status}" -eq 0 ]]
   [[ "${shown}" == *"Boot          boot.bin, no emulation, x86"*"Done. ${OUT} is built from 1 entry."* ]]
 }
+
+@test "Enter on DVD Video turns the VIDEO_TS layout on" {
+  # Arrange
+  local keys='3\033[B\033[B\033[B\033[B\033[B\033[B\033[B\033[B\033[B\nq'
+
+  # Act
+  run on_terminal "${keys}"
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"> DVD Video  [x]"* ]]
+}

@@ -309,7 +309,7 @@ options_everywhere() {
   local first=publisher
 
   # Act
-  run options_everywhere "${first}" preparer application system-id volume-set date iso-level boot emulation platform load-sectors boot-info-table
+  run options_everywhere "${first}" preparer application system-id volume-set date iso-level boot emulation platform load-sectors boot-info-table dvd-video
 
   # Assert
   [[ "${status}" -eq 0 ]]

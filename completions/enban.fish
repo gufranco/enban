@@ -44,6 +44,7 @@ complete -c enban -l emulation -x -a 'none floppy hard-disk' -d 'how the boot im
 complete -c enban -l platform -x -a 'x86 efi ppc mac' -d 'the system the disc boots'
 complete -c enban -l load-sectors -r -d 'sectors the firmware loads with no emulation'
 complete -c enban -l boot-info-table -d 'write the disc layout into the boot image copy'
+complete -c enban -l dvd-video -d 'lay out VIDEO_TS for a DVD player'
 complete -c enban -l full -d 'erase every sector'
 complete -c enban -l sectors -r -d 'how many sectors discovery writes'
 complete -c enban -l csv -r -F -d 'where discovery saves its read rate'

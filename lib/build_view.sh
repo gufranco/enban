@@ -44,6 +44,8 @@ disk_frame_build() {
   disk_job_row $((disk_fb_count + 6)) "${DISK_APP_B_FOCUS}" "Boot" "${DISK_APP_B_BOOT:-not bootable}"
   disk_job_row $((disk_fb_count + 7)) "${DISK_APP_B_FOCUS}" "Emulation" "${DISK_APP_B_EMULATION}"
   disk_job_row $((disk_fb_count + 8)) "${DISK_APP_B_FOCUS}" "Platform" "${DISK_APP_B_PLATFORM}"
+  disk_fb_dvd="$(disk_job_box "${DISK_APP_B_DVD}")"
+  disk_job_row $((disk_fb_count + 9)) "${DISK_APP_B_FOCUS}" "DVD Video" "${disk_fb_dvd}"
   printf '%s\n' "" "a file   f folder   x remove   n rename   b build"
 }
 

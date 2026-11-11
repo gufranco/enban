@@ -8,7 +8,7 @@ disk_build_tab_key() {
   disk_bk_count="$(disk_build_tab_count)"
   case "$1" in
   up) [ "${DISK_APP_B_FOCUS}" -le 0 ] || DISK_APP_B_FOCUS=$((DISK_APP_B_FOCUS - 1)) ;;
-  down) [ "${DISK_APP_B_FOCUS}" -ge $((disk_bk_count + 8)) ] || DISK_APP_B_FOCUS=$((DISK_APP_B_FOCUS + 1)) ;;
+  down) [ "${DISK_APP_B_FOCUS}" -ge $((disk_bk_count + 9)) ] || DISK_APP_B_FOCUS=$((DISK_APP_B_FOCUS + 1)) ;;
   a) disk_build_tab_add file ;;
   f) disk_build_tab_add folder ;;
   x) disk_build_tab_remove "${disk_bk_count}" ;;
@@ -119,6 +119,7 @@ disk_build_tab_edit() {
   6) disk_build_tab_boot ;;
   7) DISK_APP_B_EMULATION="$(disk_build_tab_next_emulation "${DISK_APP_B_EMULATION}")" ;;
   8) DISK_APP_B_PLATFORM="$(disk_build_tab_next_platform "${DISK_APP_B_PLATFORM}")" ;;
+  9) DISK_APP_B_DVD="$(disk_job_flip "${DISK_APP_B_DVD}")" ;;
   *) return 0 ;;
   esac
   disk_build_tab_refresh
@@ -208,6 +209,7 @@ disk_build_tab_start() {
   DISK_BUILD_BOOT="${DISK_APP_B_BOOT}"
   DISK_BUILD_EMULATION="${DISK_APP_B_EMULATION}"
   DISK_BUILD_PLATFORM="${DISK_APP_B_PLATFORM}"
+  DISK_BUILD_DVD="${DISK_APP_B_DVD}"
   case "${DISK_APP_B_TARGET}" in
   disc) disk_build_tab_to_disc ;;
   *) disk_build_tab_to_image ;;

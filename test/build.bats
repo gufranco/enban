@@ -381,7 +381,7 @@ pvd_field() {
 
 @test "enban build on Linux refuses a date with UDF" {
   # Arrange
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS refuses --date for every build"
+  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS builds --date with xorriso, which refuses UDF"
   local option=--date
 
   # Act
@@ -389,7 +389,7 @@ pvd_field() {
 
   # Assert
   [[ "${status}" -eq 1 ]]
-  [[ "${output}" == "enban: --date needs xorriso, and a UDF image on Linux is built with genisoimage. leave udf out of --fs or leave out --date." ]]
+  [[ "${output}" == "enban: --date needs xorriso, and a UDF image is built with genisoimage or mkisofs, which cannot set it. leave udf out of --fs or leave out --date." ]]
   [[ ! -e "${OUT}" ]]
 }
 
@@ -705,6 +705,163 @@ mbr_image() {
   # Assert
   [[ "${status}" -eq 1 ]]
   [[ "${output}" == "enban: option '--boot' works only with build. run 'enban help' for usage." ]]
+}
+
+put_bytes() {
+  printf '%b' "$3" | dd of="$1" bs=1 seek="$2" conv=notrunc 2>/dev/null
+}
+
+be32() {
+  printf '\\%03o\\%03o\\%03o\\%03o' $(($1 >> 24 & 255)) $(($1 >> 16 & 255)) $(($1 >> 8 & 255)) $(($1 & 255))
+}
+
+put_be32() {
+  local bytes
+  bytes="$(be32 "$3")"
+  put_bytes "$1" "$2" "${bytes}"
+}
+
+video_ts() {
+  local dir="$1/VIDEO_TS"
+  mkdir -p "${dir}"
+  head -c 4096 /dev/zero >"${dir}/VIDEO_TS.IFO"
+  put_bytes "${dir}/VIDEO_TS.IFO" 0 DVDVIDEO-VMG
+  put_be32 "${dir}/VIDEO_TS.IFO" 12 6
+  put_be32 "${dir}/VIDEO_TS.IFO" 28 1
+  put_bytes "${dir}/VIDEO_TS.IFO" 62 '\000\001'
+  put_be32 "${dir}/VIDEO_TS.IFO" 192 2
+  put_be32 "${dir}/VIDEO_TS.IFO" 196 1
+  put_bytes "${dir}/VIDEO_TS.IFO" 2048 '\000\001'
+  put_bytes "${dir}/VIDEO_TS.IFO" 2062 '\001'
+  put_be32 "${dir}/VIDEO_TS.IFO" 2064 7
+  head -c 6144 /dev/urandom >"${dir}/VIDEO_TS.VOB"
+  cp -f "${dir}/VIDEO_TS.IFO" "${dir}/VIDEO_TS.BUP"
+  head -c 2048 /dev/zero >"${dir}/VTS_01_0.IFO"
+  put_bytes "${dir}/VTS_01_0.IFO" 0 DVDVIDEO-VTS
+  put_be32 "${dir}/VTS_01_0.IFO" 12 6
+  put_be32 "${dir}/VTS_01_0.IFO" 192 1
+  put_be32 "${dir}/VTS_01_0.IFO" 196 3
+  head -c 4096 /dev/urandom >"${dir}/VTS_01_0.VOB"
+  head -c 4096 /dev/urandom >"${dir}/VTS_01_1.VOB"
+  head -c 2048 /dev/urandom >"${dir}/VTS_01_2.VOB"
+  cp -f "${dir}/VTS_01_0.IFO" "${dir}/VTS_01_0.BUP"
+}
+
+video_order() {
+  local report rows sorted
+  report="$(xorriso -indev "$1" -find /VIDEO_TS -type f -exec report_lba -- 2>/dev/null)"
+  rows="$(sed -n "s/^File data lba: *0 , *\([0-9]*\) ,.*'\/VIDEO_TS\/\(.*\)'\$/\1 \2/p" <<<"${report}")"
+  sorted="$(sort -n <<<"${rows}")"
+  awk '{ printf "%s ", $2 }' <<<"${sorted}"
+}
+
+player_order() {
+  printf '%s ' VIDEO_TS.IFO VIDEO_TS.VOB VIDEO_TS.BUP VTS_01_0.IFO VTS_01_0.VOB VTS_01_1.VOB VTS_01_2.VOB VTS_01_0.BUP
+}
+
+@test "enban build --dvd-video lays out VIDEO_TS in the order a player reads it" {
+  # Arrange
+  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || command -v mkisofs >/dev/null || skip "macOS needs mkisofs from cdrtools"
+  local wanted
+  video_ts "${SRC}"
+  wanted="$(player_order)"
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --dvd-video </dev/null
+
+  # Assert
+  local order kinds
+  order="$(video_order "${OUT}")"
+  kinds="$(descriptors "${OUT}")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${order}" == "${wanted}" ]]
+  [[ "${kinds}" == *"udf "* ]]
+  [[ "${lines[3]}" == "Video         DVD Video, VIDEO_TS in player order" ]]
+}
+
+@test "enban build --dvd-video finds VIDEO_TS among the layout entries" {
+  # Arrange
+  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || command -v mkisofs >/dev/null || skip "macOS needs mkisofs from cdrtools"
+  local call wanted
+  video_ts "${WORK}/movie"
+  call="$(layout_call VIDEO_TS "${WORK}/movie/VIDEO_TS")"
+  wanted="$(player_order)"
+
+  # Act
+  run disk_test_call eval "DISK_BUILD_DVD=y ${call}"
+
+  # Assert
+  local order
+  order="$(video_order "${OUT}")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${order}" == "${wanted}" ]]
+}
+
+@test "enban build --dvd-video on macOS needs mkisofs" {
+  # Arrange
+  [[ "${ENBAN_TEST_OS}" == "Darwin" ]] || skip "Linux builds DVD Video with genisoimage"
+  local farm
+  video_ts "${SRC}"
+  farm="$(disk_test_farm mkisofs)"
+
+  # Act
+  run disk_test_run_path "${farm}" enban build "${SRC}" "${OUT}" --dvd-video </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: --dvd-video on macOS needs mkisofs, since hdiutil makehybrid writes the VIDEO_TS files out of order. install it with brew install cdrtools." ]]
+}
+
+@test "enban build --dvd-video reports a mkisofs that fails and leaves no image" {
+  # Arrange
+  video_ts "${SRC}"
+  disk_test_shim mkisofs "exit 1"
+  disk_test_shim genisoimage "exit 1"
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --dvd-video </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: unable to build ${OUT} from ${SRC}." ]]
+  [[ ! -e "${OUT}" ]]
+}
+
+@test "enban build --dvd-video needs a VIDEO_TS folder at the root" {
+  # Arrange
+  local option=--dvd-video
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" "${option}" </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: --dvd-video needs a VIDEO_TS folder at the root of the disc." ]]
+}
+
+@test "enban build --dvd-video needs UDF" {
+  # Arrange
+  video_ts "${SRC}"
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --dvd-video --fs iso9660,joliet </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: --dvd-video needs udf in --fs, since a DVD player reads the disc through UDF." ]]
+}
+
+@test "enban build --dvd-video does not boot" {
+  # Arrange
+  video_ts "${SRC}"
+  head -c 2048 /dev/zero >"${WORK}/boot.bin"
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --dvd-video --boot "${WORK}/boot.bin" </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: --dvd-video and --boot do not go together: a DVD Video disc does not boot." ]]
 }
 
 quoted() {

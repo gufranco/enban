@@ -39,9 +39,13 @@ disk_build_mac_option() {
 }
 
 disk_build_mac_tool() {
-  DISK_BUILD_XORRISO=n
+  DISK_BUILD_MKISOFS=n
   disk_bq_os="$(disk_os)"
   [ "${disk_bq_os}" = Darwin ] || return 0
+  if [ "${DISK_BUILD_DVD}" = y ]; then
+    disk_build_video_mac
+    return
+  fi
   disk_bq_option="$(disk_build_mac_option)"
   [ -n "${disk_bq_option}" ] || return 0
   if [ "${DISK_BUILD_UDF}" = y ]; then
@@ -49,7 +53,7 @@ disk_build_mac_tool() {
     return 1
   fi
   if command -v xorriso >/dev/null 2>&1; then
-    DISK_BUILD_XORRISO=y
+    DISK_BUILD_MKISOFS=y
     return 0
   fi
   disk_error "${disk_bq_option} on macOS needs xorriso, since hdiutil makehybrid has no such field. install it with brew install xorriso."
@@ -58,7 +62,7 @@ disk_build_mac_tool() {
 
 disk_build_ids_udf() {
   [ "${DISK_BUILD_UDF}" = y ] && [ -n "${DISK_BUILD_DATE}" ] || return 0
-  disk_error "--date needs xorriso, and a UDF image on Linux is built with genisoimage. leave udf out of --fs or leave out --date."
+  disk_error "--date needs xorriso, and a UDF image is built with genisoimage or mkisofs, which cannot set it. leave udf out of --fs or leave out --date."
   return 1
 }
 
