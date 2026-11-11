@@ -62,6 +62,8 @@ export LC_ALL
 : "${DISK_OPERAND_TWO:=}"
 : "${DISK_WRITE_OPTION:=}"
 : "${DISK_BUILD_OPTION:=}"
+: "${DISK_ERASE_OPTION:=}"
+: "${DISK_ERASE_FULL:=n}"
 : "${DISK_BUILD_SOURCE:=}"
 : "${DISK_BUILD_OUT:=}"
 : "${DISK_BUILD_FS:=iso9660,joliet,udf}"

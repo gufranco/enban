@@ -33,6 +33,8 @@ DISK_PROG=enban
 . "${DISK_LIB}/verify.sh"
 # shellcheck source=SCRIPTDIR/../lib/build.sh
 . "${DISK_LIB}/build.sh"
+# shellcheck source=SCRIPTDIR/../lib/erase.sh
+. "${DISK_LIB}/erase.sh"
 # shellcheck source=SCRIPTDIR/../lib/write_tab.sh
 . "${DISK_LIB}/write_tab.sh"
 # shellcheck source=SCRIPTDIR/../lib/read_tab.sh
@@ -65,6 +67,7 @@ usage:
   enban read --drive DRIVE IMAGE      copy a disc to an image and its SHA-256
   enban verify --drive DRIVE [IMAGE]  check every sector, or compare with IMAGE
   enban build FOLDER IMAGE            make an image from a folder
+  enban erase --drive DRIVE [--full]  blank a rewritable disc
   enban doctor                        check the tools enban needs
   enban version                       print the version
   enban help                          print this page
@@ -77,11 +80,12 @@ options:
   --no-eject          leave the disc in the drive when the write ends
   --fs LIST           file systems build writes; iso9660,joliet,udf by default
   --label NAME        the volume name build writes; the folder's by default
+  --full              erase every sector instead of the start of the disc
   --theme NAME        colours of the terminal interface, see notes
 
 notes:
-  info, write, read, verify and the app read the drive through xorriso on
-  Linux. Reading a drive on macOS is not supported yet.
+  info, write, read, verify, erase and the app reach the drive through
+  xorriso on Linux. Reading a drive on macOS is not supported yet.
 
   write burns only a blank disc, asks for the drive's name before it starts,
   then reads the disc back and compares it with the image. read copies the
@@ -90,7 +94,9 @@ notes:
   of a disc that holds data, compares it with the image when one is given,
   and names the first sector that differs or cannot be read. build makes a new
   image from a folder on macOS and Linux, with ISO9660 always and Joliet and
-  UDF unless --fs leaves them out. UDF on Linux needs genisoimage.
+  UDF unless --fs leaves them out. UDF on Linux needs genisoimage. erase
+  blanks a rewritable disc that holds data, only after you type the drive's
+  name; --full overwrites every sector and takes much longer.
 
   The app draws in the terminal's alternate screen and gives the screen back
   when it ends, on q or on an interrupt. Tab and the digits switch tabs, the
@@ -118,6 +124,7 @@ examples:
   enban read --drive /dev/sr0 backup.iso
   enban verify --drive /dev/sr0 debian.iso
   enban build ~/Photos/2009 family.iso --label "Family 2009"
+  enban erase --drive /dev/sr0
   enban doctor
 USAGE
 }
@@ -127,6 +134,7 @@ disk_option_flag() {
   --json) DISK_JSON=y ;;
   --no-verify) DISK_WRITE_VERIFY=n ;;
   --no-eject) DISK_WRITE_EJECT=n ;;
+  --full) DISK_ERASE_FULL=y ;;
   *) return 1 ;;
   esac
   disk_option_seen "$1"
@@ -147,6 +155,7 @@ disk_option_seen() {
   --speed | --no-eject) DISK_WRITE_OPTION="${DISK_WRITE_OPTION:-$1}" ;;
   --no-verify) DISK_VERIFY_OPTION="$1" ;;
   --fs | --label) DISK_BUILD_OPTION="${DISK_BUILD_OPTION:-$1}" ;;
+  --full) DISK_ERASE_OPTION="$1" ;;
   *) ;;
   esac
   return 0
@@ -197,6 +206,10 @@ disk_only_for() {
   fi
   if [ "$1" != build ] && [ -n "${DISK_BUILD_OPTION}" ]; then
     disk_cli_hint "option '${DISK_BUILD_OPTION}' works only with build"
+    return 1
+  fi
+  if [ "$1" != erase ] && [ -n "${DISK_ERASE_OPTION}" ]; then
+    disk_cli_hint "option '${DISK_ERASE_OPTION}' works only with erase"
     return 1
   fi
   case "$1:${DISK_VERIFY_OPTION}" in
@@ -277,6 +290,16 @@ disk_build() {
   disk_build_run
 }
 
+disk_erase() {
+  disk_options 0 "$@" || return 1
+  disk_only_for erase || return 1
+  if [ -z "${DISK_DRIVE}" ]; then
+    disk_cli_hint "erase needs --drive"
+    return 1
+  fi
+  disk_erase_run
+}
+
 disk_app_start() {
   disk_options 0 "$@" || return 1
   disk_only_for app || return 1
@@ -343,6 +366,10 @@ disk_route() {
   build)
     shift
     disk_build "$@"
+    ;;
+  erase)
+    shift
+    disk_erase "$@"
     ;;
   '') disk_open ;;
   -*) disk_app_start "$@" ;;

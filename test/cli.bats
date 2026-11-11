@@ -303,3 +303,18 @@ options_everywhere() {
   # Assert
   [[ "${status}" -eq 0 ]]
 }
+
+@test "enban help, man page and completions list erase and --full" {
+  # Arrange
+  local command=erase
+
+  # Act
+  run command_everywhere "${command}"
+
+  # Assert
+  local options_status
+  options_status=0
+  options_everywhere full || options_status=$?
+  [[ "${status}" -eq 0 ]]
+  [[ "${options_status}" -eq 0 ]]
+}

@@ -39,6 +39,15 @@ case " $* " in
     printf 'X' | dd of="${file}" bs=1 seek=4096 conv=notrunc 2>/dev/null
   fi
   ;;
+*" -blank "*)
+  fail_blank="$(value fail_blank)"
+  if [ "${fail_blank}" = 1 ]; then
+    printf 'xorriso : FAILURE : -blank: Job could not be performed properly.\n' >&2
+    exit 5
+  fi
+  printf '%s\n' "$*" | sed -n 's/.* -blank \([a-z_]*\).*/blanked=\1/p' >>"${state}"
+  "${real}" "$@"
+  ;;
 *" -eject all "*)
   fail_eject="$(value fail_eject)"
   [ "${fail_eject}" != 1 ] || exit 5
