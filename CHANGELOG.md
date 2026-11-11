@@ -1,5 +1,12 @@
 # Changelog
 
+# [1.8.0](https://github.com/gufranco/enban/compare/v1.7.0...v1.8.0) (2026-11-11)
+
+
+### Features
+
+* show a sector as hex with sector ([5aa4399](https://github.com/gufranco/enban/commit/5aa4399edf40e808c566110fb39e17949afe126c))
+
 # [1.7.0](https://github.com/gufranco/enban/compare/v1.6.0...v1.7.0) (2026-11-11)
 
 
