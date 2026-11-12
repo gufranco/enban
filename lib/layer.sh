@@ -25,7 +25,7 @@ disk_layer_ifos() {
 }
 
 disk_layer_word() {
-  od -An -tu1 -j "$1" -N 4 "${DISK_LAYER_IMAGE}" | awk '{ print $1 * 16777216 + $2 * 65536 + $3 * 256 + $4 }'
+  od -An -tu1 -j "$1" -N 4 "${DISK_LAYER_IMAGE}" | awk 'NF { print $1 * 16777216 + $2 * 65536 + $3 * 256 + $4 }'
 }
 
 disk_layer_cells() {

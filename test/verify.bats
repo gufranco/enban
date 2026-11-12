@@ -74,7 +74,7 @@ change_sector() {
 @test "enban verify names the first sector it cannot read" {
   # Arrange
   written_dvd
-  disk_test_shim dd "case \" \$* \" in *\" if=\"*) \"\${REAL}\" \"\$@\" count=200; exit 1 ;; *) exec \"\${REAL}\" \"\$@\" ;; esac"
+  disk_test_shim dd "case \" \$* \" in *\" if=\"*) \"\${REAL}\" if='${DRIVE#stdio:}' bs=2048 count=200; exit 1 ;; *) exec \"\${REAL}\" \"\$@\" ;; esac"
 
   # Act
   run disk_test_run enban verify --drive "${DRIVE}" </dev/null

@@ -49,7 +49,8 @@ written_dvd() {
   bytes="$(wc -c <"${IMAGE}")"
   [[ "${status}" -eq 0 ]]
   [[ "${shown}" == *"Result"*"SHA-256"* ]]
-  cmp -s -n "${bytes}" "${IMAGE}" "${OUT}"
+  head -c "${bytes//[[:space:]]/}" "${OUT}" >"${WORK}/prefix.bin"
+  cmp -s "${WORK}/prefix.bin" "${IMAGE}"
 }
 
 @test "the Read tab shows why a read failed" {

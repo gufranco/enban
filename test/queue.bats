@@ -29,7 +29,8 @@ swapping_drive() {
 burned() {
   local sectors
   sectors=$(($(wc -c <"$1") / 2048))
-  cmp -s -n $((sectors * 2048)) "$1" "$2"
+  head -c $((sectors * 2048)) "$2" >"${WORK}/prefix.bin"
+  cmp -s "${WORK}/prefix.bin" "$1"
 }
 
 @test "the queue writes two images in order, one blank disc each" {

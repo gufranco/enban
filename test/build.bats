@@ -21,16 +21,14 @@ teardown() {
 }
 
 sized_files() {
-  local found file size
-  local -a names
+  local found file size rows=""
   found="$(cd "$1" && find . -type f)"
-  mapfile -t names <<<"${found}"
-  local -a rows=()
-  for file in "${names[@]}"; do
+  while IFS= read -r file; do
+    [[ -n "${file}" ]] || continue
     size="$(wc -c <"$1/${file}")"
-    rows+=("${file#./} ${size//[[:space:]]/}")
-  done
-  printf '%s\n' "${rows[@]}" | LC_ALL=C sort
+    rows="${rows}${file#./} ${size//[[:space:]]/}"$'\n'
+  done <<<"${found}"
+  printf '%s' "${rows}" | LC_ALL=C sort
 }
 
 listed_files() {
@@ -1331,8 +1329,8 @@ project() {
 
   # Assert
   local listed kinds label
-  listed="$(image_files "${OUT}")"
-  listed="${listed,,}"
+  image_files "${OUT}" >"${WORK}/listed.txt"
+  listed="$(tr '[:upper:]' '[:lower:]' <"${WORK}/listed.txt")"
   kinds="$(descriptors "${OUT}")"
   label="$(volume_id "${OUT}")"
   [[ "${status}" -eq 0 ]]

@@ -28,7 +28,8 @@ written_dvd() {
 prefix_of() {
   local size
   size="$(wc -c <"$1")"
-  cmp -s -n "${size}" "$1" "$2"
+  head -c "${size//[[:space:]]/}" "$2" >"${WORK}/prefix.bin"
+  cmp -s "${WORK}/prefix.bin" "$1"
 }
 
 @test "enban read copies the disc to an image and prints its SHA-256" {

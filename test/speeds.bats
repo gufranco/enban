@@ -92,7 +92,8 @@ burn_speed() {
   # Arrange
   local count=0
   blank_dvd
-  sed -i 's/^product=.*/product=file/' "${WORK}/drive.state"
+  sed 's/^product=.*/product=file/' "${WORK}/drive.state" >"${WORK}/drive.state.new"
+  mv -f "${WORK}/drive.state.new" "${WORK}/drive.state"
   while [[ "${count}" -lt 10 ]]; do
     : >"${WORK}/disc${count}.iso"
     count=$((count + 1))
