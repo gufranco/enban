@@ -243,6 +243,63 @@ sent() {
   [[ "${output}" == *"Done. ${DRIVE} wrote its cache to the disc." ]]
 }
 
+@test "enban features names each feature and marks the current ones" {
+  # Arrange
+  drive_with 0011 "DVD-R sequential recording"
+  printf 'features=0000:1 002b:1 0040:0 9999:0\n' >>"${WORK}/drive.state"
+
+  # Act
+  run disk_test_run enban features --drive "${DRIVE}" </dev/null
+
+  # Assert
+  local command
+  command="$(sent 1)"
+  [[ "${status}" -eq 0 ]]
+  [[ "${command}" == "-r 65530 -o "*" ${DISC} 46 00 00 00 00 00 00 ff fa 00" ]]
+  [[ "${lines[0]}" == "0x0000  Profile list                             current" ]]
+  [[ "${lines[1]}" == "0x002b  DVD+R                                    current" ]]
+  [[ "${lines[2]}" == "0x0040  BD read                                  supported" ]]
+  [[ "${lines[3]}" == "0x9999  unknown feature                          supported" ]]
+}
+
+@test "enban features --json prints one object" {
+  # Arrange
+  drive_with 0011 "DVD-R sequential recording"
+  printf 'features=002b:1\n' >>"${WORK}/drive.state"
+
+  # Act
+  run disk_test_run enban features --drive "${DRIVE}" --json </dev/null
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+  [[ "${output}" == "{\"drive\":\"${DRIVE}\",\"features\":[{\"code\":\"0x002b\",\"name\":\"DVD+R\",\"current\":true}]}" ]]
+}
+
+@test "enban features says when the drive reports none" {
+  # Arrange
+  drive_with 0011 "DVD-R sequential recording"
+
+  # Act
+  run disk_test_run enban features --drive "${DRIVE}" </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: ${DRIVE} reported no features." ]]
+}
+
+@test "enban features says what the drive answered when it refuses" {
+  # Arrange
+  drive_with 0011 "DVD-R sequential recording"
+  disk_test_drive_flag raw_fail
+
+  # Act
+  run disk_test_run enban features --drive "${DRIVE}" </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: the drive refused the command: SCSI Status: Check Condition" ]]
+}
+
 @test "enban speed sets the read speed in kB/s for the disc's kind" {
   # Arrange
   drive_with 0011 "DVD-R sequential recording" written

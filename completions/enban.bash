@@ -21,7 +21,7 @@ _enban() {
     COMPREPLY=($(compgen -f -- "${cur}"))
     return
   fi
-  COMPREPLY=($(compgen -W "info write read verify build erase checksum queue discovery sector cue close tray rezero sync speed region booktype convert label layerbreak mount unmount speeds doctor version help" -- "${cur}"))
+  COMPREPLY=($(compgen -W "info write read verify build erase checksum queue discovery sector cue close tray rezero sync features speed region booktype convert label layerbreak mount unmount speeds doctor version help" -- "${cur}"))
 }
 
 complete -F _enban enban

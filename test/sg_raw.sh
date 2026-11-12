@@ -52,6 +52,28 @@ if [ "${fail}" = 1 ]; then
 fi
 
 case "$1" in
+46)
+  listed="$(value features)"
+  profile="$(value code)"
+  escapes="$(printf '%s\n' "${listed}" | awk -v code="${profile}" '
+    function put(v) { printf "\\0%03o", v }
+    NF {
+      count = split($0, list, " ")
+      put(0); put(0); put(0); put(4 + 4 * count)
+      put(0); put(0); put(int(strtonum_hex(code) / 256)); put(strtonum_hex(code) % 256)
+      for (i = 1; i <= count; i++) {
+        split(list[i], part, ":")
+        value = strtonum_hex(part[1])
+        put(int(value / 256)); put(value % 256); put(part[2] == 1 ? 1 : 0); put(0)
+      }
+    }
+    function strtonum_hex(h,   v, k, c) {
+      v = 0
+      for (k = 1; k <= length(h); k++) { c = index("0123456789abcdef", substr(h, k, 1)) - 1; v = v * 16 + c }
+      return v
+    }')"
+  printf '%b' "${escapes}" >"${out}"
+  ;;
 51)
   track="$(value last_track)"
   track="${track:-1}"

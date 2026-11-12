@@ -13,6 +13,7 @@ complete -c enban -n __fish_use_subcommand -a close -d 'close the open session o
 complete -c enban -n __fish_use_subcommand -a tray -d 'load, lock or unlock the tray'
 complete -c enban -n __fish_use_subcommand -a rezero -d 'move the head back to the start'
 complete -c enban -n __fish_use_subcommand -a sync -d 'write the drive cache to the disc'
+complete -c enban -n __fish_use_subcommand -a features -d 'list the drive MMC features'
 complete -c enban -n __fish_use_subcommand -a speed -d 'set the read speed'
 complete -c enban -n __fish_use_subcommand -a region -d 'show or set the DVD region'
 complete -c enban -n __fish_use_subcommand -a booktype -d 'show or set the book type'

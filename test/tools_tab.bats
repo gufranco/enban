@@ -307,6 +307,21 @@ written() {
   [[ "${shown}" == *"Capabilities"*"CD-R"*"CD-RW"*"DVD-R"*"DVD+RW"* ]]
 }
 
+@test "Capabilities lists the drive's features" {
+  # Arrange
+  written 0011 "DVD-R sequential recording"
+  disk_test_raw
+  printf 'features=002b:1 0040:0\n' >>"${WORK}/drive.state"
+
+  # Act
+  run on_terminal "7$(printf '\\033[B%.0s' {1..5})\\nq" --drive "stdio:${DISC}"
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"Features"*"0x002b  DVD+R"*"current"*"0x0040  BD read"*"supported"* ]]
+}
+
 @test "Capabilities says when no drive is chosen and Enter goes back" {
   # Arrange
   local keys

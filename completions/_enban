@@ -18,6 +18,7 @@ _enban() {
     'tray:load, lock or unlock the tray'
     'rezero:move the head back to the start'
     'sync:write the drive cache to the disc'
+    'features:list the drive MMC features'
     'speed:set the read speed'
     'region:show or set the DVD region'
     'booktype:show or set the book type'

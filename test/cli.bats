@@ -247,7 +247,7 @@ command_everywhere() {
   grep -q -- "-a $1 " "${REPO_DIR}/completions/enban.fish" || return 5
 }
 
-@test "enban help, man page and completions list tray, rezero and sync" {
+@test "enban help, man page and completions list tray, rezero, sync and features" {
   # Arrange
   local first=tray
 
@@ -260,6 +260,7 @@ command_everywhere() {
   sync_status=0
   command_everywhere rezero || rezero_status=$?
   command_everywhere sync || sync_status=$?
+  command_everywhere features || sync_status=$?
   [[ "${status}" -eq 0 ]]
   [[ "${rezero_status}" -eq 0 ]]
   [[ "${sync_status}" -eq 0 ]]

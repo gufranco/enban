@@ -61,6 +61,8 @@ DISK_PROG=enban
 . "${DISK_LIB}/raw.sh"
 # shellcheck source=SCRIPTDIR/../lib/tray.sh
 . "${DISK_LIB}/tray.sh"
+# shellcheck source=SCRIPTDIR/../lib/features.sh
+. "${DISK_LIB}/features.sh"
 # shellcheck source=SCRIPTDIR/../lib/booktype.sh
 . "${DISK_LIB}/booktype.sh"
 # shellcheck source=SCRIPTDIR/../lib/audio.sh
@@ -143,6 +145,7 @@ usage:
   enban tray --drive DRIVE ACTION     load, lock or unlock the tray
   enban rezero --drive DRIVE          move the drive's head back to the start
   enban sync --drive DRIVE            write the drive's cache to the disc
+  enban features --drive DRIVE        list the drive's MMC features
   enban speed --drive DRIVE N|max     set the drive's read speed
   enban region --drive DRIVE          show the DVD region, or --set N
   enban booktype --drive DRIVE [TYPE] show or set the book type of a DVD+R
@@ -158,7 +161,8 @@ usage:
 
 options:
   --drive DRIVE       the drive to read, such as /dev/sr0; else ENBAN_DRIVE
-  --json              print the result of info as one JSON object, for scripts
+  --json              print the result of info or features as one JSON object,
+                      for scripts
   --speed N           write at N times, such as 8; the drive picks by default
   --verify            compare the disc after write, read or queue; the default
   --no-verify         write, read or queue without the pass that compares
@@ -452,7 +456,7 @@ disk_only_for() {
   [ "${DISK_JSON}" != y ] || disk_of_json=--json
   disk_option_pair "${DISK_VERIFY_CLASH}" verify || return 1
   disk_option_pair "${DISK_EJECT_CLASH}" eject || return 1
-  disk_option_owner "$1" "${disk_of_json}" info info || return 1
+  disk_option_owner "$1" "${disk_of_json}" "info features" "info and features" || return 1
   disk_option_owner "$1" "${DISK_SPEED_OPTION}" "write read verify discovery" "write, read, verify and discovery" || return 1
   disk_option_owner "$1" "${DISK_READ_OPTION}" read read || return 1
   disk_option_owner "$1" "${DISK_RETRY_OPTION}" "read verify" "read and verify" || return 1
@@ -637,6 +641,13 @@ disk_close() {
     return 1
   fi
   disk_close_run
+}
+
+disk_features() {
+  disk_options 0 "$@" || return 1
+  disk_only_for features || return 1
+  disk_needs_drive features || return 1
+  disk_features_run
 }
 
 disk_tray() {
@@ -845,7 +856,7 @@ disk_route() {
     shift
     disk_cue "$@"
     ;;
-  close | tray | rezero | sync | speed | region | booktype | convert | label | layerbreak | mount | unmount | speeds)
+  close | tray | rezero | sync | features | speed | region | booktype | convert | label | layerbreak | mount | unmount | speeds)
     disk_mn_command="$1"
     shift
     "disk_${disk_mn_command}" "$@"

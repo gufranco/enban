@@ -54,6 +54,8 @@ DISK_LIB="$(cd "$(dirname "$0")/../lib" && pwd)" || exit 1
 . "${DISK_LIB}/raw.sh"
 # shellcheck source=SCRIPTDIR/../lib/tray.sh
 . "${DISK_LIB}/tray.sh"
+# shellcheck source=SCRIPTDIR/../lib/features.sh
+. "${DISK_LIB}/features.sh"
 # shellcheck source=SCRIPTDIR/../lib/booktype.sh
 . "${DISK_LIB}/booktype.sh"
 # shellcheck source=SCRIPTDIR/../lib/audio.sh

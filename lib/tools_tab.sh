@@ -51,6 +51,7 @@ disk_tools_tab_list_key() {
 
 disk_tools_tab_open() {
   disk_to_action="$(disk_tools_field "${DISK_APP_T_FOCUS}" 3)"
+  [ "${disk_to_action}" != caps ] || disk_tools_tab_caps_load
   case "${disk_to_action}" in
   erase | caps | speeds) DISK_APP_T_OPEN="${disk_to_action}" ;;
   tray) disk_tools_tab_tray ;;
@@ -67,6 +68,16 @@ disk_tools_tab_erase_key() {
   esc) DISK_APP_T_OPEN="" ;;
   *) return 0 ;;
   esac
+}
+
+disk_tools_tab_caps_load() {
+  DISK_APP_T_FEATURES=""
+  [ -z "${DISK_APP_DRIVE_NOTE}" ] || return 0
+  if ! command -v sg_raw >/dev/null 2>&1; then
+    DISK_APP_T_FEATURES=-
+    return 0
+  fi
+  DISK_APP_T_FEATURES="$(disk_features_text 2>/dev/null)" || DISK_APP_T_FEATURES=""
 }
 
 disk_tools_tab_caps_key() {
@@ -241,5 +252,11 @@ disk_frame_tools_caps() {
   else
     printf '%s\n' "${DISK_DRIVE_MEDIA}" | sed 's/^/  /'
   fi
+  printf '%s\n' "" "Features"
+  case "${DISK_APP_T_FEATURES}" in
+  '') printf '%s\n' "  The drive reports no features." ;;
+  -) printf '%s\n' "  sg_raw from sg3-utils lists them." ;;
+  *) printf '%s\n' "${DISK_APP_T_FEATURES}" | awk -F '\t' '{ printf "  0x%s  %-38s %s\n", $1, $2, $3 }' ;;
+  esac
   printf '%s\n' "" "enter or esc back"
 }

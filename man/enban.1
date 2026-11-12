@@ -96,6 +96,10 @@ enban \- write, read, build and verify CD, DVD and Blu-ray discs
 .B enban sync
 .BI \-\-drive " drive"
 .br
+.B enban features
+.BI \-\-drive " drive"
+.RB [ \-\-json ]
+.br
 .B enban speed
 .BI \-\-drive " drive"
 .I n
@@ -344,6 +348,12 @@ Move the drive's head back to the start of the disc with REZERO UNIT.
 .TP
 .B sync
 Make the drive write what its cache holds to the disc with SYNCHRONIZE CACHE.
+.TP
+.B features
+List the drive's MMC features from GET CONFIGURATION, each with its code, its
+name and whether it is current for the disc loaded, or as one JSON object with
+.BR \-\-json .
+The Capabilities panel of the Tools tab lists them too.
 .TP
 .B speed
 Set the drive's read speed to

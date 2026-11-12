@@ -92,6 +92,7 @@ export LC_ALL
 : "${DISK_CLOSE_TRACK:=n}"
 : "${DISK_SECTOR_SUB:=n}"
 : "${DISK_APP_T_SUB:=n}"
+: "${DISK_APP_T_FEATURES:=}"
 : "${DISK_TRAY_ACTION:=}"
 : "${DISK_SPEED_WANTED:=}"
 : "${DISK_REGION_SET:=}"
