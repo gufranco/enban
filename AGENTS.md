@@ -69,12 +69,11 @@ Guidance for anyone, human or agent, changing enban. What enban is and how to us
 ## Release
 
 - `ENBAN_VERSION` lives in [`lib/core.sh`](lib/core.sh).
-- Every release asks the tap to bump `Formula/enban.rb`, and that bump fails until the formula exists. The formula waits for the first disc job to ship.
+- Every release asks the tap to bump `Formula/enban.rb`, which depends on `gum` and `xorriso`.
 
 ## Gaps against FAMILY.md
 
 - The README is in English only; the Japanese, Simplified Chinese and Hong Kong Traditional Chinese READMEs are not written yet (as of 2026-11-10).
-- v1.0.0 ships the app frame, its tabs and its keys, but no disc job, so it has no Homebrew formula yet (as of 2026-11-11).
 - `enban info` stops on macOS: the drive is read through `drutil`, and no `drutil -xml` output from a real drive has been captured to build the parser and its stand-in from (as of 2026-11-11).
 - On macOS every disc command and drive pane runs against an image target, `--drive stdio:FILE`, through the same xorriso code as Linux, and both test legs drive it, but a real drive is refused: Homebrew's xorriso has no macOS drive adapter, libburn reports sg-dummy, so real drives need a backend over `drutil`, `hdiutil`, cdrtools, cdrdao and dvd+rw-tools, checked on the owner's drive. `sg_raw` has no macOS build, so close, speed, region, OPC and raw sectors need another route there (as of 2026-11-11).
 - macOS images carry no Rock Ridge, since hdiutil makehybrid cannot write it, so an ISO9660-only build shows 8.3 names on macOS where Linux keeps the full names (as of 2026-11-11).
