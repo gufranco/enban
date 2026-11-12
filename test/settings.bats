@@ -96,6 +96,34 @@ kinds() {
   [[ "${output}" == *"File systems  ISO9660"* ]]
 }
 
+@test "the settings file sets the write mode and the read retries" {
+  # Arrange
+  settings "write_mode=tao" "read_retries=7"
+  local call="disk_settings_load; printf '%s %s' \"\${DISK_WRITE_MODE}\" \"\${DISK_READ_RETRIES}\""
+
+  # Act
+  run disk_test_call eval "${call}"
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+  [[ "${output}" == "tao 7" ]]
+}
+
+@test "a write mode or read retries the settings file cannot use warns" {
+  # Arrange
+  settings "write_mode=sao" "read_retries=100"
+  local call="disk_settings_load; printf '%s %s' \"\${DISK_WRITE_MODE}\" \"\${DISK_READ_RETRIES}\""
+
+  # Act
+  run disk_test_call eval "${call}"
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+  [[ "${output}" == *"enban: warning: settings line 1: write_mode must be dao or tao, got: sao"* ]]
+  [[ "${output}" == *"enban: warning: settings line 2: read_retries must be a whole number from 0 to 99, got: 100"* ]]
+  [[ "${output}" == *"dao 0" ]]
+}
+
 @test "the environment wins over the settings file for the queue wait" {
   # Arrange
   settings "queue_wait=soon" "write_speed=8" "write_speed=auto"
