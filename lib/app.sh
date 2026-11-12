@@ -18,10 +18,15 @@ disk_app_colours() {
   DISK_APP_C_ACCENT=""
   DISK_APP_C_MUTED=""
   DISK_APP_C_TEXT=""
+  DISK_APP_C_LEVELS=""
   [ -n "${DISK_UI_ACCENT}" ] || return 0
   DISK_APP_C_ACCENT="$(disk_app_rgb "${DISK_UI_ACCENT}")"
   DISK_APP_C_MUTED="$(disk_app_rgb "${DISK_UI_MUTED}")"
   DISK_APP_C_TEXT="$(disk_app_rgb "${DISK_UI_TEXT}")"
+  disk_ac_ok="$(disk_app_rgb "${DISK_UI_OK}")"
+  disk_ac_warn="$(disk_app_rgb "${DISK_UI_WARN}")"
+  disk_ac_err="$(disk_app_rgb "${DISK_UI_ERR}")"
+  DISK_APP_C_LEVELS="${disk_ac_ok}|${disk_ac_warn}|${disk_ac_err}"
 }
 
 disk_app_ink() {

@@ -42,7 +42,8 @@ disk_frame_log() {
   [ "${DISK_APP_L_LEVEL}" != warn ] || disk_fl_shown="warnings and errors"
   [ "${DISK_APP_L_LEVEL}" != error ] || disk_fl_shown="errors"
   [ -z "${DISK_APP_L_SEARCH}" ] || disk_fl_shown="${disk_fl_shown}, matching ${DISK_APP_L_SEARCH}"
-  printf 'Log   this session, newest last, showing %s\n\n' "${disk_fl_shown}"
+  printf 'Log   this session, newest last, showing %s\n' "${disk_fl_shown}"
+  awk '{ count[$2]++ } END { printf "INFO %d   WARN %d   ERROR %d\n\n", count["INFO"], count["WARN"], count["ERROR"] }' "${DISK_APP_LOG}"
   disk_log_lines
   disk_fl_folder="$(disk_log_folder)"
   disk_fl_day="$(date -u +%Y-%m-%d)"

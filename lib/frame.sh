@@ -48,9 +48,19 @@ disk_frame_box() {
   disk_fb_top="$(disk_app_ink "${DISK_APP_C_ACCENT}" "$(printf '\342\225\255%s\342\225\256' "${disk_fb_rule}")")"
   disk_fb_bottom="$(disk_app_ink "${DISK_APP_C_ACCENT}" "$(printf '\342\225\260%s\342\225\257' "${disk_fb_rule}")")"
   disk_fb_side="$(disk_app_ink "${DISK_APP_C_ACCENT}" "$(printf '\342\224\202')")"
-  disk_frame_wrap $(($1 - 4)) | awk -v w=$(($1 - 4)) -v top="${disk_fb_top}" -v bottom="${disk_fb_bottom}" -v side="${disk_fb_side}" '
-    BEGIN { print top }
-    { printf "%s %s %s\n", side, sprintf("%-" w "s", $0), side }
+  disk_frame_wrap $(($1 - 4)) | awk -v w=$(($1 - 4)) -v top="${disk_fb_top}" -v bottom="${disk_fb_bottom}" -v side="${disk_fb_side}" -v levels="${DISK_APP_C_LEVELS}" '
+    BEGIN {
+      print top
+      if (levels != "") { split(levels, rgb, "|"); ink["INFO"] = rgb[1]; ink["WARN"] = rgb[2]; ink["ERROR"] = rgb[3] }
+    }
+    {
+      text = sprintf("%-" w "s", $0)
+      if (levels != "" && match(text, /^[0-9][0-9]:[0-9][0-9]:[0-9][0-9] (INFO|WARN|ERROR)/)) {
+        word = substr(text, 10, RLENGTH - 9)
+        text = substr(text, 1, 9) "\033[38;2;" ink[word] "m" word "\033[0m" substr(text, RLENGTH + 1)
+      }
+      printf "%s %s %s\n", side, text, side
+    }
     END { print bottom }'
 }
 

@@ -211,7 +211,8 @@ pauses a running queue before its next image and lets it go on again. On
 Discovery, Enter sets the sectors or the speed and
 .B t
 starts the test after the drive's name is typed; the tab draws the read rate
-of the last run and compares the last five runs. On Log,
+of the last run and compares the last five runs. On Log, a line counts the
+entries of each level and each level is drawn in its theme colour;
 .B f
 filters by level,
 .B /
@@ -318,7 +319,10 @@ gives the state of every image.
 Fill a blank disc with a known pattern, all its free sectors unless
 .B \-\-sectors
 says fewer, after the drive's name is typed. Then read it back in a hundred
-stretches, compare every sector, and save the read rate of each stretch as CSV.
+stretches, compare every sector, and save the read rate of each stretch as CSV,
+with an ImgBurn graph file,
+.IR csv .ibg,
+beside it for DVDInfoPro, BurnPlot and Opti Drive Control.
 It names the first sector that reads back wrong or cannot be read.
 .TP
 .B sector

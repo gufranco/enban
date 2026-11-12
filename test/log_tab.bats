@@ -46,6 +46,46 @@ build_keys() {
   [[ "${shown}" =~ [0-9][0-9]:[0-9][0-9]:[0-9][0-9]\ WARN\ +No\ drive\ chosen\. ]]
 }
 
+@test "the log counts its lines per level" {
+  # Arrange
+  local keys='8q'
+
+  # Act
+  run on_terminal "${keys}"
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"INFO 0   WARN 1   ERROR 0"* ]]
+}
+
+@test "the log draws each level in its theme colour" {
+  # Arrange
+  local keys='8q'
+
+  # Act
+  run on_terminal "${keys}"
+
+  # Assert
+  local raw
+  raw="$(<"${WORK}/out")"
+  [[ "${raw}" == *$'\033[38;2;255;184;108mWARN\033[0m'* ]]
+}
+
+@test "the log stays plain in the mono theme" {
+  # Arrange
+  local keys='8q'
+  export ENBAN_THEME=mono
+
+  # Act
+  run on_terminal "${keys}"
+
+  # Assert
+  local raw
+  raw="$(<"${WORK}/out")"
+  [[ "${raw}" != *"mWARN"* ]]
+}
+
 @test "the log names the drive and the disc it found" {
   # Arrange
   disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160

@@ -126,6 +126,7 @@ export LC_ALL
 : "${DISK_DELETE_OPTION:=}"
 : "${DISK_APP_Q_DELETE:=n}"
 : "${DISK_APP_Q_MARKS:=}"
+: "${DISK_APP_C_LEVELS:=}"
 : "${DISK_MOUNT_IMAGE:=}"
 : "${DISK_MOUNT_POINT:=}"
 : "${DISK_SECTOR_OPTION:=}"

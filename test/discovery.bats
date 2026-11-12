@@ -66,6 +66,40 @@ pattern_line() {
   [[ "${output}" == *"CSV          ${CSV}"* ]]
 }
 
+@test "enban discovery saves an ImgBurn graph beside the CSV" {
+  # Arrange
+  blank_disc 128
+
+  # Act
+  run disk_test_run enban discovery --drive "${DRIVE}" --csv "${CSV}" <<<"disc.iso"
+
+  # Assert
+  local graph="${CSV%.*}.ibg" header rows wanted ending
+  header="$(head -n 1 "${graph}")"
+  rows="$(grep -c $'^[0-9][0-9.]*,[0-9]*,[0-9]*,0\r$' "${graph}")"
+  wanted="$(grep -c '^[0-9]' "${CSV}")"
+  ending="$(od -An -tx1 -N 6 "${graph}")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${ending//[[:space:]]/}" == "494247440d0a" ]]
+  [[ "${header}" == $'IBGD\r' ]]
+  grep -q $'^MEDIA_TYPE=DVD-R sequential recording\r$' "${graph}"
+  grep -q $'^DATA_SECTORS=128\r$' "${graph}"
+  [[ "${rows}" -eq "${wanted}" ]]
+  [[ "${output}" == *"Graph        ${CSV%.*}.ibg, for DVDInfoPro, BurnPlot and Opti Drive Control"* ]]
+}
+
+@test "the graph counts a CD's 1x as 150 KiB/s and a Blu-ray's as 4500" {
+  # Arrange
+  local call='for DISK_DRIVE_CODE in 0009 0011 0041; do disk_graph_unit; done'
+
+  # Act
+  run disk_test_call eval "${call}"
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+  [[ "${output}" == $'150\n1353\n4500' ]]
+}
+
 @test "enban discovery writes only the sectors asked for" {
   # Arrange
   blank_disc 128

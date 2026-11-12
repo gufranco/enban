@@ -50,6 +50,8 @@ DISK_LIB="$(cd "$(dirname "$0")/../lib" && pwd)" || exit 1
 . "${DISK_LIB}/queue.sh"
 # shellcheck source=SCRIPTDIR/../lib/discovery.sh
 . "${DISK_LIB}/discovery.sh"
+# shellcheck source=SCRIPTDIR/../lib/graph.sh
+. "${DISK_LIB}/graph.sh"
 # shellcheck source=SCRIPTDIR/../lib/sector.sh
 . "${DISK_LIB}/sector.sh"
 # shellcheck source=SCRIPTDIR/../lib/cue.sh
