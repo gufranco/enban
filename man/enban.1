@@ -196,14 +196,19 @@ removes the focused one,
 .B J
 and
 .B K
-move it down or up, Enter sets its speed and copies,
+move it down or up, space marks it, Enter sets the speed and copies of the
+marked images or of the focused one,
 .B v
 turns the verify on or off,
+.B d
+deletes each image once it is written,
 .B o
 saves the queue to a file and
 .B s
-starts it after each drive's name is typed. On Discovery, Enter sets the
-sectors or the speed and
+starts it after each drive's name is typed;
+.B p
+pauses a running queue before its next image and lets it go on again. On
+Discovery, Enter sets the sectors or the speed and
 .B t
 starts the test after the drive's name is typed; the tab draws the read rate
 of the last run and compares the last five runs. On Log,
@@ -304,7 +309,10 @@ skipped. It asks for each drive's name once, writes each drive's images in
 order while the drives work at the same time, waits for a blank disc before
 each copy, verifies it unless
 .B \-\-no\-verify
-is given, and ejects it. A table at the end gives the state of every image.
+is given, and ejects it. With
+.B \-\-delete\-image
+it deletes each image once every copy of it is written. A table at the end
+gives the state of every image.
 .TP
 .B discovery
 Fill a blank disc with a known pattern, all its free sectors unless

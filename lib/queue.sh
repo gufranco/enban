@@ -113,15 +113,31 @@ disk_queue_burn() {
   disk_write_go
 }
 
+disk_queue_hold() {
+  disk_qh_waited=0
+  while [ -e "${DISK_QUEUE_DIR}/paused" ] && [ "${disk_qh_waited}" -lt "${DISK_QUEUE_PAUSE_LIMIT}" ]; do
+    printf 'paused\n' >"${DISK_QUEUE_DIR}/state.$1"
+    sleep 1
+    disk_qh_waited=$((disk_qh_waited + 1))
+  done
+}
+
+disk_queue_finish() {
+  printf 'done\n' >"${DISK_QUEUE_DIR}/state.$1"
+  [ "${DISK_QUEUE_DELETE}" = y ] || return 0
+  rm -f "$2" && : >"${DISK_QUEUE_DIR}/deleted.$1"
+}
+
 disk_queue_worker() {
   while IFS="${DISK_TAB}" read -r disk_qr_line disk_qr_image disk_qr_drive disk_qr_speed disk_qr_copies; do
     [ "${disk_qr_drive}" = "$1" ] || continue
+    disk_queue_hold "${disk_qr_line}"
     disk_qr_copy=1
     while [ "${disk_qr_copy}" -le "${disk_qr_copies}" ]; do
       disk_queue_one "${disk_qr_line}" "${disk_qr_image}" "${disk_qr_drive}" "${disk_qr_speed}" || break
       disk_qr_copy=$((disk_qr_copy + 1))
     done
-    [ "${disk_qr_copy}" -le "${disk_qr_copies}" ] || printf 'done\n' >"${DISK_QUEUE_DIR}/state.${disk_qr_line}"
+    [ "${disk_qr_copy}" -le "${disk_qr_copies}" ] || disk_queue_finish "${disk_qr_line}" "${disk_qr_image}"
   done <"$2"
 }
 
@@ -143,6 +159,7 @@ disk_queue_report() {
     disk_qt_row=$((disk_qt_row + 1))
     disk_qt_state="not started"
     [ ! -f "${DISK_QUEUE_DIR}/state.${disk_qt_line}" ] || disk_qt_state="$(cat "${DISK_QUEUE_DIR}/state.${disk_qt_line}")"
+    [ ! -e "${DISK_QUEUE_DIR}/deleted.${disk_qt_line}" ] || disk_qt_state="${disk_qt_state}, image deleted"
     disk_qt_shown="${disk_qt_speed}x"
     [ "${disk_qt_speed}" != auto ] || disk_qt_shown=auto
     printf '%-3s%-24s %-18s %-6s %-7s %s\n' "${disk_qt_row}" "${disk_qt_image##*/}" "${disk_qt_drive}" "${disk_qt_shown}" "${disk_qt_copies}" "${disk_qt_state}"

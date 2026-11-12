@@ -139,6 +139,8 @@ disk_app_decode() {
   61) DISK_APP_KEY=a ;;
   62) DISK_APP_KEY=b ;;
   63) DISK_APP_KEY=c ;;
+  64) DISK_APP_KEY=d ;;
+  70) DISK_APP_KEY=p ;;
   4a) DISK_APP_KEY=J ;;
   4b) DISK_APP_KEY=K ;;
   66) DISK_APP_KEY=f ;;

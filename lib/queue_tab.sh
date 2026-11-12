@@ -4,18 +4,33 @@
 . "${DISK_LIB:?}/state.sh"
 
 disk_queue_tab_key() {
+  if [ "$1" = p ] && disk_queue_live; then
+    disk_queue_tab_pause
+    return 0
+  fi
   disk_job_key queue "$1" && return 0
   disk_qa_count="$(disk_queue_tab_count)"
   case "$1" in
   up) [ "${DISK_APP_Q_FOCUS}" -le 0 ] || DISK_APP_Q_FOCUS=$((DISK_APP_Q_FOCUS - 1)) ;;
   down) [ "${DISK_APP_Q_FOCUS}" -ge $((disk_qa_count - 1)) ] || DISK_APP_Q_FOCUS=$((DISK_APP_Q_FOCUS + 1)) ;;
   a) disk_queue_tab_add ;;
-  x) disk_queue_tab_remove "${disk_qa_count}" ;;
-  J) disk_queue_tab_move "${disk_qa_count}" 1 ;;
-  K) disk_queue_tab_move "${disk_qa_count}" -1 ;;
+  x)
+    DISK_APP_Q_MARKS=""
+    disk_queue_tab_remove "${disk_qa_count}"
+    ;;
+  J)
+    DISK_APP_Q_MARKS=""
+    disk_queue_tab_move "${disk_qa_count}" 1
+    ;;
+  K)
+    DISK_APP_Q_MARKS=""
+    disk_queue_tab_move "${disk_qa_count}" -1
+    ;;
   enter) disk_queue_tab_edit "${disk_qa_count}" ;;
   o) disk_queue_tab_save ;;
   v) DISK_APP_Q_VERIFY="$(disk_job_flip "${DISK_APP_Q_VERIFY}")" ;;
+  d) DISK_APP_Q_DELETE="$(disk_job_flip "${DISK_APP_Q_DELETE}")" ;;
+  space) disk_queue_tab_mark "${disk_qa_count}" ;;
   s) disk_queue_tab_start ;;
   *) return 0 ;;
   esac
@@ -85,8 +100,33 @@ disk_queue_tab_edit() {
 }
 
 disk_queue_tab_set() {
-  DISK_APP_Q_ROWS="$(printf '%s\n' "${DISK_APP_Q_ROWS}" | awk -F "${DISK_TAB}" -v OFS="${DISK_TAB}" -v n=$((DISK_APP_Q_FOCUS + 1)) -v speed="$1" -v copies="$2" '
-    NR == n { $3 = speed; $4 = copies } { print }')"
+  disk_qz_rows="${DISK_APP_Q_MARKS:- $((DISK_APP_Q_FOCUS + 1)) }"
+  DISK_APP_Q_ROWS="$(printf '%s\n' "${DISK_APP_Q_ROWS}" | awk -F "${DISK_TAB}" -v OFS="${DISK_TAB}" -v rows="${disk_qz_rows}" -v speed="$1" -v copies="$2" '
+    index(rows, " " NR " ") { $3 = speed; $4 = copies } { print }')"
+  disk_qz_count="$(printf '%s\n' "${disk_qz_rows}" | awk '{ print NF }')"
+  disk_qz_noun="$(disk_queue_plural "${disk_qz_count}" image)"
+  DISK_APP_STATUS="Set ${disk_qz_noun} to speed $1, $2 copies."
+}
+
+disk_queue_tab_mark() {
+  [ "$1" -gt 0 ] || return 0
+  disk_qv_row=" $((DISK_APP_Q_FOCUS + 1)) "
+  case "${DISK_APP_Q_MARKS}" in
+  *"${disk_qv_row}"*) DISK_APP_Q_MARKS="$(printf '%s' "${DISK_APP_Q_MARKS}" | sed "s/${disk_qv_row}/ /")" ;;
+  *) DISK_APP_Q_MARKS="${DISK_APP_Q_MARKS:- }$((DISK_APP_Q_FOCUS + 1)) " ;;
+  esac
+  [ "${DISK_APP_Q_MARKS}" != " " ] || DISK_APP_Q_MARKS=""
+}
+
+disk_queue_tab_pause() {
+  disk_qp_flag="${DISK_APP_JOB_DIR}/queue/paused"
+  if [ -e "${disk_qp_flag}" ]; then
+    rm -f "${disk_qp_flag}"
+    DISK_APP_STATUS="The queue goes on with the next image."
+    return 0
+  fi
+  : >"${disk_qp_flag}"
+  DISK_APP_STATUS="The queue pauses before its next image. Press p to go on."
 }
 
 disk_queue_tab_save() {
@@ -132,6 +172,7 @@ disk_queue_tab_typed() {
 
 disk_queue_tab_steps() {
   DISK_WRITE_VERIFY="${DISK_APP_Q_VERIFY}"
+  DISK_QUEUE_DELETE="${DISK_APP_Q_DELETE}"
   DISK_QUEUE_DIR="${DISK_APP_JOB_DIR}/queue"
   mkdir -p "${DISK_QUEUE_DIR}"
   printf '%s\n' "${DISK_APP_Q_ROWS}" | awk '{ print NR "\t" $0 }' >"${DISK_QUEUE_DIR}/rows"

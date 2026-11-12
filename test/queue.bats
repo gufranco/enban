@@ -49,6 +49,63 @@ burned() {
   burned "${TWO}" "${DISC}.2"
 }
 
+@test "the queue deletes each image once every copy of it is written" {
+  # Arrange
+  swapping_drive
+  printf '%s\t%s\n' "${ONE}" "stdio:${DISC}" "${TWO}" "stdio:${DISC}" >"${QUEUE}"
+
+  # Act
+  run disk_test_run enban queue "${QUEUE}" --delete-image <<<"disc.iso"
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+  [[ "${output}" == *"1  one.iso"*"done, image deleted"* ]]
+  [[ "${output}" == *"2  two.iso"*"done, image deleted"* ]]
+  [[ ! -e "${ONE}" ]]
+  [[ ! -e "${TWO}" ]]
+}
+
+@test "the queue holds before its next image while it is paused" {
+  # Arrange
+  mkdir -p "${WORK}/run"
+  : >"${WORK}/run/paused"
+  local call
+  call="DISK_QUEUE_DIR='${WORK}/run' DISK_QUEUE_PAUSE_LIMIT=2; disk_queue_hold 7"
+
+  # Act
+  run disk_test_call eval "${call}"
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+  [[ "$(<"${WORK}/run/state.7")" == "paused" ]]
+}
+
+@test "the queue starts at once when it is not paused" {
+  # Arrange
+  mkdir -p "${WORK}/run"
+  local call
+  call="DISK_QUEUE_DIR='${WORK}/run'; disk_queue_hold 7"
+
+  # Act
+  run disk_test_call eval "${call}"
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+  [[ ! -e "${WORK}/run/state.7" ]]
+}
+
+@test "info refuses --delete-image, which only write and queue take" {
+  # Arrange
+  local option=--delete-image
+
+  # Act
+  run disk_test_run enban info --drive "stdio:${DISC}" "${option}" </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: option '--delete-image' works only with write and queue. run 'enban help' for usage." ]]
+}
+
 @test "the queue writes each copy on its own disc" {
   # Arrange
   swapping_drive

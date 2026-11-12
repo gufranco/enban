@@ -115,6 +115,65 @@ answers() {
   [[ "${shown}" == *"> 1  one.iso"*"8x"*"3"* ]]
 }
 
+@test "space marks images and Enter sets the speed and copies of every marked one" {
+  # Arrange
+  answers "${ONE}" /dev/sr1 "${TWO}" /dev/sr1 8 3
+
+  # Act
+  run on_terminal '6aa \033[A \nq'
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *">*1  one.iso"*"8x"*"3"* ]]
+  [[ "${shown}" == *" *2  two.iso"*"8x"*"3"* ]]
+  [[ "${shown}" == *"Set 2 images to speed 8, 3 copies."* ]]
+}
+
+@test "space on a marked image unmarks it" {
+  # Arrange
+  answers "${ONE}" /dev/sr1
+
+  # Act
+  run on_terminal '6a  q'
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"> 1  one.iso"* ]]
+}
+
+@test "d deletes each image once it is written" {
+  # Arrange
+  disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160
+  disk_test_drive_flag swap
+  answers "${ONE}" "${TWO}" disc.iso
+
+  # Act
+  run on_terminal_in_steps '6aads' 'images written to' 'q' --drive "stdio:${DISC}"
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"1  one.iso"*"done, image deleted"* ]]
+  [[ ! -e "${ONE}" ]]
+  [[ ! -e "${TWO}" ]]
+}
+
+@test "p pauses a running queue and p again lets it go on" {
+  # Arrange
+  mkdir -p "${WORK}/job/queue"
+  local call
+  call="DISK_APP_JOB_DIR='${WORK}/job' DISK_APP_JOB=running DISK_APP_JOB_KIND=queue; disk_queue_tab_key p; printf '%s|' \"\${DISK_APP_STATUS}\"; [ -e '${WORK}/job/queue/paused' ] && printf 'held|'; disk_queue_tab_key p; printf '%s|' \"\${DISK_APP_STATUS}\"; [ -e '${WORK}/job/queue/paused' ] || printf 'free'"
+
+  # Act
+  run disk_test_call eval "${call}"
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+  [[ "${output}" == "The queue pauses before its next image. Press p to go on.|held|The queue goes on with the next image.|free" ]]
+}
+
 @test "Enter keeps the row when the speed or copies are not numbers" {
   # Arrange
   answers "${ONE}" /dev/sr1 fast "${ONE}" /dev/sr1 auto 0
