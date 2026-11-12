@@ -148,7 +148,8 @@ usage:
   enban sector --drive DRIVE          the same for the disc in the drive
   enban cue CUE TRACK...              write a CUE sheet for an audio CD from
                                       WAV, FLAC, MP3, OGG, M4A and others
-  enban close --drive DRIVE           close the open session, --track or --finalize
+  enban close --drive DRIVE           close the open session, or --track or
+                                      --finalize
   enban tray --drive DRIVE ACTION     load, lock or unlock the tray
   enban rezero --drive DRIVE          move the drive's head back to the start
   enban sync --drive DRIVE            write the drive's cache to the disc
@@ -214,7 +215,8 @@ options:
   --test              write and discovery simulate the burn and write nothing
   --copies N          write writes N copies, 1 to 100, waiting for a blank
                       disc between them
-  --delete-image      write deletes the image once every copy is written
+  --delete-image      write and queue delete each image once every copy of it
+                      is written
   --mode dao|tao      write's mode: disc at once by default, or track at once
   --no-finalize       write leaves the disc open for another session
   --opc               write calibrates the laser power first, on data discs;
@@ -422,7 +424,8 @@ disk_option_seen() {
   --ignore-errors | --cue) DISK_READ_OPTION="${DISK_READ_OPTION:-$1}" ;;
   --retries) DISK_RETRY_OPTION="$1" ;;
   --ignore-miscompares) DISK_MISCOMPARE_OPTION="$1" ;;
-  --copies | --delete-image | --mode | --no-finalize | --opc) DISK_COPIES_OPTION="${DISK_COPIES_OPTION:-$1}" ;;
+  --copies | --mode | --no-finalize | --opc) DISK_COPIES_OPTION="${DISK_COPIES_OPTION:-$1}" ;;
+  --delete-image) DISK_DELETE_OPTION="$1" ;;
   --set) DISK_RAW_OPTION="$1:region" ;;
   --title | --performer | --pregap) DISK_CUE_OPTION="${DISK_CUE_OPTION:-$1}" ;;
   *) ;;
@@ -484,6 +487,7 @@ disk_only_for() {
   disk_option_owner "$1" "${DISK_SECTOR_OPTION}" sector sector || return 1
   disk_option_owner "$1" "${DISK_CUE_OPTION}" cue cue || return 1
   disk_option_owner "$1" "${DISK_LAYER_OPTION}" layerbreak layerbreak || return 1
+  disk_option_owner "$1" "${DISK_DELETE_OPTION}" "write queue" "write and queue" || return 1
   disk_option_owner "$1" "${DISK_RAW_OPTION%:*}" "${DISK_RAW_OPTION#*:}" "${DISK_RAW_OPTION#*:}" || return 1
   disk_option_owner "$1" "${DISK_VERIFY_OPTION}" "write read queue" "write, read and queue"
 }
@@ -607,6 +611,7 @@ disk_queue() {
     return 1
   fi
   DISK_QUEUE_FILE="${DISK_OPERAND}"
+  DISK_QUEUE_DELETE="${DISK_WRITE_DELETE}"
   disk_queue_run
 }
 
