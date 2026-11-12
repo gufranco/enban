@@ -60,14 +60,17 @@ disk_layer_run() {
   disk_layer_check || return 1
   if [ "${DISK_LAYER_TOTAL}" -le "${DISK_LAYER_SINGLE}" ]; then
     printf '%s is %s sectors and fits on one layer, so it needs no layer break.\n' "${DISK_LAYER_IMAGE}" "${DISK_LAYER_TOTAL}"
-    return 0
+    disk_layer_files
+    return
   fi
   disk_kr_pick="$(disk_layer_starts | disk_layer_pick)"
   disk_kr_sector="${disk_kr_pick% *}"
   disk_kr_set="${disk_kr_pick#* }"
+  DISK_LAYER_BREAK="${disk_kr_sector}"
   if [ "${disk_kr_set}" = - ]; then
     printf 'No cell starts between the middle and sector %s, so the layer break falls at sector %s, the middle.\n' "${DISK_LAYER_ZERO}" "${disk_kr_sector}"
-    return 0
+  else
+    printf 'Layer break at sector %s, a cell start in %s. layer 0 holds %s of %s sectors.\n' "${disk_kr_sector}" "${disk_kr_set}" "${disk_kr_sector}" "${DISK_LAYER_TOTAL}"
   fi
-  printf 'Layer break at sector %s, a cell start in %s. layer 0 holds %s of %s sectors.\n' "${disk_kr_sector}" "${disk_kr_set}" "${disk_kr_sector}" "${DISK_LAYER_TOTAL}"
+  disk_layer_files
 }

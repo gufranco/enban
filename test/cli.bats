@@ -316,7 +316,7 @@ options_everywhere() {
   local option=track
 
   # Act
-  run options_everywhere "${option}" subchannel
+  run options_everywhere "${option}" subchannel dvd-file mds-file
 
   # Assert
   [[ "${status}" -eq 0 ]]

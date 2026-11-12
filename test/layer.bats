@@ -113,6 +113,121 @@ ifo_sector() {
   [[ "${output}" == *"falls at sector 1200000, the middle." ]]
 }
 
+middle_image() {
+  printf 'data' >"${WORK}/files/a.dat"
+  rmdir "${WORK}/files/VIDEO_TS"
+  image_of 3000001
+}
+
+be_word() {
+  local value
+  value="$(od -An -tu1 -j "$2" -N 4 "$1")"
+  awk '{ print $1 * 16777216 + $2 * 65536 + $3 * 256 + $4 }' <<<"${value}"
+}
+
+le_word() {
+  local value
+  value="$(od -An -tu4 -j "$2" -N 4 "$1")"
+  printf '%s' "${value//[[:space:]]/}"
+}
+
+@test "enban layerbreak --dvd-file writes the layer break for ImgBurn" {
+  # Arrange
+  middle_image
+
+  # Act
+  run disk_test_run enban layerbreak "${IMAGE}" --dvd-file </dev/null
+
+  # Assert
+  local written
+  written="$(od -An -tx1 -v "${WORK}/movie.dvd")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${written//[[:space:]]/}" == "4c61796572427265616b3d313530303030310d0a6d6f7669652e69736f0d0a" ]]
+  [[ "${lines[1]}" == "Wrote ${WORK}/movie.dvd, which points ImgBurn and other burners at the layer break." ]]
+}
+
+@test "enban layerbreak --mds-file writes a dual-layer descriptor" {
+  # Arrange
+  middle_image
+
+  # Act
+  run disk_test_run enban layerbreak "${IMAGE}" --mds-file </dev/null
+
+  # Assert
+  local mds="${WORK}/movie.mds" signature layer_end area_end second_end length name
+  signature="$(head -c 16 "${mds}")"
+  layer_end="$(be_word "${mds}" $((88 + 4 + 2048 + 12)))"
+  area_end="$(be_word "${mds}" $((88 + 4 + 2048 + 8)))"
+  second_end="$(be_word "${mds}" $((88 + 4100 + 4 + 2048 + 12)))"
+  length="$(le_word "${mds}" 8292)"
+  name="$(dd if="${mds}" bs=1 skip=8408 count=9 2>/dev/null)"
+  [[ "${status}" -eq 0 ]]
+  [[ "${signature}" == "MEDIA DESCRIPTOR" ]]
+  [[ "${layer_end}" == "$((196608 + 1500001 - 1))" ]]
+  [[ "${area_end}" == "$((16777215 - (196608 + 1500001 - 1) + 1500000 - 1))" ]]
+  [[ "${second_end}" == "${layer_end}" ]]
+  [[ "${length}" == "3000001" ]]
+  [[ "${name}" == "movie.iso" ]]
+}
+
+@test "enban layerbreak keeps a DVD file it replaces" {
+  # Arrange
+  middle_image
+  printf 'old' >"${WORK}/movie.dvd"
+
+  # Act
+  run disk_test_run enban layerbreak "${IMAGE}" --dvd-file </dev/null
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+  [[ "$(<"${WORK}/movie.dvd.bak")" == "old" ]]
+  [[ "${output}" == *"The earlier ${WORK}/movie.dvd is kept as ${WORK}/movie.dvd.bak."* ]]
+}
+
+@test "enban layerbreak stops when every backup name is taken" {
+  # Arrange
+  local n
+  middle_image
+  printf 'old' >"${WORK}/movie.mds"
+  : >"${WORK}/movie.mds.bak"
+  for n in $(seq 1 99); do : >"${WORK}/movie.mds.bak.${n}"; done
+
+  # Act
+  run disk_test_run enban layerbreak "${IMAGE}" --mds-file </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == *"enban: stopped: ${WORK}/movie.mds.bak to .bak.99 all exist, so there is no room to keep ${WORK}/movie.mds." ]]
+  [[ "$(<"${WORK}/movie.mds")" == "old" ]]
+}
+
+@test "enban layerbreak writes no layer file for a single-layer image" {
+  # Arrange
+  printf 'CD001' >"${WORK}/magic"
+  head -c 65536 /dev/zero >"${IMAGE}"
+  dd if="${WORK}/magic" of="${IMAGE}" bs=1 seek=32769 conv=notrunc 2>/dev/null
+
+  # Act
+  run disk_test_run enban layerbreak "${IMAGE}" --dvd-file </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${lines[1]}" == "enban: --dvd-file and --mds-file need an image that spans two layers." ]]
+  [[ ! -e "${WORK}/movie.dvd" ]]
+}
+
+@test "write refuses --dvd-file, which only layerbreak takes" {
+  # Arrange
+  local option=--dvd-file
+
+  # Act
+  run disk_test_run enban write "${IMAGE}" --drive /dev/sr0 "${option}" </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: option '--dvd-file' works only with layerbreak. run 'enban help' for usage." ]]
+}
+
 @test "enban layerbreak says an image that fits one layer needs no break" {
   # Arrange
   printf 'CD001' >"${WORK}/magic"

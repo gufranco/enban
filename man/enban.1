@@ -123,6 +123,8 @@ enban \- write, read, build and verify CD, DVD and Blu-ray discs
 .br
 .B enban layerbreak
 .I image
+.RB [ \-\-dvd\-file ]
+.RB [ \-\-mds\-file ]
 .br
 .B enban mount
 .I image
@@ -395,6 +397,16 @@ and put back if a step fails.
 Print the layer break of a dual-layer DVD image: the first DVD-Video cell
 start past the middle that still fits on layer 0, else the middle. An image
 that fits one layer needs none.
+.B \-\-dvd\-file
+writes
+.IR image .dvd,
+the text file ImgBurn reads with the layer break and the image name, and
+.B \-\-mds\-file
+writes
+.IR image .mds,
+a dual-layer media descriptor whose physical format information puts the
+layer break where it falls. A file either replaces is kept as
+.IR name .bak.
 .TP
 .B mount
 Attach an image read-only through

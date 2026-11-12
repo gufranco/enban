@@ -75,6 +75,8 @@ DISK_PROG=enban
 . "${DISK_LIB}/udf.sh"
 # shellcheck source=SCRIPTDIR/../lib/layer.sh
 . "${DISK_LIB}/layer.sh"
+# shellcheck source=SCRIPTDIR/../lib/layer_files.sh
+. "${DISK_LIB}/layer_files.sh"
 # shellcheck source=SCRIPTDIR/../lib/mount.sh
 . "${DISK_LIB}/mount.sh"
 # shellcheck source=SCRIPTDIR/../lib/speeds.sh
@@ -151,7 +153,8 @@ usage:
   enban booktype --drive DRIVE [TYPE] show or set the book type of a DVD+R
   enban convert IMAGE ISO             turn a BIN/CUE, NRG, MDF or CDI into ISO
   enban label IMAGE NAME              change the volume label of an ISO image
-  enban layerbreak IMAGE              find the layer break of a DVD image
+  enban layerbreak IMAGE              find the layer break of a DVD image, and
+                                      write .dvd or .mds files for it
   enban mount IMAGE                   attach an image read-only
   enban unmount FOLDER                detach the image mounted at FOLDER
   enban speeds                        list the write speeds enban remembers
@@ -200,6 +203,8 @@ options:
   --subchannel        sector adds the 96-byte P-W subchannel and its Q channel
   --finalize          close finalizes the whole disc, not only the session
   --track             close closes the last track, not the session
+  --dvd-file          layerbreak writes IMAGE.dvd with the layer break
+  --mds-file          layerbreak writes IMAGE.mds, a dual-layer descriptor
   --test              write and discovery simulate the burn and write nothing
   --copies N          write writes N copies, 1 to 100, waiting for a blank
                       disc between them
@@ -332,6 +337,8 @@ disk_option_flag() {
   --full) DISK_ERASE_FULL=y ;;
   --finalize) DISK_CLOSE_FINALIZE=y ;;
   --track) DISK_CLOSE_TRACK=y ;;
+  --dvd-file) DISK_LAYER_DVD=y ;;
+  --mds-file) DISK_LAYER_MDS=y ;;
   --raw) DISK_SECTOR_RAW=y ;;
   --subchannel)
     DISK_SECTOR_RAW=y
@@ -404,6 +411,7 @@ disk_option_seen() {
   --sectors | --csv) DISK_DISCOVERY_OPTION="${DISK_DISCOVERY_OPTION:-$1}" ;;
   --lba | --raw | --subchannel) DISK_SECTOR_OPTION="${DISK_SECTOR_OPTION:-$1}" ;;
   --finalize | --track) DISK_RAW_OPTION="$1:close" ;;
+  --dvd-file | --mds-file) DISK_LAYER_OPTION="${DISK_LAYER_OPTION:-$1}" ;;
   --test) DISK_TEST_OPTION="$1" ;;
   --ignore-errors | --cue) DISK_READ_OPTION="${DISK_READ_OPTION:-$1}" ;;
   --retries) DISK_RETRY_OPTION="$1" ;;
@@ -469,6 +477,7 @@ disk_only_for() {
   disk_option_owner "$1" "${DISK_DISCOVERY_OPTION}" discovery discovery || return 1
   disk_option_owner "$1" "${DISK_SECTOR_OPTION}" sector sector || return 1
   disk_option_owner "$1" "${DISK_CUE_OPTION}" cue cue || return 1
+  disk_option_owner "$1" "${DISK_LAYER_OPTION}" layerbreak layerbreak || return 1
   disk_option_owner "$1" "${DISK_RAW_OPTION%:*}" "${DISK_RAW_OPTION#*:}" "${DISK_RAW_OPTION#*:}" || return 1
   disk_option_owner "$1" "${DISK_VERIFY_OPTION}" "write read queue" "write, read and queue"
 }

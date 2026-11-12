@@ -93,7 +93,7 @@ make install
 | `enban booktype --drive /dev/sr0 dvd-rom` | Make a DVD+R or DVD+RW read as `dvd-rom`, `dvd+r` or `dvd+rw`, or show the book type with no type. Needs dvd+rw-tools and root; on macOS a real drive is not supported yet |
 | `enban convert disc.cue disc.iso` | Turn a BIN/CUE image into an ISO through bchunk, or an NRG, MDF, CDI or IMG image through iat |
 | `enban label family.iso "Family 2009"` | Change the volume label of an ISO image in place, on ISO 9660, Joliet and UDF, the name Windows and macOS show for a DVD. The original is kept as `family.iso.bak` |
-| `enban layerbreak movie.iso` | Print the layer break of a dual-layer DVD image: the first DVD-Video cell start past the middle that fits layer 0, else the middle |
+| `enban layerbreak movie.iso` | Print the layer break of a dual-layer DVD image: the first DVD-Video cell start past the middle that fits layer 0, else the middle. `--dvd-file` and `--mds-file` write the `.dvd` and `.mds` files burners read for the break |
 | `enban mount family.iso`, `enban unmount /Volumes/FAMILY` | Attach an image read-only and print where, or detach it, through hdiutil on macOS and udisksctl on Linux |
 | `enban speeds` | List the write speeds enban remembers. A write with `--speed` keeps its speed for that disc ID and drive, and a later write with no speed uses it |
 | `enban doctor` | List the tools enban needs and whether they are installed |

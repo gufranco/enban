@@ -74,6 +74,8 @@ _enban() {
     '--subchannel[add the 96-byte subchannel to a raw sector]' \
     '--finalize[close the whole disc]' \
     '--track[close the last track]' \
+    '--dvd-file[write IMAGE.dvd with the layer break]' \
+    '--mds-file[write IMAGE.mds, a dual-layer descriptor]' \
     '--test[simulate the burn and write nothing]' \
     '--copies[how many copies write writes]:copies:' \
     '--delete-image[delete the image after the last copy]' \
