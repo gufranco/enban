@@ -1458,3 +1458,42 @@ project() {
   [[ "${status}" -eq 1 ]]
   [[ "${output}" == "enban: option '--project' works only with build. run 'enban help' for usage." ]]
 }
+
+@test "a project sets every build field it names" {
+  # Arrange
+  local tab=$'\t'
+  project enban-project=1 "fs=iso9660,udf" "label=Trip" "publisher=Family" "date=20091224180000" "boot=${SRC}/notes.txt" \
+    "emulation=floppy" "platform=efi" "dvd_video=yes" "bdmv=no" "udf_version=2.50" "entry=sub${tab}${SRC}/sub"
+  local call="disk_project_read '${WORK}/family.enban'; printf '%s|' \"\${DISK_BUILD_FS}\" \"\${DISK_BUILD_LABEL}\" \"\${DISK_BUILD_PUBLISHER}\" \"\${DISK_BUILD_DATE}\" \"\${DISK_BUILD_BOOT}\" \"\${DISK_BUILD_EMULATION}\" \"\${DISK_BUILD_PLATFORM}\" \"\${DISK_BUILD_DVD}\" \"\${DISK_BUILD_BDMV}\" \"\${DISK_BUILD_UDF_VERSION}\""
+
+  # Act
+  run disk_test_call eval "${call}"
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+  [[ "${output}" == "iso9660,udf|Trip|Family|20091224180000|${SRC}/notes.txt|floppy|efi|y|n|2.50|" ]]
+}
+
+@test "saving a project leaves nothing behind when no backup name is free" {
+  # Arrange
+  local count=1
+  printf 'older\n' >"${WORK}/trip.enban"
+  printf 'older\n' >"${WORK}/trip.enban.bak"
+  while [[ "${count}" -le 99 ]]; do
+    printf 'older\n' >"${WORK}/trip.enban.bak.${count}"
+    count=$((count + 1))
+  done
+  local tab=$'\t'
+  local call="DISK_BUILD_LAYOUT='notes.txt${tab}${SRC}/notes.txt'; disk_project_save '${WORK}/trip.enban'"
+
+  # Act
+  run disk_test_call eval "${call}"
+
+  # Assert
+  local left
+  left="$(find "${WORK}" -name '.enban-project.*')"
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: stopped: ${WORK}/trip.enban.bak to .bak.99 all exist, so there is no room to keep ${WORK}/trip.enban." ]]
+  [[ -z "${left}" ]]
+  [[ "$(<"${WORK}/trip.enban")" == "older" ]]
+}
