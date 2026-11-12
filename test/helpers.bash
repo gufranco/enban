@@ -433,3 +433,18 @@ disk_test_matches_golden() {
 
   diff <(printf '%s\n' "${normalized}") "${golden}"
 }
+
+disk_test_raw_bin() {
+  local sector=0 bytes count
+  bytes="$(wc -c <"$1")"
+  count=$((bytes / 2048))
+  : >"$2"
+  while [[ "${sector}" -lt "${count}" ]]; do
+    {
+      printf '\000\377\377\377\377\377\377\377\377\377\377\000\000\002\000\001'
+      dd if="$1" bs=2048 skip="${sector}" count=1 2>/dev/null
+      head -c 288 /dev/zero
+    } >>"$2"
+    sector=$((sector + 1))
+  done
+}

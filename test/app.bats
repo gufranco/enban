@@ -245,7 +245,7 @@ teardown() {
 
   # Assert
   [[ "${status}" -eq 1 ]]
-  [[ "${output}" == "enban: option '--json' works only with info. run 'enban help' for usage." ]]
+  [[ "${output}" == "enban: option '--json' works only with info and features. run 'enban help' for usage." ]]
 }
 
 @test "the app rejects a stray argument after its options" {

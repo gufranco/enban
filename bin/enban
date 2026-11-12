@@ -27,6 +27,8 @@ DISK_PROG=enban
 . "${DISK_LIB}/drive.sh"
 # shellcheck source=SCRIPTDIR/../lib/write.sh
 . "${DISK_LIB}/write.sh"
+# shellcheck source=SCRIPTDIR/../lib/write_convert.sh
+. "${DISK_LIB}/write_convert.sh"
 # shellcheck source=SCRIPTDIR/../lib/read.sh
 . "${DISK_LIB}/read.sh"
 # shellcheck source=SCRIPTDIR/../lib/verify.sh
@@ -151,7 +153,8 @@ usage:
   enban speed --drive DRIVE N|max     set the drive's read speed
   enban region --drive DRIVE          show the DVD region, or --set N
   enban booktype --drive DRIVE [TYPE] show or set the book type of a DVD+R
-  enban convert IMAGE ISO             turn a BIN/CUE, NRG, MDF or CDI into ISO
+  enban convert IMAGE ISO             turn a BIN/CUE, CCD, CDI, MDS, NRG, IMG,
+                                      DI, GI or PDI image into ISO
   enban label IMAGE NAME              change the volume label of an ISO image
   enban layerbreak IMAGE              find the layer break of a DVD image, and
                                       write .dvd or .mds files for it
@@ -525,7 +528,13 @@ disk_write() {
   DISK_WRITE_IMAGE="${DISK_OPERAND}"
   case "${DISK_WRITE_IMAGE}" in
   *.cue | *.CUE) disk_audio_run ;;
-  *) disk_write_run ;;
+  *)
+    if disk_write_foreign "${DISK_WRITE_IMAGE}"; then
+      disk_write_converted
+      return
+    fi
+    disk_write_run
+    ;;
   esac
 }
 

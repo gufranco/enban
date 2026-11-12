@@ -35,6 +35,75 @@ image_on_disc() {
   cmp -s "${copy}" "${IMAGE}"
 }
 
+foreign_image() {
+  local search_path
+  mkdir -p "${WORK}/files"
+  head -c 70000 /dev/urandom >"${WORK}/files/photo.bin"
+  search_path="$(disk_test_path)"
+  PATH="${search_path}" xorriso -as mkisofs -quiet -o "${IMAGE}" "${WORK}/files" 2>/dev/null
+  disk_test_raw_bin "${IMAGE}" "$1"
+}
+
+@test "enban write converts an NRG image to ISO before it burns" {
+  # Arrange
+  blank_dvd
+  foreign_image "${WORK}/disc.nrg"
+
+  # Act
+  run write_typing disc.iso "${WORK}/disc.nrg" --drive "${DRIVE}" --no-eject
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+  [[ "${output}" == "Converting ${WORK}/disc.nrg to an ISO image before the burn."* ]]
+  image_on_disc
+}
+
+@test "enban write removes the original image, not the converted one" {
+  # Arrange
+  blank_dvd
+  foreign_image "${WORK}/disc.img"
+
+  # Act
+  run write_typing disc.iso "${WORK}/disc.img" --drive "${DRIVE}" --no-eject --delete-image
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+  [[ "${output}" == *"Deleted ${WORK}/disc.img, as asked."* ]]
+  [[ ! -e "${WORK}/disc.img" ]]
+}
+
+@test "enban write writes an IMG that is a plain ISO as it is" {
+  # Arrange
+  blank_dvd
+  foreign_image "${WORK}/unused.img"
+  cp -f "${IMAGE}" "${WORK}/plain.img"
+
+  # Act
+  run write_typing disc.iso "${WORK}/plain.img" --drive "${DRIVE}" --no-eject
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+  [[ "${output}" != *"Converting"* ]]
+  image_on_disc
+}
+
+@test "enban write stops when the image cannot be converted" {
+  # Arrange
+  blank_dvd
+  foreign_image "${WORK}/disc.cdi"
+  disk_test_shim iat "exit 1"
+
+  # Act
+  run write_typing disc.iso "${WORK}/disc.cdi" --drive "${DRIVE}" --no-eject
+
+  # Assert
+  local burned
+  burned="$(sed -n 's/^burn=//p' "${WORK}/drive.state")"
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == *"enban: unable to convert ${WORK}/disc.cdi into "*"/image.iso." ]]
+  [[ -z "${burned}" ]]
+}
+
 @test "enban write burns the image, verifies it and ejects the disc" {
   # Arrange
   blank_dvd
@@ -295,7 +364,7 @@ image_on_disc() {
 
   # Assert
   [[ "${status}" -eq 1 ]]
-  [[ "${output}" == "enban: option '--json' works only with info. run 'enban help' for usage." ]]
+  [[ "${output}" == "enban: option '--json' works only with info and features. run 'enban help' for usage." ]]
 }
 
 @test "enban write says so when the tray does not open" {

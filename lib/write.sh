@@ -138,15 +138,16 @@ disk_write_copies() {
 
 disk_write_delete() {
   [ "${DISK_WRITE_DELETE}" = y ] || return 0
+  disk_wd_image="${DISK_WRITE_SOURCE:-${DISK_WRITE_IMAGE}}"
   if [ "${DISK_WRITE_TEST}" = y ]; then
-    disk_say "Kept ${DISK_WRITE_IMAGE}, since a test write burns nothing."
+    disk_say "Kept ${disk_wd_image}, since a test write burns nothing."
     return 0
   fi
-  if rm -f "${DISK_WRITE_IMAGE}"; then
-    disk_say "Deleted ${DISK_WRITE_IMAGE}, as asked."
+  if rm -f "${disk_wd_image}"; then
+    disk_say "Deleted ${disk_wd_image}, as asked."
     return 0
   fi
-  disk_error "every copy is written, but ${DISK_WRITE_IMAGE} could not be deleted."
+  disk_error "every copy is written, but ${disk_wd_image} could not be deleted."
   return 1
 }
 

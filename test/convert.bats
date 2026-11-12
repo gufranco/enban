@@ -15,24 +15,9 @@ teardown() {
   rm -rf "${WORK}"
 }
 
-raw_bin() {
-  local sector=0 bytes count
-  bytes="$(wc -c <"$1")"
-  count=$((bytes / 2048))
-  : >"$2"
-  while [[ "${sector}" -lt "${count}" ]]; do
-    {
-      printf '\000\377\377\377\377\377\377\377\377\377\377\000\000\002\000\001'
-      dd if="$1" bs=2048 skip="${sector}" count=1 2>/dev/null
-      head -c 288 /dev/zero
-    } >>"$2"
-    sector=$((sector + 1))
-  done
-}
-
 @test "enban convert turns a BIN/CUE image into an ISO" {
   # Arrange
-  raw_bin "${DATA}" "${WORK}/disc.bin"
+  disk_test_raw_bin "${DATA}" "${WORK}/disc.bin"
   printf 'FILE "disc.bin" BINARY\n  TRACK 01 MODE1/2352\n    INDEX 01 00:00:00\n' >"${WORK}/disc.cue"
 
   # Act
@@ -51,7 +36,7 @@ raw_bin() {
   printf 'hello\n' >"${WORK}/files/a.txt"
   search_path="$(disk_test_path)"
   PATH="${search_path}" xorriso -as mkisofs -quiet -o "${WORK}/real.iso" "${WORK}/files" 2>/dev/null
-  raw_bin "${WORK}/real.iso" "${WORK}/disc.img"
+  disk_test_raw_bin "${WORK}/real.iso" "${WORK}/disc.img"
 
   # Act
   run disk_test_run enban convert "${WORK}/disc.img" "${OUT}" </dev/null
@@ -61,6 +46,56 @@ raw_bin() {
   volume="$(dd if="${OUT}" bs=1 skip=32769 count=5 2>/dev/null)"
   [[ "${status}" -eq 0 ]]
   [[ "${volume}" == "CD001" ]]
+}
+
+real_iso() {
+  local search_path
+  mkdir -p "${WORK}/files"
+  printf 'hello\n' >"${WORK}/files/a.txt"
+  search_path="$(disk_test_path)"
+  PATH="${search_path}" xorriso -as mkisofs -quiet -o "$1" "${WORK}/files" 2>/dev/null
+}
+
+@test "enban convert reads an MDS image from its MDF file" {
+  # Arrange
+  real_iso "${WORK}/real.iso"
+  disk_test_raw_bin "${WORK}/real.iso" "${WORK}/disc.mdf"
+  printf 'MEDIA DESCRIPTOR' >"${WORK}/disc.mds"
+
+  # Act
+  run disk_test_run enban convert "${WORK}/disc.mds" "${OUT}" </dev/null
+
+  # Assert
+  local volume
+  volume="$(dd if="${OUT}" bs=1 skip=32769 count=5 2>/dev/null)"
+  [[ "${status}" -eq 0 ]]
+  [[ "${volume}" == "CD001" ]]
+}
+
+@test "enban convert reads a CloneCD image from its IMG file" {
+  # Arrange
+  real_iso "${WORK}/real.iso"
+  disk_test_raw_bin "${WORK}/real.iso" "${WORK}/disc.img"
+  printf '[CloneCD]\nVersion=3\n' >"${WORK}/disc.ccd"
+
+  # Act
+  run disk_test_run enban convert "${WORK}/disc.ccd" "${OUT}" </dev/null
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+  cmp -s "${WORK}/real.iso" "${OUT}"
+}
+
+@test "enban convert says when an MDS image has no MDF file" {
+  # Arrange
+  printf 'MEDIA DESCRIPTOR' >"${WORK}/disc.mds"
+
+  # Act
+  run disk_test_run enban convert "${WORK}/disc.mds" "${OUT}" </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: ${WORK}/disc.mds describes its data in ${WORK}/disc.mdf, which is not there." ]]
 }
 
 @test "enban convert says when the tool cannot convert the image" {
@@ -150,7 +185,7 @@ raw_bin() {
 @test "enban convert reads a BIN file named by its full path" {
   # Arrange
   mkdir -p "${WORK}/bins"
-  raw_bin "${DATA}" "${WORK}/bins/disc.bin"
+  disk_test_raw_bin "${DATA}" "${WORK}/bins/disc.bin"
   printf 'FILE "%s" BINARY\n  TRACK 01 MODE1/2352\n    INDEX 01 00:00:00\n' "${WORK}/bins/disc.bin" >"${WORK}/disc.cue"
 
   # Act

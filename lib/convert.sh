@@ -12,6 +12,7 @@ disk_convert_check() {
     disk_error "stopped: ${DISK_CONVERT_OUT} already exists."
     return 1
   fi
+  disk_convert_companion || return 1
   if disk_iso_is "${DISK_CONVERT_IN}"; then
     disk_error "stopped: ${DISK_CONVERT_IN} is already an ISO image, so it needs no conversion."
     return 1
@@ -27,6 +28,21 @@ disk_convert_check() {
   esac
   command -v "${disk_cc_tool}" >/dev/null 2>&1 && return 0
   disk_error "convert needs ${disk_cc_tool} for ${disk_cc_what}. install it and try again."
+  return 1
+}
+
+disk_convert_data() {
+  case "${DISK_CONVERT_IN}" in
+  *.[mM][dD][sS]) printf '%s.mdf\n' "${DISK_CONVERT_IN%.*}" ;;
+  *.[cC][cC][dD]) printf '%s.img\n' "${DISK_CONVERT_IN%.*}" ;;
+  *) printf '%s\n' "${DISK_CONVERT_IN}" ;;
+  esac
+}
+
+disk_convert_companion() {
+  disk_cn_data="$(disk_convert_data)"
+  [ -f "${disk_cn_data}" ] && return 0
+  disk_error "${DISK_CONVERT_IN} describes its data in ${disk_cn_data}, which is not there."
   return 1
 }
 
@@ -48,7 +64,10 @@ disk_convert_make() {
     disk_cm_bin="$(disk_convert_bin)" || return 1
     bchunk "${disk_cm_bin}" "${DISK_CONVERT_IN}" "$1/track" >/dev/null 2>&1 && mv "$1/track01.iso" "$1/out.iso"
     ;;
-  *) iat -i "${DISK_CONVERT_IN}" -o "$1/out.iso" --iso >/dev/null 2>&1 ;;
+  *)
+    disk_cm_data="$(disk_convert_data)"
+    iat -i "${disk_cm_data}" -o "$1/out.iso" --iso >/dev/null 2>&1
+    ;;
   esac
 }
 

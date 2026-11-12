@@ -232,7 +232,10 @@ Reading a drive on macOS is not supported yet, so info stops there.
 Burn
 .I image
 to the blank disc in the drive. The image must be a whole number of 2048-byte
-sectors and fit the free space. enban asks for the drive's name, as in
+sectors and fit the free space; a CCD, CDI, MDS, MDF, NRG, IMG, DI, GI or PDI
+image is converted to a temporary ISO first, as
+.B convert
+does. enban asks for the drive's name, as in
 .BR sr0 ,
 and writes only when it is typed. Then it reads the disc back, compares it
 with the image and ejects the disc. It refuses a disc that is not blank.
@@ -378,9 +381,10 @@ after the drive's name is typed. It needs root.
 .B convert
 Turn a BIN/CUE image into an ISO through
 .BR bchunk ,
-or an NRG, MDF, CDI or IMG image through
+or a CCD, CDI, MDS, MDF, NRG, IMG, DI, GI or PDI image through
 .BR iat .
-An image that is already an ISO is refused.
+An MDS image is read from the MDF file beside it and a CCD image from its IMG
+file. An image that is already an ISO is refused.
 .TP
 .B label
 Rewrite the volume label of an ISO image in place: the ISO 9660 label in
