@@ -457,19 +457,67 @@ image_on_disc() {
   [[ "${output}" == "enban: option '--copies' works only with write. run 'enban help' for usage." ]]
 }
 
-@test "enban write passes track at once, an open disc and OPC to the burner" {
+@test "enban write passes track at once and an open disc to the burner" {
   # Arrange
   blank_dvd
 
   # Act
-  run write_typing disc.iso "${IMAGE}" --drive "${DRIVE}" --mode tao --no-finalize --opc --no-eject
+  run write_typing disc.iso "${IMAGE}" --drive "${DRIVE}" --mode tao --no-finalize --no-eject
 
   # Assert
   local burned
   burned="$(sed -n 's/^burn=//p' "${WORK}/drive.state")"
   [[ "${status}" -eq 0 ]]
-  [[ "${burned}" == *" -tao -multi --perform_opc "* ]]
+  [[ "${burned}" == *" -tao -multi "* ]]
   image_on_disc
+}
+
+@test "enban write --opc calibrates the laser before it burns" {
+  # Arrange
+  blank_dvd
+  disk_test_raw
+
+  # Act
+  run write_typing disc.iso "${IMAGE}" --drive "${DRIVE}" --opc --no-eject
+
+  # Assert
+  local sent
+  sent="$(cat "${WORK}/sg_raw.log")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${sent}" == "${DISC} 54 01 00 00 00 00 00 00 00 00" ]]
+  [[ "${output}" == *"Calibrating the laser power of ${DRIVE}."* ]]
+  image_on_disc
+}
+
+@test "enban write --opc stops when the drive refuses to calibrate" {
+  # Arrange
+  blank_dvd
+  disk_test_raw
+  disk_test_drive_flag raw_fail
+
+  # Act
+  run write_typing disc.iso "${IMAGE}" --drive "${DRIVE}" --opc --no-eject
+
+  # Assert
+  local burned
+  burned="$(sed -n 's/^burn=//p' "${WORK}/drive.state")"
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == *"enban: the drive refused the command: SCSI Status: Check Condition" ]]
+  [[ -z "${burned}" ]]
+}
+
+@test "enban write --opc needs sg_raw" {
+  # Arrange
+  blank_dvd
+  local farm
+  farm="$(disk_test_farm sg_raw)"
+
+  # Act
+  run disk_test_run_path "${farm}" enban write "${IMAGE}" --drive "${DRIVE}" --opc </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: --opc needs sg_raw from sg3-utils to calibrate the laser. install it and try again." ]]
 }
 
 @test "enban write reads sao as disc at once" {

@@ -195,7 +195,8 @@ options:
   --delete-image      write deletes the image once every copy is written
   --mode dao|tao      write's mode: disc at once by default, or track at once
   --no-finalize       write leaves the disc open for another session
-  --opc               write calibrates the laser power first, on data discs
+  --opc               write calibrates the laser power first, on data discs;
+                      needs sg_raw
   --retries N         read and verify try a failed read N more times; 0
   --ignore-errors     read keeps going past unreadable sectors, as zeros
   --cue               read writes a CUE sheet beside the image

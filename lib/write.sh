@@ -41,7 +41,6 @@ disk_write_burn() {
   disk_wb_log="$(mktemp "${TMPDIR:-/tmp}/enban-write.XXXXXX")" || return 1
   set -- -as cdrecord -v "dev=${DISK_DRIVE}" "-${DISK_WRITE_MODE}"
   [ "${DISK_WRITE_FINALIZE}" = y ] || set -- "$@" -multi
-  [ "${DISK_WRITE_OPC}" = n ] || set -- "$@" --perform_opc
   [ -z "${DISK_WRITE_SPEED}" ] || set -- "$@" "speed=${DISK_WRITE_SPEED}"
   [ "${DISK_WRITE_TEST}" = n ] || set -- "$@" -dummy
   disk_wb_status=0
@@ -155,7 +154,22 @@ disk_write_check() {
   disk_write_image "${DISK_WRITE_IMAGE}" || return 1
   disk_drive_read "${DISK_DRIVE}" write || return 1
   disk_write_fits "${DISK_WRITE_IMAGE}" || return 1
+  disk_write_opc_ready || return 1
   disk_speeds_recall
+}
+
+disk_write_opc_ready() {
+  [ "${DISK_WRITE_OPC}" = y ] || return 0
+  command -v sg_raw >/dev/null 2>&1 && return 0
+  disk_error "--opc needs sg_raw from sg3-utils to calibrate the laser. install it and try again."
+  return 1
+}
+
+disk_write_opc() {
+  [ "${DISK_WRITE_OPC}" = y ] || return 0
+  disk_say "Calibrating the laser power of ${DISK_DRIVE}."
+  disk_wq_device="$(disk_raw_device)"
+  disk_raw_send "${disk_wq_device}" 54 01 00 00 00 00 00 00 00 00
 }
 
 disk_write_tested() {
@@ -163,6 +177,7 @@ disk_write_tested() {
 }
 
 disk_write_go() {
+  disk_write_opc || return 1
   disk_write_burn || return 1
   if [ "${DISK_WRITE_TEST}" = y ]; then
     disk_write_tested
