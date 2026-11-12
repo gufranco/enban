@@ -57,6 +57,10 @@ disk_close_check() {
 }
 
 disk_close_go() {
+  if [ "${DISK_CLOSE_TRACK}" = y ]; then
+    disk_close_track
+    return
+  fi
   disk_cr_how=02
   [ "${DISK_CLOSE_FINALIZE}" = n ] || disk_cr_how=04
   disk_cr_device="$(disk_raw_device)"

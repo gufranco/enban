@@ -84,7 +84,17 @@ enban \- write, read, build and verify CD, DVD and Blu-ray discs
 .br
 .B enban close
 .BI \-\-drive " drive"
-.RB [ \-\-finalize ]
+.RB [ \-\-finalize | \-\-track ]
+.br
+.B enban tray
+.BI \-\-drive " drive"
+.BR load | lock | unlock
+.br
+.B enban rezero
+.BI \-\-drive " drive"
+.br
+.B enban sync
+.BI \-\-drive " drive"
 .br
 .B enban speed
 .BI \-\-drive " drive"
@@ -310,11 +320,30 @@ with CD-TEXT titles from the file names. Every track must be CD audio, 44100 Hz,
 16-bit and stereo, and the album must fit the 80 minutes of a CD-R.
 .TP
 .B close
-Close the open session of the disc in the drive, or with
+Close the open session of the disc in the drive, with
 .B \-\-finalize
-the whole disc, after the drive's name is typed. It sends CLOSE TRACK/SESSION
+the whole disc, or with
+.B \-\-track
+its last track, after the drive's name is typed. It sends CLOSE TRACK/SESSION
 through
+.BR sg_raw ,
+and for a track reads the last track number with READ DISC INFORMATION first.
+.TP
+.B tray
+.B load
+closes the tray and loads the disc,
+.B lock
+keeps the tray shut until it is unlocked or the drive restarts, and
+.B unlock
+frees it again, through START STOP UNIT and PREVENT ALLOW MEDIUM REMOVAL sent
+by
 .BR sg_raw .
+.TP
+.B rezero
+Move the drive's head back to the start of the disc with REZERO UNIT.
+.TP
+.B sync
+Make the drive write what its cache holds to the disc with SYNCHRONIZE CACHE.
 .TP
 .B speed
 Set the drive's read speed to

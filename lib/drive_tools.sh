@@ -19,9 +19,11 @@ disk_drive_tools_say() {
 disk_tools_tab_close() {
   disk_job_busy && return 0
   disk_drive_tools_has close || return 0
-  disk_app_ask "Close the session or the disc? session or disc" "session"
+  disk_app_ask "Close the session, the disc or the last track? session, disc or track" "session"
   DISK_CLOSE_FINALIZE=n
+  DISK_CLOSE_TRACK=n
   [ "${DISK_APP_ANSWER}" != disc ] || DISK_CLOSE_FINALIZE=y
+  [ "${DISK_APP_ANSWER}" != track ] || DISK_CLOSE_TRACK=y
   disk_drive_tools_say disk_close_check || return 0
   disk_job_typed close || return 0
   disk_drive_tools_say disk_close_go || :
@@ -109,4 +111,14 @@ disk_tools_tab_convert() {
   DISK_CONVERT_IN="${disk_tv_in}"
   DISK_CONVERT_OUT="${DISK_APP_ANSWER}"
   disk_job_launch disk_convert_run convert "${disk_tv_in} into ${DISK_APP_ANSWER}"
+}
+
+disk_tools_tab_rezero() {
+  disk_drive_tools_has "move the head of" || return 0
+  disk_drive_tools_say disk_rezero_run || :
+}
+
+disk_tools_tab_sync() {
+  disk_drive_tools_has "sync the cache of" || return 0
+  disk_drive_tools_say disk_sync_run || :
 }

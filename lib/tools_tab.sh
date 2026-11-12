@@ -6,10 +6,10 @@
 disk_tools_list() {
   printf '%s\n' \
     "Erase disc|quick or full, rewritable media only|erase" \
-    "Close|session or disc|close" \
+    "Close|session, disc or track|close" \
     "Book type|DVD-ROM, DVD+R or DVD+RW|booktype" \
     "Read speed|set or reset|speed" \
-    "Tray|eject the disc|tray" \
+    "Tray|eject, load, lock or unlock|tray" \
     "Capabilities|what this drive reads and writes|caps" \
     "Sector viewer|hex of any LBA, user data|sector" \
     "Region|read or change the DVD region|region" \
@@ -19,7 +19,9 @@ disk_tools_list() {
     "Volume label|change an ISO's label in place|label" \
     "Checksum|MD5, SHA-1 and SHA-256|checksum" \
     "Layer break|show the IFO layer break of DVD Video|layer" \
-    "Mount|attach an image read-only|mount"
+    "Mount|attach an image read-only|mount" \
+    "ReZero|move the head back to the start|rezero" \
+    "Sync cache|write the drive's cache to the disc|sync"
 }
 
 disk_tools_field() {
@@ -41,7 +43,7 @@ disk_tools_tab_key() {
 disk_tools_tab_list_key() {
   case "$1" in
   up) [ "${DISK_APP_T_FOCUS}" -le 0 ] || DISK_APP_T_FOCUS=$((DISK_APP_T_FOCUS - 1)) ;;
-  down) [ "${DISK_APP_T_FOCUS}" -ge 14 ] || DISK_APP_T_FOCUS=$((DISK_APP_T_FOCUS + 1)) ;;
+  down) [ "${DISK_APP_T_FOCUS}" -ge 16 ] || DISK_APP_T_FOCUS=$((DISK_APP_T_FOCUS + 1)) ;;
   enter) disk_tools_tab_open ;;
   *) return 0 ;;
   esac
@@ -51,7 +53,7 @@ disk_tools_tab_open() {
   disk_to_action="$(disk_tools_field "${DISK_APP_T_FOCUS}" 3)"
   case "${disk_to_action}" in
   erase | caps | speeds) DISK_APP_T_OPEN="${disk_to_action}" ;;
-  tray) disk_tools_tab_eject ;;
+  tray) disk_tools_tab_tray ;;
   checksum) disk_tools_tab_checksum ;;
   sector) disk_tools_tab_sector_open ;;
   *) "disk_tools_tab_${disk_to_action}" ;;
@@ -153,6 +155,19 @@ disk_tools_tab_erase() {
 disk_tools_tab_erase_steps() {
   disk_erase_check || return 1
   disk_erase_go
+}
+
+disk_tools_tab_tray() {
+  disk_app_ask "Tray: eject, load, lock or unlock" "eject"
+  case "${DISK_APP_ANSWER}" in
+  '' | eject) disk_tools_tab_eject ;;
+  load | lock | unlock)
+    disk_drive_tools_has "move the tray of" || return 0
+    DISK_TRAY_ACTION="${DISK_APP_ANSWER}"
+    disk_drive_tools_say disk_tray_run || :
+    ;;
+  *) DISK_APP_STATUS="The tray takes eject, load, lock or unlock." ;;
+  esac
 }
 
 disk_tools_tab_eject() {

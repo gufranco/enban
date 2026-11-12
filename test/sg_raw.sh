@@ -40,6 +40,17 @@ if [ "${fail}" = 1 ]; then
 fi
 
 case "$1" in
+51)
+  track="$(value last_track)"
+  track="${track:-1}"
+  {
+    head -c 6 /dev/zero
+    printf '%b' "$(printf '\\%03o' $((track % 256)))"
+    head -c 4 /dev/zero
+    printf '%b' "$(printf '\\%03o' $((track / 256)))"
+    head -c 22 /dev/zero
+  } >"${out}"
+  ;;
 a4)
   rpc="$(value rpc)"
   printf '%b' "${rpc}" >"${out}"

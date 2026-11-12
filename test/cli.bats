@@ -247,6 +247,24 @@ command_everywhere() {
   grep -q -- "-a $1 " "${REPO_DIR}/completions/enban.fish" || return 5
 }
 
+@test "enban help, man page and completions list tray, rezero and sync" {
+  # Arrange
+  local first=tray
+
+  # Act
+  run command_everywhere "${first}"
+
+  # Assert
+  local rezero_status sync_status
+  rezero_status=0
+  sync_status=0
+  command_everywhere rezero || rezero_status=$?
+  command_everywhere sync || sync_status=$?
+  [[ "${status}" -eq 0 ]]
+  [[ "${rezero_status}" -eq 0 ]]
+  [[ "${sync_status}" -eq 0 ]]
+}
+
 @test "enban help, man page and completions list read" {
   # Arrange
   local command=read
@@ -290,6 +308,17 @@ options_everywhere() {
     grep -q -- "'--${option}\[" "${REPO_DIR}/completions/_enban" || return 5
     grep -q -- "-l ${option} " "${REPO_DIR}/completions/enban.fish" || return 6
   done
+}
+
+@test "enban help, man page and completions list --track" {
+  # Arrange
+  local option=track
+
+  # Act
+  run options_everywhere "${option}"
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
 }
 
 @test "enban help, man page and completions list --fs and --label" {

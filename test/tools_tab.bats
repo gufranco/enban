@@ -59,7 +59,7 @@ written() {
   # Assert
   local shown
   shown="$(last_frame)"
-  [[ "${shown}" == *"> Mount"* ]]
+  [[ "${shown}" == *"> Sync cache"* ]]
 }
 
 @test "Enter on Erase disc opens the erase panel and space picks the method" {
@@ -176,6 +176,80 @@ written() {
   left="$(pgrep -f 'sleep 43' || true)"
   [[ "${shown}" == *"Cancelled while checking. Nothing changed."* ]]
   [[ -z "${left}" ]]
+}
+
+@test "Tray loads, locks and unlocks through the drive" {
+  # Arrange
+  written 0011 "DVD-R sequential recording"
+  disk_test_raw
+  answers lock
+
+  # Act
+  run on_terminal "7$(printf '\\033[B%.0s' {1..4})\\nq" --drive "stdio:${DISC}"
+
+  # Assert
+  local shown sent
+  shown="$(last_frame)"
+  sent="$(cat "${WORK}/sg_raw.log")"
+  [[ "${sent}" == "${DISC} 1e 00 00 00 01 00" ]]
+  [[ "${shown}" == *"Done. the tray of stdio:${DISC} is locked"* ]]
+}
+
+@test "Tray says what it takes" {
+  # Arrange
+  written 0011 "DVD-R sequential recording"
+  answers open
+
+  # Act
+  run on_terminal "7$(printf '\\033[B%.0s' {1..4})\\nq" --drive "stdio:${DISC}"
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"The tray takes eject, load, lock or unlock."* ]]
+}
+
+@test "ReZero moves the head back through the drive" {
+  # Arrange
+  written 0011 "DVD-R sequential recording"
+  disk_test_raw
+
+  # Act
+  run on_terminal "7$(printf '\\033[B%.0s' {1..15})\\nq" --drive "stdio:${DISC}"
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"stdio:${DISC} moved its head back to the start of the disc."* ]]
+}
+
+@test "Sync cache writes the drive's cache" {
+  # Arrange
+  written 0011 "DVD-R sequential recording"
+  disk_test_raw
+
+  # Act
+  run on_terminal "7$(printf '\\033[B%.0s' {1..16})\\nq" --drive "stdio:${DISC}"
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"stdio:${DISC} wrote its cache to the disc."* ]]
+}
+
+@test "ReZero and Sync cache need a drive" {
+  # Arrange
+  local keys
+  keys="7$(printf '\\033[B%.0s' {1..15})\\n\\033[B\\nq"
+
+  # Act
+  run on_terminal "${keys}"
+
+  # Assert
+  local shown
+  shown="$(screen)"
+  [[ "${shown}" == *"There is no drive to move the head of."* ]]
+  [[ "${shown}" == *"There is no drive to sync the cache of."* ]]
 }
 
 @test "Tray ejects the disc" {
@@ -432,6 +506,25 @@ iso_session() {
   sent="$(cat "${WORK}/sg_raw.log")"
   [[ "${shown}" == *"Done. the session on stdio:${DISC} is closed."* ]]
   [[ "${sent}" == *"5b 01 02 00"* ]]
+}
+
+@test "Close closes the last track after the drive's name" {
+  # Arrange
+  iso_session 0011 "DVD-R sequential recording"
+  printf 'last_track=3\n' >>"${WORK}/drive.state"
+  answers track disc.iso
+  local keys
+  keys="$(tool_keys 1 q)"
+
+  # Act
+  run on_terminal "${keys}" --drive "stdio:${DISC}"
+
+  # Assert
+  local shown sent
+  shown="$(last_frame)"
+  sent="$(cat "${WORK}/sg_raw.log")"
+  [[ "${shown}" == *"Done. track 3 on stdio:${DISC} is closed."* ]]
+  [[ "${sent}" == *"5b 01 01 00 00 03 00"* ]]
 }
 
 @test "Close finalizes the disc and stops at the first refusal" {

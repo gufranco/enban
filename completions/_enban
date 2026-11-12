@@ -15,6 +15,9 @@ _enban() {
     'sector:show one sector as hex and text'
     'cue:write a CUE sheet for an audio CD'
     'close:close the open session or the disc'
+    'tray:load, lock or unlock the tray'
+    'rezero:move the head back to the start'
+    'sync:write the drive cache to the disc'
     'speed:set the read speed'
     'region:show or set the DVD region'
     'booktype:show or set the book type'
@@ -68,6 +71,7 @@ _enban() {
     '--pregap[the gap before each track]:seconds:' \
     '--raw[show raw 2352-byte sectors]' \
     '--finalize[close the whole disc]' \
+    '--track[close the last track]' \
     '--test[simulate the burn and write nothing]' \
     '--copies[how many copies write writes]:copies:' \
     '--delete-image[delete the image after the last copy]' \

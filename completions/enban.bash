@@ -14,14 +14,14 @@ _enban() {
     return
   fi
   if [[ "${cur}" == -* ]]; then
-    COMPREPLY=($(compgen -W "--drive --json --speed --copies --delete-image --mode --no-finalize --opc --retries --ignore-errors --cue --ignore-miscompares --verify --no-verify --eject --no-eject --fs --label --publisher --preparer --application --system-id --volume-set --date --iso-level --boot --emulation --platform --load-sectors --boot-info-table --dvd-video --bdmv --udf-version --full --sectors --csv --lba --title --performer --pregap --raw --finalize --test --set --theme" -- "${cur}"))
+    COMPREPLY=($(compgen -W "--drive --json --speed --copies --delete-image --mode --no-finalize --opc --retries --ignore-errors --cue --ignore-miscompares --verify --no-verify --eject --no-eject --fs --label --publisher --preparer --application --system-id --volume-set --date --iso-level --boot --emulation --platform --load-sectors --boot-info-table --dvd-video --bdmv --udf-version --full --sectors --csv --lba --title --performer --pregap --raw --finalize --track --test --set --theme" -- "${cur}"))
     return
   fi
   if [[ "${COMP_WORDS[1]}" =~ ^(write|read|verify|build|checksum|queue|sector|cue|convert|label|layerbreak|mount|unmount)$ && "${COMP_CWORD}" -gt 1 ]]; then
     COMPREPLY=($(compgen -f -- "${cur}"))
     return
   fi
-  COMPREPLY=($(compgen -W "info write read verify build erase checksum queue discovery sector cue close speed region booktype convert label layerbreak mount unmount speeds doctor version help" -- "${cur}"))
+  COMPREPLY=($(compgen -W "info write read verify build erase checksum queue discovery sector cue close tray rezero sync speed region booktype convert label layerbreak mount unmount speeds doctor version help" -- "${cur}"))
 }
 
 complete -F _enban enban

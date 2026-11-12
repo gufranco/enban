@@ -59,6 +59,8 @@ DISK_PROG=enban
 . "${DISK_LIB}/cue.sh"
 # shellcheck source=SCRIPTDIR/../lib/raw.sh
 . "${DISK_LIB}/raw.sh"
+# shellcheck source=SCRIPTDIR/../lib/tray.sh
+. "${DISK_LIB}/tray.sh"
 # shellcheck source=SCRIPTDIR/../lib/booktype.sh
 . "${DISK_LIB}/booktype.sh"
 # shellcheck source=SCRIPTDIR/../lib/audio.sh
@@ -137,7 +139,10 @@ usage:
   enban sector IMAGE [--lba N]        show one sector as hex and text
   enban sector --drive DRIVE          the same for the disc in the drive
   enban cue CUE TRACK.wav...          write a CUE sheet for an audio CD
-  enban close --drive DRIVE           close the open session, or --finalize
+  enban close --drive DRIVE           close the open session, --track or --finalize
+  enban tray --drive DRIVE ACTION     load, lock or unlock the tray
+  enban rezero --drive DRIVE          move the drive's head back to the start
+  enban sync --drive DRIVE            write the drive's cache to the disc
   enban speed --drive DRIVE N|max     set the drive's read speed
   enban region --drive DRIVE          show the DVD region, or --set N
   enban booktype --drive DRIVE [TYPE] show or set the book type of a DVD+R
@@ -189,6 +194,7 @@ options:
   --pregap SECONDS    the gap cue puts before each track after the first; 2
   --raw               sector shows raw 2352-byte sectors
   --finalize          close finalizes the whole disc, not only the session
+  --track             close closes the last track, not the session
   --test              write and discovery simulate the burn and write nothing
   --copies N          write writes N copies, 1 to 100, waiting for a blank
                       disc between them
@@ -320,6 +326,7 @@ disk_option_flag() {
   --no-eject) DISK_WRITE_EJECT=n ;;
   --full) DISK_ERASE_FULL=y ;;
   --finalize) DISK_CLOSE_FINALIZE=y ;;
+  --track) DISK_CLOSE_TRACK=y ;;
   --raw) DISK_SECTOR_RAW=y ;;
   --test) DISK_WRITE_TEST=y ;;
   --delete-image) DISK_WRITE_DELETE=y ;;
@@ -387,7 +394,7 @@ disk_option_seen() {
   --full) DISK_ERASE_OPTION="$1" ;;
   --sectors | --csv) DISK_DISCOVERY_OPTION="${DISK_DISCOVERY_OPTION:-$1}" ;;
   --lba | --raw) DISK_SECTOR_OPTION="${DISK_SECTOR_OPTION:-$1}" ;;
-  --finalize) DISK_RAW_OPTION="$1:close" ;;
+  --finalize | --track) DISK_RAW_OPTION="$1:close" ;;
   --test) DISK_TEST_OPTION="$1" ;;
   --ignore-errors | --cue) DISK_READ_OPTION="${DISK_READ_OPTION:-$1}" ;;
   --retries) DISK_RETRY_OPTION="$1" ;;
@@ -620,7 +627,43 @@ disk_close() {
   disk_options 0 "$@" || return 1
   disk_only_for close || return 1
   disk_needs_drive close || return 1
+  if [ "${DISK_CLOSE_TRACK}" = y ] && [ "${DISK_CLOSE_FINALIZE}" = y ]; then
+    disk_error "--track and --finalize close different things, so give one of them."
+    return 1
+  fi
   disk_close_run
+}
+
+disk_tray() {
+  disk_options 1 "$@" || return 1
+  disk_only_for tray || return 1
+  disk_needs_drive tray || return 1
+  case "${DISK_OPERAND}" in
+  load | lock | unlock) DISK_TRAY_ACTION="${DISK_OPERAND}" ;;
+  '')
+    disk_cli_hint "tray needs load, lock or unlock"
+    return 1
+    ;;
+  *)
+    disk_error "tray takes load, lock or unlock, got: ${DISK_OPERAND}"
+    return 1
+    ;;
+  esac
+  disk_tray_run
+}
+
+disk_rezero() {
+  disk_options 0 "$@" || return 1
+  disk_only_for rezero || return 1
+  disk_needs_drive rezero || return 1
+  disk_rezero_run
+}
+
+disk_sync() {
+  disk_options 0 "$@" || return 1
+  disk_only_for sync || return 1
+  disk_needs_drive sync || return 1
+  disk_sync_run
 }
 
 disk_speed() {
@@ -797,7 +840,7 @@ disk_route() {
     shift
     disk_cue "$@"
     ;;
-  close | speed | region | booktype | convert | label | layerbreak | mount | unmount | speeds)
+  close | tray | rezero | sync | speed | region | booktype | convert | label | layerbreak | mount | unmount | speeds)
     disk_mn_command="$1"
     shift
     "disk_${disk_mn_command}" "$@"

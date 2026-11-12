@@ -101,6 +101,148 @@ sent() {
   [[ "${output}" == *"enban: the drive refused the command: SCSI Status: Check Condition" ]]
 }
 
+@test "enban close --track closes the last track after the drive's name" {
+  # Arrange
+  drive_with 0011 "DVD-R sequential recording" written
+  printf 'last_track=258\n' >>"${WORK}/drive.state"
+
+  # Act
+  run disk_test_run enban close --drive "${DRIVE}" --track <<<"disc.iso"
+
+  # Assert
+  local asked closed
+  asked="$(sent 1)"
+  closed="$(sent 2)"
+  [[ "${status}" -eq 0 ]]
+  [[ "${asked}" == *" ${DISC} 51 00 00 00 00 00 00 00 22 00" ]]
+  [[ "${closed}" == "${DISC} 5b 01 01 00 01 02 00 00 00 00" ]]
+  [[ "${output}" == *"Done. track 258 on ${DRIVE} is closed." ]]
+}
+
+@test "enban close --track stops when the drive will not say its last track" {
+  # Arrange
+  drive_with 0011 "DVD-R sequential recording" written
+  disk_test_drive_flag raw_fail
+
+  # Act
+  run disk_test_run enban close --drive "${DRIVE}" --track <<<"disc.iso"
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == *"enban: the drive refused the command: SCSI Status: Check Condition" ]]
+}
+
+@test "enban close takes --track or --finalize, not both" {
+  # Arrange
+  drive_with 0011 "DVD-R sequential recording" written
+
+  # Act
+  run disk_test_run enban close --drive "${DRIVE}" --track --finalize </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: --track and --finalize close different things, so give one of them." ]]
+}
+
+@test "enban tray load closes the tray" {
+  # Arrange
+  drive_with 0011 "DVD-R sequential recording"
+
+  # Act
+  run disk_test_run enban tray --drive "${DRIVE}" load </dev/null
+
+  # Assert
+  local command
+  command="$(sent 1)"
+  [[ "${status}" -eq 0 ]]
+  [[ "${command}" == "${DISC} 1b 00 00 00 03 00" ]]
+  [[ "${output}" == *"Done. the tray of ${DRIVE} is closed and its disc loaded." ]]
+}
+
+@test "enban tray lock keeps the tray shut" {
+  # Arrange
+  drive_with 0011 "DVD-R sequential recording"
+
+  # Act
+  run disk_test_run enban tray --drive "${DRIVE}" lock </dev/null
+
+  # Assert
+  local command
+  command="$(sent 1)"
+  [[ "${status}" -eq 0 ]]
+  [[ "${command}" == "${DISC} 1e 00 00 00 01 00" ]]
+  [[ "${output}" == *"Done. the tray of ${DRIVE} is locked until it is unlocked or the drive restarts." ]]
+}
+
+@test "enban tray unlock frees the tray" {
+  # Arrange
+  drive_with 0011 "DVD-R sequential recording"
+
+  # Act
+  run disk_test_run enban tray --drive "${DRIVE}" unlock </dev/null
+
+  # Assert
+  local command
+  command="$(sent 1)"
+  [[ "${status}" -eq 0 ]]
+  [[ "${command}" == "${DISC} 1e 00 00 00 00 00" ]]
+  [[ "${output}" == *"Done. the tray of ${DRIVE} is unlocked." ]]
+}
+
+@test "enban tray says what it takes" {
+  # Arrange
+  drive_with 0011 "DVD-R sequential recording"
+
+  # Act
+  run disk_test_run enban tray --drive "${DRIVE}" open </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: tray takes load, lock or unlock, got: open" ]]
+}
+
+@test "enban tray needs an action" {
+  # Arrange
+  drive_with 0011 "DVD-R sequential recording"
+
+  # Act
+  run disk_test_run enban tray --drive "${DRIVE}" </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: tray needs load, lock or unlock. run 'enban help' for usage." ]]
+}
+
+@test "enban rezero moves the head back to the start" {
+  # Arrange
+  drive_with 0011 "DVD-R sequential recording"
+
+  # Act
+  run disk_test_run enban rezero --drive "${DRIVE}" </dev/null
+
+  # Assert
+  local command
+  command="$(sent 1)"
+  [[ "${status}" -eq 0 ]]
+  [[ "${command}" == "${DISC} 01 00 00 00 00 00" ]]
+  [[ "${output}" == *"Done. ${DRIVE} moved its head back to the start of the disc." ]]
+}
+
+@test "enban sync writes the drive's cache to the disc" {
+  # Arrange
+  drive_with 0011 "DVD-R sequential recording"
+
+  # Act
+  run disk_test_run enban sync --drive "${DRIVE}" </dev/null
+
+  # Assert
+  local command
+  command="$(sent 1)"
+  [[ "${status}" -eq 0 ]]
+  [[ "${command}" == "${DISC} 35 00 00 00 00 00 00 00 00 00" ]]
+  [[ "${output}" == *"Done. ${DRIVE} wrote its cache to the disc." ]]
+}
+
 @test "enban speed sets the read speed in kB/s for the disc's kind" {
   # Arrange
   drive_with 0011 "DVD-R sequential recording" written

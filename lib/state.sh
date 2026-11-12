@@ -89,6 +89,8 @@ export LC_ALL
 : "${DISK_SECTOR_LBA:=0}"
 : "${DISK_SECTOR_RAW:=n}"
 : "${DISK_CLOSE_FINALIZE:=n}"
+: "${DISK_CLOSE_TRACK:=n}"
+: "${DISK_TRAY_ACTION:=}"
 : "${DISK_SPEED_WANTED:=}"
 : "${DISK_REGION_SET:=}"
 : "${DISK_REGION_STATE:=}"
