@@ -133,6 +133,59 @@ image_on_disc() {
   [[ -z "${rings}" ]]
 }
 
+@test "Close quits enban once the write is done and prints the result" {
+  # Arrange
+  blank_dvd
+  answers "${IMAGE}" disc.iso
+  local keys
+  keys="1\\n$(printf '\\033[B%.0s' {1..10}) w"
+
+  # Act
+  run on_terminal "${keys}" --drive "stdio:${DISC}"
+
+  # Assert
+  local after shown
+  after="${output##*$'\033[?1049l'}"
+  shown="$(screen)"
+  [[ "${status}" -eq 0 ]]
+  [[ "${after}" == *"Done. stdio:${DISC} is written, verified and ejected."* ]]
+  [[ "${shown}" == *"> Close      [x] enban, after the last copy"* ]]
+}
+
+@test "Close keeps enban open when the write fails" {
+  # Arrange
+  blank_dvd
+  disk_test_drive_flag fail_write
+  answers "${IMAGE}" disc.iso
+  local keys
+  keys="1\\n$(printf '\\033[B%.0s' {1..10}) w"
+
+  # Act
+  run on_terminal_in_steps "${keys}" 'the result says why' 'q' --drive "stdio:${DISC}"
+
+  # Assert
+  local after shown
+  after="${output##*$'\033[?1049l'}"
+  shown="$(last_frame)"
+  [[ "${status}" -eq 0 ]]
+  [[ "${shown}" == *"The write failed; the result says why."* ]]
+  [[ "${after}" != *"enban: the write to"* ]]
+}
+
+@test "a write from the Write tab leaves the Settings defaults alone" {
+  # Arrange
+  blank_dvd
+  answers "${IMAGE}" disc.iso
+
+  # Act
+  run on_terminal_in_steps '1\n\033[B\033[B w' 'is written and ejected' '9q' --drive "stdio:${DISC}"
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"[Write]"*"> Verify     [x] on"* ]]
+}
+
 @test "Enter on a result brings the form back" {
   # Arrange
   blank_dvd
@@ -251,8 +304,8 @@ image_on_disc() {
   # Assert
   local shown
   shown="$(last_frame)"
-  [[ "${shown}" == *"  OPC        [x] on"* ]]
-  [[ "${shown}" == *"> Finalize   [ ] off"* ]]
+  [[ "${shown}" == *"  Close      [x] enban, after the last copy"* ]]
+  [[ "${shown}" == *"> OPC        [x] on"* ]]
 }
 
 @test "space on a field with nothing to turn leaves it alone" {

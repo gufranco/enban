@@ -183,6 +183,20 @@ past_runs() {
   [[ "${shown}" == *"Cancelled while testing. The disc holds part of the test data."* ]]
 }
 
+@test "a discovery test leaves the Settings write speed alone" {
+  # Arrange
+  disk_test_drive 0011 "DVD-R sequential recording" 64 22160
+  answers 4 disc.iso
+
+  # Act
+  run on_terminal_in_steps '5\033[B\nt' 'passed discovery' '9q' --drive "stdio:${DISC}"
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"Speed      chosen by the drive"* ]]
+}
+
 @test "the Discovery tab starts nothing while a read runs" {
   # Arrange
   local call='DISK_APP_JOB=running DISK_APP_JOB_KIND=read DISK_APP_JOB_PID=1; disk_discovery_tab_start; printf "%s|%s|%s\n" "${DISK_APP_JOB_KIND}" "${DISK_APP_JOB_PID}" "${DISK_APP_STATUS}"'

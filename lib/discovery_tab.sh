@@ -43,13 +43,13 @@ disk_discovery_tab_start() {
     DISK_APP_STATUS="Nothing was written."
     return 0
   fi
-  DISK_DISCOVERY_SECTORS="${DISK_APP_D_SECTORS}"
-  DISK_WRITE_SPEED="${DISK_APP_D_SPEED}"
-  DISK_DISCOVERY_CSV=""
   disk_job_launch disk_discovery_tab_steps discovery "the disc in ${DISK_DRIVE}"
 }
 
 disk_discovery_tab_steps() {
+  DISK_DISCOVERY_SECTORS="${DISK_APP_D_SECTORS}"
+  DISK_WRITE_SPEED="${DISK_APP_D_SPEED}"
+  DISK_DISCOVERY_CSV=""
   disk_discovery_check || return 1
   disk_discovery_go
 }

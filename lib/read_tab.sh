@@ -50,9 +50,13 @@ disk_read_tab_start() {
     DISK_APP_STATUS="There is no drive to read from."
     return 0
   fi
+  disk_job_launch disk_read_tab_steps read "${DISK_DRIVE} into ${DISK_APP_R_OUT}"
+}
+
+disk_read_tab_steps() {
   DISK_READ_OUT="${DISK_APP_R_OUT}"
   DISK_READ_VERIFY="${DISK_APP_R_VERIFY}"
-  disk_job_launch disk_read_run read "${DISK_DRIVE} into ${DISK_APP_R_OUT}"
+  disk_read_run
 }
 
 disk_frame_read() {

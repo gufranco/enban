@@ -157,6 +157,20 @@ slow_half_read() {
   [[ "${final}" == *"Cancelled while reading. The image is incomplete."* ]]
 }
 
+@test "a read from the Read tab leaves the Settings defaults alone" {
+  # Arrange
+  written_dvd
+  answers "${OUT}"
+
+  # Act
+  run on_terminal_in_steps '2\n\033[B r' 'is read into' '9\033[Cq' --drive "stdio:${DISC}"
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"[Read]"*"> Verify     [x] on"* ]]
+}
+
 @test "the Read tab asks for a file before it reads" {
   # Arrange
   local keys='2rq'

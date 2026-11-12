@@ -7,6 +7,7 @@ disk_job_launch() {
   DISK_APP_JOB_DIR="$(mktemp -d "${TMPDIR:-/tmp}/enban-job.XXXXXX")" || return 0
   DISK_APP_JOB_KIND="$2"
   DISK_APP_JOB_WHAT="$3"
+  DISK_APP_CLOSE_AFTER="${4:-n}"
   DISK_JOB_NOTE="${DISK_APP_JOB_DIR}/part"
   disk_job_run "$1" "${DISK_APP_JOB_DIR}" &
   DISK_APP_JOB_PID=$!
@@ -47,6 +48,7 @@ disk_job_poll() {
   [ "${disk_jp_status}" -ne 0 ] || DISK_APP_STATUS="$(printf '%s\n' "${DISK_APP_JOB_RESULT}" | sed -n '$p')"
   disk_log_job_end "${disk_jp_status}"
   disk_job_bell
+  [ "${disk_jp_status}" -ne 0 ] || [ "${DISK_APP_CLOSE_AFTER}" = n ] || DISK_APP_QUIT=y
 }
 
 disk_job_bell() {

@@ -286,8 +286,10 @@ notes:
   The app draws in the terminal's alternate screen and gives the screen back
   when it ends, on q or on an interrupt. Tab and the digits switch tabs, the
   arrows move between the jobs on Home and Enter opens one, ? shows the keys,
-  and q quits. On Write, Enter edits a field, space turns verify or eject on
-  or off, w writes after you type the drive's name, and c cancels the write.
+  and q quits. On Write, Enter edits a field, space turns a switch such as
+  verify, eject, test mode, delete, finalize, OPC or close on or off, w writes
+  after you type the drive's name, with close on enban quits and prints the
+  result once the last copy is written, and c cancels the write.
   On Read, Enter names the new image file, space turns verify on or off,
   r reads the disc into it, and c cancels the read. On Verify, space turns the
   image comparison on or off, Enter names the image, v verifies the disc, and

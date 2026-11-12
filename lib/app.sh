@@ -212,7 +212,10 @@ disk_app_act() {
   [0-9]) [ "$1" -ge "$2" ] || DISK_APP_TAB="$1" ;;
   tab) DISK_APP_TAB=$(((DISK_APP_TAB + 1) % $2)) ;;
   help) DISK_APP_HELP=1 ;;
-  tick) disk_job_poll ;;
+  tick)
+    disk_job_poll
+    [ "${DISK_APP_QUIT}" = n ] || return 1
+    ;;
   *) disk_app_pane_key "$1" ;;
   esac
   return 0
@@ -279,6 +282,7 @@ disk_app_run() {
     disk_app_act "${DISK_APP_KEY}" "${disk_ar_count}" || break
   done
   disk_app_leave
+  [ "${DISK_APP_QUIT}" = n ] || printf '%s\n' "${DISK_APP_JOB_RESULT}"
   disk_log_close
   trap - INT TERM
   return 0

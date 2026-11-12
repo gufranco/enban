@@ -7,7 +7,7 @@ disk_write_tab_key() {
   disk_job_key write "$1" && return 0
   case "$1" in
   up) [ "${DISK_APP_W_FIELD}" -le 0 ] || DISK_APP_W_FIELD=$((DISK_APP_W_FIELD - 1)) ;;
-  down) [ "${DISK_APP_W_FIELD}" -ge 9 ] || DISK_APP_W_FIELD=$((DISK_APP_W_FIELD + 1)) ;;
+  down) [ "${DISK_APP_W_FIELD}" -ge 10 ] || DISK_APP_W_FIELD=$((DISK_APP_W_FIELD + 1)) ;;
   enter) disk_write_tab_edit ;;
   space) disk_write_tab_toggle ;;
   w) disk_write_tab_start ;;
@@ -42,6 +42,7 @@ disk_write_tab_toggle() {
   7) disk_write_tab_mode ;;
   8) DISK_APP_W_FINALIZE="$(disk_job_flip "${DISK_APP_W_FINALIZE}")" ;;
   9) DISK_APP_W_OPC="$(disk_job_flip "${DISK_APP_W_OPC}")" ;;
+  10) DISK_APP_W_CLOSE="$(disk_job_flip "${DISK_APP_W_CLOSE}")" ;;
   *) return 0 ;;
   esac
 }
@@ -86,6 +87,10 @@ disk_write_tab_start() {
     return 0
   fi
   disk_job_typed || return 0
+  disk_job_launch disk_write_tab_steps write "${DISK_APP_W_IMAGE} to ${DISK_DRIVE}" "${DISK_APP_W_CLOSE}"
+}
+
+disk_write_tab_export() {
   DISK_WRITE_IMAGE="${DISK_APP_W_IMAGE}"
   DISK_WRITE_SPEED="${DISK_APP_W_SPEED}"
   DISK_WRITE_VERIFY="${DISK_APP_W_VERIFY}"
@@ -97,10 +102,10 @@ disk_write_tab_start() {
   DISK_WRITE_FINALIZE="${DISK_APP_W_FINALIZE}"
   DISK_WRITE_OPC="${DISK_APP_W_OPC}"
   [ "${DISK_WRITE_COPIES}" -eq 1 ] || DISK_WRITE_EJECT=y
-  disk_job_launch disk_write_tab_steps write "${DISK_APP_W_IMAGE} to ${DISK_DRIVE}"
 }
 
 disk_write_tab_steps() {
+  disk_write_tab_export
   disk_write_check || return 1
   disk_write_copies
 }
@@ -128,5 +133,8 @@ disk_frame_write() {
   disk_job_row 7 "${DISK_APP_W_FIELD}" "Mode" "${disk_fw_mode}"
   disk_job_row 8 "${DISK_APP_W_FIELD}" "Finalize" "${disk_fw_finalize}"
   disk_job_row 9 "${DISK_APP_W_FIELD}" "OPC" "${disk_fw_opc}"
+  disk_fw_close="[ ] no, enban stays open"
+  [ "${DISK_APP_W_CLOSE}" = n ] || disk_fw_close="[x] enban, after the last copy"
+  disk_job_row 10 "${DISK_APP_W_FIELD}" "Close" "${disk_fw_close}"
   printf '%s\n' "" "enter edit   space toggle   w write"
 }

@@ -104,7 +104,7 @@ make install
 |:----|:-----------|
 | Arrows | Move between the six jobs on Home, or the rows and fields on Write, Read, Build and Verify |
 | Enter | Open the focused job's tab, or edit the focused field |
-| Space | Turn verify or eject on or off on Write, verify on Read, or the image comparison on Verify |
+| Space | Turn a switch on or off: verify, eject, test mode, delete, finalize, OPC or close on Write, verify on Read, or the image comparison on Verify. With close on, enban quits and prints the result once the last copy is written |
 | `v` on Queue | Turn the verify after each image on or off |
 | `w` | Write the chosen image, after you type the drive's name |
 | `r` | Read the disc into the chosen new file |
