@@ -27,7 +27,7 @@ disk_udf_dstring() {
 }
 
 disk_udf_crc() {
-  od -An -tu1 -v -j $(($1 + 16)) -N "$2" "${DISK_LABEL_IMAGE}" | awk '
+  od -An -tu1 -v -j $(($1 + 16)) -N "$2" "${DISK_LABEL_IMAGE}" 2>/dev/null | awk '
     function bits_xor(a, b,   result, bit) {
       result = 0
       bit = 1
