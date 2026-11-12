@@ -54,6 +54,19 @@ disk_build_udf_tool() {
 }
 
 disk_build_video_rows() {
-  [ "${DISK_BUILD_DVD}" = n ] || printf 'Video         DVD Video, VIDEO_TS in player order\n'
-  return 0
+  [ "${DISK_BUILD_DVD}" = y ] || return 0
+  printf 'Video         DVD Video, VIDEO_TS in player order\n'
+  disk_build_video_layer
+}
+
+disk_build_video_layer() {
+  disk_vl_bytes="$(disk_file_bytes "${DISK_BUILD_OUT}")"
+  DISK_LAYER_TOTAL=$((disk_vl_bytes / 2048))
+  [ "${DISK_LAYER_TOTAL}" -gt "${DISK_LAYER_SINGLE}" ] || return 0
+  DISK_LAYER_IMAGE="${DISK_BUILD_OUT}"
+  disk_vl_pick="$(disk_layer_starts | disk_layer_pick)"
+  disk_vl_set="${disk_vl_pick#* }"
+  disk_vl_where="a cell start in ${disk_vl_set}"
+  [ "${disk_vl_set}" != - ] || disk_vl_where="the middle, since no cell starts near it"
+  printf 'Layer break   sector %s, %s\n' "${disk_vl_pick% *}" "${disk_vl_where}"
 }

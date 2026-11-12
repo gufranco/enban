@@ -745,11 +745,21 @@ video_ts() {
   put_be32 "${dir}/VIDEO_TS.IFO" 2064 7
   head -c 6144 /dev/urandom >"${dir}/VIDEO_TS.VOB"
   cp -f "${dir}/VIDEO_TS.IFO" "${dir}/VIDEO_TS.BUP"
-  head -c 2048 /dev/zero >"${dir}/VTS_01_0.IFO"
+  head -c 4096 /dev/zero >"${dir}/VTS_01_0.IFO"
   put_bytes "${dir}/VTS_01_0.IFO" 0 DVDVIDEO-VTS
-  put_be32 "${dir}/VTS_01_0.IFO" 12 6
-  put_be32 "${dir}/VTS_01_0.IFO" 192 1
-  put_be32 "${dir}/VTS_01_0.IFO" 196 3
+  put_be32 "${dir}/VTS_01_0.IFO" 12 8
+  put_be32 "${dir}/VTS_01_0.IFO" 28 1
+  put_be32 "${dir}/VTS_01_0.IFO" 192 2
+  put_be32 "${dir}/VTS_01_0.IFO" 196 4
+  put_be32 "${dir}/VTS_01_0.IFO" 224 1
+  put_bytes "${dir}/VTS_01_0.IFO" 2048 '\000\001'
+  put_be32 "${dir}/VTS_01_0.IFO" 2052 31
+  put_bytes "${dir}/VTS_01_0.IFO" 2056 '\000\001\001\000'
+  put_be32 "${dir}/VTS_01_0.IFO" 2060 0
+  put_be32 "${dir}/VTS_01_0.IFO" 2064 1
+  put_bytes "${dir}/VTS_01_0.IFO" 2068 '\000\001\002\000'
+  put_be32 "${dir}/VTS_01_0.IFO" 2072 2
+  put_be32 "${dir}/VTS_01_0.IFO" 2076 2
   head -c 4096 /dev/urandom >"${dir}/VTS_01_0.VOB"
   head -c 4096 /dev/urandom >"${dir}/VTS_01_1.VOB"
   head -c 2048 /dev/urandom >"${dir}/VTS_01_2.VOB"
@@ -1187,6 +1197,49 @@ leftovers() {
   # Assert
   [[ "${status}" -eq 1 ]]
   [[ "${output}" == "enban: --bdmv uses UDF 2.50, the revision a Blu-ray player reads." ]]
+}
+
+dvd_layer_call() {
+  local source out
+  source="$(quoted "${SRC}")"
+  out="$(quoted "${OUT}")"
+  printf 'DISK_LAYER_SINGLE=1 DISK_LAYER_ZERO=%s DISK_BUILD_DVD=y DISK_BUILD_SOURCE=%s DISK_BUILD_OUT=%s; disk_build_run' "$1" "${source}" "${out}"
+}
+
+ifo_lba() {
+  local report
+  report="$(xorriso -indev "$1" -find /VIDEO_TS -type f -name "$2" -exec report_lba -- 2>/dev/null)"
+  sed -n "s/^File data lba: *0 , *\([0-9]*\) ,.*/\1/p" <<<"${report}"
+}
+
+@test "a dual-layer DVD Video build names its layer break at a cell start" {
+  # Arrange
+  local call
+  video_ts "${SRC}"
+  call="$(dvd_layer_call 100000)"
+
+  # Act
+  run disk_test_call eval "${call}"
+
+  # Assert
+  local ifo
+  ifo="$(ifo_lba "${OUT}" VTS_01_0.IFO)"
+  [[ "${status}" -eq 0 ]]
+  [[ "${lines[4]}" == "Layer break   sector $((ifo + 4)), a cell start in VTS_01" ]]
+}
+
+@test "a dual-layer DVD Video build breaks in the middle when no cell starts near it" {
+  # Arrange
+  local call
+  video_ts "${SRC}"
+  call="$(dvd_layer_call 2)"
+
+  # Act
+  run disk_test_call eval "${call}"
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+  [[ "${lines[4]}" == "Layer break   sector "*", the middle, since no cell starts near it" ]]
 }
 
 quoted() {

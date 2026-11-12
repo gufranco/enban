@@ -30,6 +30,8 @@ DISK_LIB="$(cd "$(dirname "$0")/../lib" && pwd)" || exit 1
 . "${DISK_LIB}/build_boot.sh"
 # shellcheck source=SCRIPTDIR/../lib/build_video.sh
 . "${DISK_LIB}/build_video.sh"
+# shellcheck source=SCRIPTDIR/../lib/layer.sh
+. "${DISK_LIB}/layer.sh"
 # shellcheck source=SCRIPTDIR/../lib/build_bdmv.sh
 . "${DISK_LIB}/build_bdmv.sh"
 # shellcheck source=SCRIPTDIR/../lib/build_udf.sh

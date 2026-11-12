@@ -470,7 +470,9 @@ default.
 .B \-\-dvd\-video
 Lay out the VIDEO_TS folder at the root in the order a DVD player reads it,
 with UDF, which a player needs. Linux builds it with genisoimage and macOS
-with mkisofs from cdrtools, since hdiutil writes the files out of order.
+with mkisofs from cdrtools, since hdiutil writes the files out of order. A
+build past one DVD layer names its layer break, the first cell start between
+the middle and the end of layer 0, as layerbreak does.
 .TP
 .B \-\-bdmv
 Write a BDMV folder at the root as UDF 2.50 alone, which a Blu-ray player
