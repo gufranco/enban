@@ -564,3 +564,142 @@ answers() {
   [[ "${shown}" == *"> UDF        1.02"*"> UDF        1.50"*"> UDF        2.00"*"> UDF        2.01"*"> UDF        2.50"*"> UDF        2.60"* ]]
   [[ "${final}" == *"> UDF        the tool default"* ]]
 }
+
+@test "o saves the layout and its fields as a project" {
+  # Arrange
+  answers "${SRC}" "${WORK}/trip.enban"
+
+  # Act
+  run on_terminal '3foq'
+
+  # Assert
+  local shown saved
+  shown="$(last_frame)"
+  saved="$(<"${WORK}/trip.enban")"
+  [[ "${shown}" == *"Saved the project to ${WORK}/trip.enban."* ]]
+  [[ "${saved}" == "enban-project=1"$'\n'"fs=iso9660,joliet,udf"$'\n'"label="$'\n'"publisher="$'\n'"date="$'\n'"boot="$'\n'"emulation=none"$'\n'"platform=x86"$'\n'"dvd_video=no"$'\n'"bdmv=no"$'\n'"udf_version="$'\n'"entry=photos"$'\t'"${SRC}" ]]
+}
+
+@test "o keeps a project that exists as NAME.bak before it saves" {
+  # Arrange
+  printf 'older\n' >"${WORK}/trip.enban"
+  answers "${SRC}" "${WORK}/trip.enban"
+
+  # Act
+  run on_terminal '3foq'
+
+  # Assert
+  local shown kept
+  shown="$(last_frame)"
+  kept="$(<"${WORK}/trip.enban.bak")"
+  [[ "${shown}" == *"The earlier ${WORK}/trip.enban is kept as ${WORK}/trip.enban.bak. Saved the project to ${WORK}/trip.enban."* ]]
+  [[ "${kept}" == "older" ]]
+}
+
+@test "o asks for an entry before it saves" {
+  # Arrange
+  local keys='3oq'
+
+  # Act
+  run on_terminal "${keys}"
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"Add a file or folder first: press a or f."* ]]
+}
+
+@test "o saves nothing when no file is named" {
+  # Arrange
+  answers "${SRC}" ""
+
+  # Act
+  run on_terminal '3foq'
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"Added photos."* ]]
+}
+
+@test "o says when the project cannot be saved" {
+  # Arrange
+  answers "${SRC}" "${WORK}/missing/trip.enban"
+
+  # Act
+  run on_terminal '3foq'
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"Unable to save the project to ${WORK}/missing/trip.enban."* ]]
+}
+
+@test "l opens a project into the layout and its fields" {
+  # Arrange
+  printf '%s\n' enban-project=1 "fs=iso9660,joliet" "label=Kyoto" "entry=notes.txt"$'\t'"${WORK}/notes.txt" >"${WORK}/trip.enban"
+  answers "${WORK}/trip.enban"
+
+  # Act
+  run on_terminal '3lq'
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"notes.txt"*"file"* ]]
+  [[ "${shown}" == *"Type       ISO9660, Joliet"*"Label      Kyoto"* ]]
+  [[ "${shown}" == *"Opened ${WORK}/trip.enban."* ]]
+}
+
+@test "l says why a project did not open" {
+  # Arrange
+  answers "${WORK}/nothing.enban"
+
+  # Act
+  run on_terminal '3lq'
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"Not opened: there is no project at ${WORK}/nothing.enban."* ]]
+}
+
+@test "l opens nothing when no file is named" {
+  # Arrange
+  answers ""
+
+  # Act
+  run on_terminal '3lq'
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"> Type       ISO9660, Joliet, UDF"* ]]
+}
+
+@test "a project opened on Build leaves the Settings default alone" {
+  # Arrange
+  printf '%s\n' enban-project=1 "fs=iso9660" "entry=notes.txt"$'\t'"${WORK}/notes.txt" >"${WORK}/trip.enban"
+  answers "${WORK}/trip.enban"
+
+  # Act
+  run on_terminal '3l9\033[C\033[Cq'
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"[Build]"*"> Type       ISO9660, Joliet, UDF"* ]]
+}
+
+@test "a build from the Build tab leaves the Settings default alone" {
+  # Arrange
+  answers "${SRC}" "${OUT}"
+
+  # Act
+  run on_terminal_in_steps '3f\033[B\n\033[B\033[B\nb' 'is built from' '9\033[C\033[Cq'
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"[Build]"*"> Type       ISO9660, Joliet, UDF"* ]]
+}

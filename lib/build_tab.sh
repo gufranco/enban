@@ -15,6 +15,8 @@ disk_build_tab_key() {
   n) disk_build_tab_rename "${disk_bk_count}" ;;
   enter) disk_build_tab_edit $((DISK_APP_B_FOCUS - disk_bk_count)) ;;
   b) disk_build_tab_start ;;
+  o) disk_build_tab_save ;;
+  l) disk_build_tab_load ;;
   *) return 0 ;;
   esac
 }
@@ -211,10 +213,20 @@ disk_build_tab_out() {
 
 disk_build_tab_start() {
   disk_job_busy && return 0
-  if [ -z "${DISK_APP_B_LAYOUT}" ]; then
-    DISK_APP_STATUS="Add a file or folder first: press a or f."
-    return 0
-  fi
+  disk_build_tab_has_layout || return 0
+  case "${DISK_APP_B_TARGET}" in
+  disc) disk_build_tab_to_disc ;;
+  *) disk_build_tab_to_image ;;
+  esac
+}
+
+disk_build_tab_has_layout() {
+  [ -z "${DISK_APP_B_LAYOUT}" ] || return 0
+  DISK_APP_STATUS="Add a file or folder first: press a or f."
+  return 1
+}
+
+disk_build_tab_export() {
   DISK_BUILD_LAYOUT="${DISK_APP_B_LAYOUT}"
   DISK_BUILD_FS="${DISK_APP_B_FS}"
   DISK_BUILD_LABEL="${DISK_APP_B_LABEL}"
@@ -226,10 +238,26 @@ disk_build_tab_start() {
   DISK_BUILD_DVD="${DISK_APP_B_DVD}"
   DISK_BUILD_BDMV="${DISK_APP_B_BDMV}"
   DISK_BUILD_UDF_VERSION="${DISK_APP_B_UDF}"
-  case "${DISK_APP_B_TARGET}" in
-  disc) disk_build_tab_to_disc ;;
-  *) disk_build_tab_to_image ;;
-  esac
+}
+
+disk_build_tab_import() {
+  DISK_APP_B_LAYOUT="${DISK_BUILD_LAYOUT}"
+  DISK_APP_B_FS="${DISK_BUILD_FS}"
+  DISK_APP_B_LABEL="${DISK_BUILD_LABEL}"
+  DISK_APP_B_PUBLISHER="${DISK_BUILD_PUBLISHER}"
+  DISK_APP_B_DATE="${DISK_BUILD_DATE}"
+  DISK_APP_B_BOOT="${DISK_BUILD_BOOT}"
+  DISK_APP_B_EMULATION="${DISK_BUILD_EMULATION}"
+  DISK_APP_B_PLATFORM="${DISK_BUILD_PLATFORM}"
+  DISK_APP_B_DVD="${DISK_BUILD_DVD}"
+  DISK_APP_B_BDMV="${DISK_BUILD_BDMV}"
+  DISK_APP_B_UDF="${DISK_BUILD_UDF_VERSION}"
+}
+
+disk_build_tab_image_steps() {
+  disk_build_tab_export
+  DISK_BUILD_OUT="${DISK_APP_B_OUT}"
+  disk_build_run
 }
 
 disk_build_tab_to_image() {
@@ -237,8 +265,7 @@ disk_build_tab_to_image() {
     DISK_APP_STATUS="Choose an image file first: Enter on Image."
     return 0
   fi
-  DISK_BUILD_OUT="${DISK_APP_B_OUT}"
-  disk_job_launch disk_build_run build "the layout into ${DISK_APP_B_OUT}"
+  disk_job_launch disk_build_tab_image_steps build "the layout into ${DISK_APP_B_OUT}"
 }
 
 disk_build_tab_to_disc() {
@@ -251,9 +278,43 @@ disk_build_tab_to_disc() {
 }
 
 disk_build_tab_disc_steps() {
+  disk_build_tab_export
   DISK_BUILD_OUT="${DISK_APP_JOB_DIR}/disc.iso"
   disk_build_run || return 1
   DISK_WRITE_IMAGE="${DISK_BUILD_OUT}"
   disk_write_check || return 1
   disk_write_go
+}
+
+disk_build_tab_save() {
+  disk_build_tab_has_layout || return 0
+  disk_app_ask "Project file to save" "path to a .enban file"
+  disk_bv_file="${DISK_APP_ANSWER}"
+  [ -n "${disk_bv_file}" ] || return 0
+  if disk_bv_said="$(disk_build_tab_save_steps "${disk_bv_file}" 2>&1)"; then
+    DISK_APP_STATUS="${disk_bv_said:+${disk_bv_said} }Saved the project to ${disk_bv_file}."
+    return 0
+  fi
+  DISK_APP_STATUS="Unable to save the project to ${disk_bv_file}."
+}
+
+disk_build_tab_save_steps() {
+  disk_build_tab_export
+  disk_project_save "$1"
+}
+
+disk_build_tab_load() {
+  disk_app_ask "Project file to open" "path to a .enban file"
+  disk_bo_file="${DISK_APP_ANSWER}"
+  [ -n "${disk_bo_file}" ] || return 0
+  disk_bo_fs="${DISK_BUILD_FS}"
+  if disk_project_read "${disk_bo_file}"; then
+    disk_build_tab_import
+    DISK_APP_B_FOCUS=0
+    disk_build_tab_refresh
+    DISK_APP_STATUS="Opened ${disk_bo_file}."
+  else
+    DISK_APP_STATUS="Not opened: ${DISK_PROJECT_PROBLEM}"
+  fi
+  DISK_BUILD_FS="${disk_bo_fs}"
 }

@@ -45,6 +45,8 @@ DISK_PROG=enban
 . "${DISK_LIB}/build_bdmv.sh"
 # shellcheck source=SCRIPTDIR/../lib/build_udf.sh
 . "${DISK_LIB}/build_udf.sh"
+# shellcheck source=SCRIPTDIR/../lib/project.sh
+. "${DISK_LIB}/project.sh"
 # shellcheck source=SCRIPTDIR/../lib/udf_write.sh
 . "${DISK_LIB}/udf_write.sh"
 # shellcheck source=SCRIPTDIR/../lib/erase.sh
@@ -143,6 +145,7 @@ usage:
   enban read --drive DRIVE IMAGE      copy a disc to an image and its SHA-256
   enban verify --drive DRIVE [IMAGE]  check every sector, or compare with IMAGE
   enban build FOLDER IMAGE            make an image from a folder
+  enban build --project FILE IMAGE    make an image from a project saved on Build
   enban erase --drive DRIVE [--full]  blank a rewritable disc
   enban checksum IMAGE                print the MD5, SHA-1 and SHA-256 of IMAGE
   enban checksum --drive DRIVE        the same for the disc in the drive
@@ -184,6 +187,7 @@ options:
   --no-eject          leave the disc in the drive when the write ends
   --fs LIST           file systems build writes; iso9660,joliet,udf by default
   --label NAME        the volume name build writes; the folder's by default
+  --project FILE      build takes its layout and options from this project
   --publisher TEXT    the publisher build records, in capitals
   --preparer TEXT     who prepared the image, in capitals
   --application TEXT  the application build records, in capitals
@@ -289,8 +293,9 @@ notes:
   image comparison on or off, Enter names the image, v verifies the disc, and
   c cancels the verify. On Build, a and f add a file or folder to the layout, x
   and n remove or rename the focused entry, Enter edits the type, label, image
-  or target, b builds into the image or, after you type the drive's name,
-  onto the disc, and c cancels the build. On Tools, Enter opens the focused
+  or target, o saves the layout as a project, l opens one, b builds into the
+  image or, after you type the drive's name, onto the disc, and c cancels the
+  build. On Tools, Enter opens the focused
   tool, space picks a quick or full erase, and Escape goes back to the list.
   On Queue, a adds an image, x removes it, J and K move it, Enter sets its
   speed and copies, v turns the verify on or off, o saves the queue to a file
@@ -392,6 +397,7 @@ disk_option_value() {
   --pregap) DISK_CUE_PREGAP="$2" ;;
   --set) DISK_REGION_SET="$2" ;;
   --label) DISK_BUILD_LABEL="$2" ;;
+  --project) DISK_BUILD_PROJECT="$2" ;;
   --publisher) DISK_BUILD_PUBLISHER="$2" ;;
   --preparer) DISK_BUILD_PREPARER="$2" ;;
   --application) DISK_BUILD_APPLICATION="$2" ;;
@@ -425,6 +431,7 @@ disk_option_seen() {
     DISK_BUILD_OPTION="${DISK_BUILD_OPTION:-$1}"
     DISK_BOOT_OPTION="${DISK_BOOT_OPTION:-$1}"
     ;;
+  --project) DISK_PROJECT_OPTION="$1" ;;
   --full) DISK_ERASE_OPTION="$1" ;;
   --sectors | --csv) DISK_DISCOVERY_OPTION="${DISK_DISCOVERY_OPTION:-$1}" ;;
   --lba | --raw | --subchannel) DISK_SECTOR_OPTION="${DISK_SECTOR_OPTION:-$1}" ;;
@@ -444,7 +451,7 @@ disk_option_seen() {
 }
 
 disk_options() {
-  DISK_VALUE_OPTIONS="--drive --speed --copies --mode --retries --publisher --preparer --application --system-id --volume-set --date --iso-level --boot --emulation --platform --load-sectors --udf-version --fs --label --sectors --csv --lba --title --performer --pregap --set"
+  DISK_VALUE_OPTIONS="--drive --speed --copies --mode --retries --publisher --preparer --application --system-id --volume-set --date --iso-level --boot --emulation --platform --load-sectors --udf-version --fs --label --project --sectors --csv --lba --title --performer --pregap --set"
   disk_op_room="$1"
   shift
   disk_op_left="$#"
@@ -492,6 +499,7 @@ disk_only_for() {
   disk_option_owner "$1" "${DISK_COPIES_OPTION}" write write || return 1
   disk_option_owner "$1" "${DISK_WRITE_OPTION}" write write || return 1
   disk_option_owner "$1" "${DISK_BUILD_OPTION}" build build || return 1
+  disk_option_owner "$1" "${DISK_PROJECT_OPTION}" build build || return 1
   disk_option_owner "$1" "${DISK_ERASE_OPTION}" erase erase || return 1
   disk_option_owner "$1" "${DISK_DISCOVERY_OPTION}" discovery discovery || return 1
   disk_option_owner "$1" "${DISK_SECTOR_OPTION}" sector sector || return 1
@@ -586,6 +594,10 @@ disk_verify() {
 disk_build() {
   disk_options 2 "$@" || return 1
   disk_only_for build || return 1
+  if [ -n "${DISK_PROJECT_OPTION}" ]; then
+    disk_build_project
+    return
+  fi
   if [ -z "${DISK_OPERAND_TWO}" ]; then
     disk_cli_hint "build needs a folder and an image file to create"
     return 1

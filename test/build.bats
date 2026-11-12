@@ -1316,3 +1316,147 @@ layout_call() {
   [[ "${status}" -eq 0 ]]
   [[ "${listed}" == "${wanted}" ]]
 }
+
+project() {
+  printf '%s\n' "$@" >"${WORK}/family.enban"
+}
+
+@test "enban build --project builds the entries and fields the project holds" {
+  # Arrange
+  local tab=$'\t'
+  project enban-project=1 "fs=iso9660" "label=Kyoto trip" "" "entry=pictures${tab}${SRC}/sub" "entry=notes.txt${tab}${SRC}/notes.txt"
+
+  # Act
+  run disk_test_run enban build --project "${WORK}/family.enban" "${OUT}" </dev/null
+
+  # Assert
+  local listed kinds label
+  listed="$(image_files "${OUT}")"
+  listed="${listed,,}"
+  kinds="$(descriptors "${OUT}")"
+  label="$(volume_id "${OUT}")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${listed}" == *"notes.txt"*"pictures/photo.bin"* ]]
+  [[ "${kinds}" == "" ]]
+  [[ "${label}" == "KYOTO_TRIP" ]]
+}
+
+@test "enban build --project refuses another build option beside it" {
+  # Arrange
+  project enban-project=1
+
+  # Act
+  run disk_test_run enban build --project "${WORK}/family.enban" "${OUT}" --label Trip </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: option '--label' cannot go with --project, which holds the build options. run 'enban help' for usage." ]]
+}
+
+@test "enban build --project takes only the image file" {
+  # Arrange
+  project enban-project=1
+
+  # Act
+  run disk_test_run enban build --project "${WORK}/family.enban" "${SRC}" "${OUT}" </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: build --project takes only the image file to create. run 'enban help' for usage." ]]
+}
+
+@test "enban build --project needs the image file" {
+  # Arrange
+  project enban-project=1
+
+  # Act
+  run disk_test_run enban build --project "${WORK}/family.enban" </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: build --project takes only the image file to create. run 'enban help' for usage." ]]
+}
+
+@test "enban build --project says when there is no project at the path" {
+  # Arrange
+  local missing="${WORK}/missing.enban"
+
+  # Act
+  run disk_test_run enban build --project "${missing}" "${OUT}" </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: there is no project at ${missing}." ]]
+}
+
+@test "enban build --project refuses a file that is not a project" {
+  # Arrange
+  project "fs=iso9660"
+
+  # Act
+  run disk_test_run enban build --project "${WORK}/family.enban" "${OUT}" </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: ${WORK}/family.enban is not an enban project." ]]
+}
+
+@test "enban build --project names a line it does not know" {
+  # Arrange
+  project enban-project=1 "fs=iso9660" "colour=red"
+
+  # Act
+  run disk_test_run enban build --project "${WORK}/family.enban" "${OUT}" </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: ${WORK}/family.enban line 3: unknown setting colour." ]]
+}
+
+@test "enban build --project needs yes or no for dvd_video and bdmv" {
+  # Arrange
+  project enban-project=1 "bdmv=maybe"
+
+  # Act
+  run disk_test_run enban build --project "${WORK}/family.enban" "${OUT}" </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: ${WORK}/family.enban line 2: bdmv must be yes or no, got: maybe" ]]
+}
+
+@test "enban build --project needs a name, a tab and a full path in each entry" {
+  # Arrange
+  project enban-project=1 "entry=notes.txt notes.txt"
+
+  # Act
+  run disk_test_run enban build --project "${WORK}/family.enban" "${OUT}" </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: ${WORK}/family.enban line 2: an entry is a name, a tab and a full path." ]]
+}
+
+@test "enban build --project says when the project holds nothing to build" {
+  # Arrange
+  project enban-project=1 "dvd_video=no" "bdmv=no"
+
+  # Act
+  run disk_test_run enban build --project "${WORK}/family.enban" "${OUT}" </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: ${WORK}/family.enban has no files or folders to build." ]]
+}
+
+@test "info refuses --project, which only build takes" {
+  # Arrange
+  project enban-project=1
+
+  # Act
+  run disk_test_run enban info --drive "stdio:${OUT}" --project "${WORK}/family.enban" </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: option '--project' works only with build. run 'enban help' for usage." ]]
+}

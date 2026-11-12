@@ -48,6 +48,10 @@ enban \- write, read, build and verify CD, DVD and Blu-ray discs
 .RB [ \-\-udf\-version
 .IR v ]
 .br
+.B enban build
+.BI \-\-project " file"
+.I image
+.br
 .B enban erase
 .BI \-\-drive " drive"
 .RB [ \-\-full ]
@@ -181,6 +185,10 @@ and
 .B n
 remove or rename the focused entry, Enter edits the type, label, image or
 target,
+.B o
+saves the layout as a project,
+.B l
+opens one,
 .B b
 builds into the image or, after the drive's name is typed, onto the disc, and
 .B c
@@ -496,6 +504,15 @@ commas; iso9660 is required. All three by default.
 .BI \-\-label " name"
 The volume name build writes, up to 32 characters. The folder's name by
 default.
+.TP
+.BI \-\-project " file"
+Build takes its layout and every build option from a project that the
+Build tab saved, so it takes the image file alone and no other build option.
+A project is text: the line enban-project=1, then one
+.I name=value
+per line for fs, label, publisher, date, boot, emulation, platform,
+dvd_video, bdmv and udf_version, and one entry= line per file or folder,
+holding its name on the disc, a tab and its full path.
 .TP
 .BI \-\-publisher " text"
 The publisher build records, up to 128 characters.

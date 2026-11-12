@@ -48,6 +48,7 @@ _enban() {
     '--eject[open the tray when the write ends]' \
     '--fs[file systems build writes]:file systems:(iso9660,joliet,udf iso9660,joliet iso9660,udf iso9660)' \
     '--label[the volume name build writes]:label:' \
+    '--project[the project build takes its layout from]:project:_files' \
     '--publisher[the publisher build records]:publisher:' \
     '--preparer[who prepared the image]:preparer:' \
     '--application[the application build records]:application:' \
