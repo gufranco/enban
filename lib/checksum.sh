@@ -30,7 +30,7 @@ disk_checksum_source() {
     cat "${DISK_CHECKSUM_IMAGE}"
     return
   fi
-  dd if="${DISK_DRIVE#stdio:}" bs=2048 count="${DISK_DRIVE_READABLE}" 2>/dev/null || : >"$1/failed"
+  disk_drive_dd bs=2048 count="${DISK_DRIVE_READABLE}" 2>/dev/null || : >"$1/failed"
 }
 
 disk_checksum_scan() {

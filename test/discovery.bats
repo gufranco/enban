@@ -66,6 +66,21 @@ pattern_line() {
   [[ "${output}" == *"CSV          ${CSV}"* ]]
 }
 
+@test "enban discovery reads the time of each stretch from a BSD dd summary" {
+  # Arrange
+  blank_disc 250
+  disk_test_shim dd "case \" \$* \" in *\" skip=\"*\" of=\"*) \"\${REAL}\" \"\$@\" 2>/dev/null; code=\$?; printf '3+0 records in\\n3+0 records out\\n6144 bytes transferred in 0.500000 secs (12288 bytes/sec)\\n' >&2; exit \"\${code}\" ;; *) exec \"\${REAL}\" \"\$@\" ;; esac"
+
+  # Act
+  run disk_test_run enban discovery --drive "${DRIVE}" --csv "${CSV}" <<<"disc.iso"
+
+  # Assert
+  local second
+  second="$(sed -n '3p' "${CSV}")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${second}" == "3,3,0.500000,12" ]]
+}
+
 @test "enban discovery saves an ImgBurn graph beside the CSV" {
   # Arrange
   blank_disc 128
@@ -250,7 +265,7 @@ pattern_line() {
 
   # Assert
   [[ "${status}" -eq 1 ]]
-  [[ "${output}" == "enban: reading a drive is not supported on macOS yet, so discovery stops here." ]]
+  [[ "${output}" == "enban: on macOS name a drive like IODVDServices/0 or IOCompactDiscServices/0, or an image like stdio:disc.iso, so discovery cannot use ${drive}." ]]
 }
 
 @test "enban discovery refuses a sector count that is not a number" {

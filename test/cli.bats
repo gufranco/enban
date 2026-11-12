@@ -75,7 +75,7 @@ minimal_path() {
   # Arrange
   local expected
   case "${ENBAN_TEST_OS}" in
-  Darwin) expected="drutil" ;;
+  Darwin) expected="hdiutil" ;;
   *) expected="xorriso" ;;
   esac
 

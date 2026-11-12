@@ -30,13 +30,17 @@ disk_read_retries_ok() {
 
 disk_read_speed() {
   [ -n "${DISK_SPEED_OPTION}" ] || return 0
+  if disk_mac_drive "${DISK_DRIVE}"; then
+    DISK_MAC_SPEED="${DISK_WRITE_SPEED}"
+    return 0
+  fi
   DISK_SPEED_WANTED="${DISK_WRITE_SPEED}"
   disk_speed_run
 }
 
 disk_read_once() {
   rm -f "${DISK_READ_OUT}"
-  dd if="${DISK_DRIVE#stdio:}" of="${DISK_READ_OUT}" bs=2048 count="${DISK_DRIVE_READABLE}" 2>/dev/null
+  disk_drive_dd of="${DISK_READ_OUT}" bs=2048 count="${DISK_DRIVE_READABLE}" 2>/dev/null
 }
 
 disk_read_copy() {
@@ -69,7 +73,7 @@ disk_read_drop() {
 
 disk_read_salvage() {
   disk_rz_errors="$(mktemp "${TMPDIR:-/tmp}/enban-salvage.XXXXXX")" || return 1
-  dd if="${DISK_DRIVE#stdio:}" of="${DISK_READ_OUT}" bs=2048 count="${DISK_DRIVE_READABLE}" conv=noerror,sync 2>"${disk_rz_errors}"
+  disk_drive_dd of="${DISK_READ_OUT}" bs=2048 count="${DISK_DRIVE_READABLE}" conv=noerror,sync 2>"${disk_rz_errors}"
   DISK_READ_BAD="$(grep -c 'error reading' "${disk_rz_errors}")"
   rm -f "${disk_rz_errors}"
   disk_warning "${DISK_READ_BAD} sectors of ${DISK_DRIVE} could not be read and are zeros in ${DISK_READ_OUT}."
@@ -82,8 +86,7 @@ disk_read_cue() {
 }
 
 disk_read_verify() {
-  disk_rv_source="${DISK_DRIVE#stdio:}"
-  if dd if="${disk_rv_source}" bs=2048 count="${DISK_DRIVE_READABLE}" 2>/dev/null | cmp -s - "${DISK_READ_OUT}"; then
+  if disk_drive_dd bs=2048 count="${DISK_DRIVE_READABLE}" 2>/dev/null | cmp -s - "${DISK_READ_OUT}"; then
     return 0
   fi
   disk_error "the copy in ${DISK_READ_OUT} does not match the disc in ${DISK_DRIVE}."

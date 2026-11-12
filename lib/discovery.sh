@@ -45,7 +45,7 @@ disk_discovery_csv_path() {
 }
 
 disk_discovery_confirm() {
-  disk_dc_name="${DISK_DRIVE##*/}"
+  disk_dc_name="$(disk_drive_word "${DISK_DRIVE}")"
   printf 'Type %s to fill the disc with test data, or anything else to stop: ' "${disk_dc_name}" >&2
   disk_dc_answer=""
   IFS= read -r disk_dc_answer || disk_dc_answer=""
@@ -56,23 +56,24 @@ disk_discovery_confirm() {
 
 disk_discovery_write() {
   disk_dw_log="$(mktemp "${TMPDIR:-/tmp}/enban-discovery.XXXXXX")" || return 1
-  set -- -as cdrecord -v "dev=${DISK_DRIVE}" -dao
+  set -- -v "dev=${DISK_DRIVE}" -dao
   [ -z "${DISK_WRITE_SPEED}" ] || set -- "$@" "speed=${DISK_WRITE_SPEED}"
   [ "${DISK_WRITE_TEST}" = n ] || set -- "$@" -dummy
   disk_dw_status=0
-  disk_discovery_pattern 0 "${DISK_DISCOVERY_COUNT}" | xorriso "$@" "tsize=$((DISK_DISCOVERY_COUNT * 2048))" - >"${disk_dw_log}" 2>&1 || disk_dw_status="$?"
-  disk_dw_reason="$(sed -n 's/^xorriso : FAILURE : //p' "${disk_dw_log}" | sed -n '1p')"
+  disk_discovery_pattern 0 "${DISK_DISCOVERY_COUNT}" | disk_drive_cdrecord "$@" "tsize=$((DISK_DISCOVERY_COUNT * 2048))" - >"${disk_dw_log}" 2>&1 || disk_dw_status="$?"
+  disk_dw_reason="$(disk_drive_reason "${disk_dw_log}")"
   rm -f "${disk_dw_log}"
   [ "${disk_dw_status}" -eq 0 ] && return 0
-  disk_error "the write to ${DISK_DRIVE} failed: ${disk_dw_reason:-xorriso exited with ${disk_dw_status}.}"
+  disk_dw_tool="$(disk_drive_burner)"
+  disk_error "the write to ${DISK_DRIVE} failed: ${disk_dw_reason:-${disk_dw_tool} exited with ${disk_dw_status}.}"
   return 1
 }
 
 disk_discovery_chunk() {
   disk_dk_dir="$1"
-  dd if="${DISK_DRIVE#stdio:}" bs=2048 skip="$2" count="$3" of="${disk_dk_dir}/got" 2>"${disk_dk_dir}/stat" || : >"${disk_dk_dir}/got"
+  disk_drive_dd bs=2048 skip="$2" count="$3" of="${disk_dk_dir}/got" 2>"${disk_dk_dir}/stat" || : >"${disk_dk_dir}/got"
   disk_discovery_pattern "$2" "$3" >"${disk_dk_dir}/want"
-  disk_dk_seconds="$(awk '/copied, / { sub(/.*copied, /, ""); sub(/ s.*/, ""); print }' "${disk_dk_dir}/stat")"
+  disk_dk_seconds="$(awk '/copied, / { sub(/.*copied, /, ""); sub(/ s.*/, ""); print } / transferred in / { sub(/.* transferred in /, ""); sub(/ secs.*/, ""); print }' "${disk_dk_dir}/stat")"
   disk_dk_rate="$(disk_discovery_rate "$3" "${disk_dk_seconds}")"
   printf '%s,%s,%s,%s\n' "$2" "$3" "${disk_dk_seconds}" "${disk_dk_rate}" >>"${DISK_DISCOVERY_CSV}"
   disk_dk_bytes="$(disk_file_bytes "${disk_dk_dir}/got")"

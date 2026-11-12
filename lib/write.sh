@@ -28,7 +28,7 @@ disk_write_fits() {
 }
 
 disk_write_confirm() {
-  disk_wc_name="${DISK_DRIVE##*/}"
+  disk_wc_name="$(disk_drive_word "${DISK_DRIVE}")"
   printf 'Type %s to write, or anything else to stop: ' "${disk_wc_name}" >&2
   disk_wc_answer=""
   IFS= read -r disk_wc_answer || disk_wc_answer=""
@@ -39,22 +39,22 @@ disk_write_confirm() {
 
 disk_write_burn() {
   disk_wb_log="$(mktemp "${TMPDIR:-/tmp}/enban-write.XXXXXX")" || return 1
-  set -- -as cdrecord -v "dev=${DISK_DRIVE}" "-${DISK_WRITE_MODE}"
+  set -- -v "dev=${DISK_DRIVE}" "-${DISK_WRITE_MODE}"
   [ "${DISK_WRITE_FINALIZE}" = y ] || set -- "$@" -multi
   [ -z "${DISK_WRITE_SPEED}" ] || set -- "$@" "speed=${DISK_WRITE_SPEED}"
   [ "${DISK_WRITE_TEST}" = n ] || set -- "$@" -dummy
   disk_wb_status=0
-  xorriso "$@" "${DISK_WRITE_IMAGE}" >"${disk_wb_log}" 2>&1 || disk_wb_status="$?"
-  disk_wb_reason="$(sed -n 's/^xorriso : FAILURE : //p' "${disk_wb_log}" | sed -n '1p')"
+  disk_drive_cdrecord "$@" "${DISK_WRITE_IMAGE}" >"${disk_wb_log}" 2>&1 || disk_wb_status="$?"
+  disk_wb_reason="$(disk_drive_reason "${disk_wb_log}")"
   rm -f "${disk_wb_log}"
   [ "${disk_wb_status}" -eq 0 ] && return 0
-  disk_error "the write to ${DISK_DRIVE} failed: ${disk_wb_reason:-xorriso exited with ${disk_wb_status}.}"
+  disk_wb_tool="$(disk_drive_burner)"
+  disk_error "the write to ${DISK_DRIVE} failed: ${disk_wb_reason:-${disk_wb_tool} exited with ${disk_wb_status}.}"
   return 1
 }
 
 disk_write_verify() {
-  disk_wv_source="${DISK_DRIVE#stdio:}"
-  if dd if="${disk_wv_source}" bs=2048 count="${DISK_WRITE_SECTORS}" 2>/dev/null | cmp -s - "${DISK_WRITE_IMAGE}"; then
+  if disk_drive_dd bs=2048 count="${DISK_WRITE_SECTORS}" 2>/dev/null | cmp -s - "${DISK_WRITE_IMAGE}"; then
     return 0
   fi
   disk_error "the disc in ${DISK_DRIVE} does not match ${DISK_WRITE_IMAGE}."
@@ -62,7 +62,7 @@ disk_write_verify() {
 }
 
 disk_write_eject() {
-  xorriso -outdev "${DISK_DRIVE}" -eject all >/dev/null 2>&1 && return 0
+  disk_drive_eject && return 0
   DISK_WRITE_EJECT=n
   disk_warning "the disc is written, but ${DISK_DRIVE} did not open its tray."
 }

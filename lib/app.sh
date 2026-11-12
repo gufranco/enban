@@ -84,7 +84,7 @@ disk_app_drive_note() {
     disk_log_add INFO "Found ${DISK_DRIVE}, ${DISK_DRIVE_VENDOR} ${DISK_DRIVE_PRODUCT} ${DISK_DRIVE_REVISION}, ${disk_an_profile}"
     ;;
   2)
-    DISK_APP_DRIVE_NOTE="Reading a drive is not supported on macOS yet."
+    DISK_APP_DRIVE_NOTE="On macOS, name the drive like IODVDServices/0."
     DISK_APP_STATUS="${DISK_APP_DRIVE_NOTE}"
     disk_log_add WARN "${DISK_APP_DRIVE_NOTE}"
     ;;

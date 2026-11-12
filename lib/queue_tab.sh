@@ -163,8 +163,9 @@ disk_queue_tab_typed() {
   while [ "${disk_qy_index}" -le "${disk_qy_total}" ]; do
     disk_qy_drive="$(printf '%s\n' "${disk_qy_drives}" | sed -n "${disk_qy_index}p")"
     disk_qy_index=$((disk_qy_index + 1))
-    disk_app_ask "Type ${disk_qy_drive##*/} to write to ${disk_qy_drive}, or anything else to stop" "${disk_qy_drive##*/}"
-    [ "${DISK_APP_ANSWER}" = "${disk_qy_drive##*/}" ] && continue
+    disk_qy_word="$(disk_drive_word "${disk_qy_drive}")"
+    disk_app_ask "Type ${disk_qy_word} to write to ${disk_qy_drive}, or anything else to stop" "${disk_qy_word}"
+    [ "${DISK_APP_ANSWER}" = "${disk_qy_word}" ] && continue
     DISK_APP_STATUS="Nothing was written."
     return 1
   done

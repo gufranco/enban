@@ -247,7 +247,13 @@ free sectors, the write speeds the drive offers and the kinds of disc it
 handles. On Linux it reads the drive
 through
 .BR xorriso .
-Reading a drive on macOS is not supported yet, so info stops there.
+On macOS a drive is named like IODVDServices/0, IOCompactDiscServices/0 or
+IOBDServices/0, and info, write, read, verify, erase, checksum, discovery,
+sector and queue reach it through
+.B cdrecord
+and
+.B readcd
+from cdrtools; an image target such as stdio:disc.iso works on both.
 .TP
 .B write
 Burn
@@ -770,6 +776,7 @@ is named in a warning. Options, then ENBAN_ variables, win over the file.
 .SH EXIT STATUS
 0 on success, 1 on any failure or refusal.
 .SH SEE ALSO
-.BR drutil (1),
+.BR cdrecord (1),
 .BR hdiutil (1),
+.BR readcd (1),
 .BR xorriso (1)

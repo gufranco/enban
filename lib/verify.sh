@@ -23,7 +23,7 @@ disk_verify_check() {
 }
 
 disk_verify_stream() {
-  dd if="${DISK_DRIVE#stdio:}" bs=2048 count="${DISK_VERIFY_SECTORS}" 2>"$1"
+  disk_drive_dd bs=2048 count="${DISK_VERIFY_SECTORS}" 2>"$1"
 }
 
 disk_verify_compare() {

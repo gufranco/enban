@@ -35,13 +35,21 @@ disk_sector_read() {
   if [ "${DISK_SECTOR_RAW}" = y ] && [ -z "${DISK_SECTOR_IMAGE}" ]; then
     disk_sector_raw_read "$1" || return 1
   else
-    dd if="${DISK_SECTOR_FROM}" of="$1" bs="${disk_sr_size}" skip="${DISK_SECTOR_LBA}" count=1 2>/dev/null || : >"$1"
+    disk_sector_plain "$1" "${disk_sr_size}" 2>/dev/null || : >"$1"
   fi
   disk_sector_sub_file "$1" || return 1
   disk_sr_bytes="$(disk_file_bytes "$1")"
   [ "${disk_sr_bytes}" -eq "${disk_sr_size}" ] && return 0
   disk_error "sector ${DISK_SECTOR_LBA} is past the end of ${DISK_SECTOR_NAME}."
   return 1
+}
+
+disk_sector_plain() {
+  if [ -n "${DISK_SECTOR_IMAGE}" ]; then
+    dd if="${DISK_SECTOR_FROM}" of="$1" bs="$2" skip="${DISK_SECTOR_LBA}" count=1
+    return
+  fi
+  disk_drive_dd of="$1" bs="$2" skip="${DISK_SECTOR_LBA}" count=1
 }
 
 disk_sector_raw_read() {

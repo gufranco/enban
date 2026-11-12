@@ -513,7 +513,7 @@ sent() {
 
   # Assert
   [[ "${status}" -eq 1 ]]
-  [[ "${output}" == "enban: reading a drive is not supported on macOS yet, so region stops here." ]]
+  [[ "${output}" == "enban: on macOS name a drive like IODVDServices/0 or IOCompactDiscServices/0, or an image like stdio:disc.iso, so region cannot use ${drive}." ]]
 }
 
 @test "the raw drive commands need sg_raw" {

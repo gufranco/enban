@@ -154,7 +154,7 @@ disk_job_busy() {
 }
 
 disk_job_typed() {
-  disk_jy_name="${DISK_DRIVE##*/}"
+  disk_jy_name="$(disk_drive_word "${DISK_DRIVE}")"
   disk_jy_verb="${1:-write}"
   disk_app_ask "Type ${disk_jy_name} to ${disk_jy_verb}, or anything else to stop" "${disk_jy_name}"
   [ "${DISK_APP_ANSWER}" = "${disk_jy_name}" ] && return 0

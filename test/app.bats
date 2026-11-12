@@ -218,7 +218,7 @@ teardown() {
   # Assert
   local shown
   shown="$(last_frame)"
-  [[ "${shown}" == *"Reading a drive is not supported on macOS yet."* ]]
+  [[ "${shown}" == *"On macOS, name the drive like IODVDServices/0."* ]]
 }
 
 @test "a wide terminal draws the two panes side by side" {

@@ -119,7 +119,7 @@ written_dvd() {
 
   # Assert
   [[ "${status}" -eq 1 ]]
-  [[ "${output}" == "enban: reading a drive is not supported on macOS yet, so info stops here." ]]
+  [[ "${output}" == "enban: on macOS name a drive like IODVDServices/0 or IOCompactDiscServices/0, or an image like stdio:disc.iso, so info cannot use ${drive}." ]]
 }
 
 @test "enban info without --drive stops with the usage hint" {

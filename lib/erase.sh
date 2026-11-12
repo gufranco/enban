@@ -20,7 +20,7 @@ disk_erase_check() {
 }
 
 disk_erase_confirm() {
-  disk_eo_name="${DISK_DRIVE##*/}"
+  disk_eo_name="$(disk_drive_word "${DISK_DRIVE}")"
   printf 'Type %s to erase, or anything else to stop: ' "${disk_eo_name}" >&2
   disk_eo_answer=""
   IFS= read -r disk_eo_answer || disk_eo_answer=""
@@ -34,11 +34,12 @@ disk_erase_blank() {
   [ "${DISK_ERASE_FULL}" = n ] || disk_eb_mode=all
   disk_eb_log="$(mktemp "${TMPDIR:-/tmp}/enban-erase.XXXXXX")" || return 1
   disk_eb_status=0
-  xorriso -outdev "${DISK_DRIVE}" -blank "${disk_eb_mode}" >"${disk_eb_log}" 2>&1 || disk_eb_status="$?"
-  disk_eb_reason="$(sed -n 's/^xorriso : FAILURE : //p' "${disk_eb_log}" | sed -n '1p')"
+  disk_drive_blank "${disk_eb_mode}" >"${disk_eb_log}" 2>&1 || disk_eb_status="$?"
+  disk_eb_reason="$(disk_drive_reason "${disk_eb_log}")"
   rm -f "${disk_eb_log}"
   [ "${disk_eb_status}" -eq 0 ] && return 0
-  disk_error "the erase of ${DISK_DRIVE} failed: ${disk_eb_reason:-xorriso exited with ${disk_eb_status}.}"
+  disk_eb_tool="$(disk_drive_burner)"
+  disk_error "the erase of ${DISK_DRIVE} failed: ${disk_eb_reason:-${disk_eb_tool} exited with ${disk_eb_status}.}"
   return 1
 }
 

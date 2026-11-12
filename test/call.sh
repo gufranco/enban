@@ -16,6 +16,8 @@ DISK_LIB="$(cd "$(dirname "$0")/../lib" && pwd)" || exit 1
 
 # shellcheck source=SCRIPTDIR/../lib/drive.sh
 . "${DISK_LIB}/drive.sh"
+# shellcheck source=SCRIPTDIR/../lib/mac_drive.sh
+. "${DISK_LIB}/mac_drive.sh"
 # shellcheck source=SCRIPTDIR/../lib/write.sh
 . "${DISK_LIB}/write.sh"
 # shellcheck source=SCRIPTDIR/../lib/write_convert.sh

@@ -448,3 +448,17 @@ disk_test_raw_bin() {
     sector=$((sector + 1))
   done
 }
+
+disk_test_mac_drive() {
+  local state="${WORK:?}/mac.state"
+  local disc="${WORK}/mac.disc"
+  [[ -e "${disc}" ]] || : >"${disc}"
+  printf '%s\n' "vendor=HL-DT-ST" "product=DVDRAM GH24NSB0" "revision=LK00" "class=$1" "type=$2" \
+    "status=$3" "sessions=1" "leadout=$4" "free=$5" "speeds=22160 11080" "profiles=$2:1;CD-R:0" "backing=${disc}" >"${state}"
+  disk_test_shim cdrecord "exec sh $(printf '%q' "${ENBAN_TESTS_DIR}/cdrecord.sh") $(printf '%q' "${state}") \"\$@\""
+  disk_test_shim readcd "exec sh $(printf '%q' "${ENBAN_TESTS_DIR}/readcd.sh") $(printf '%q' "${state}") \"\$@\""
+}
+
+disk_test_mac_set() {
+  printf '%s=%s\n' "$1" "$2" >>"${WORK:?}/mac.state"
+}

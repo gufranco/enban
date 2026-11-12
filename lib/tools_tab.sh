@@ -193,7 +193,7 @@ disk_tools_tab_eject() {
     DISK_APP_STATUS="There is no drive to eject."
     return 0
   fi
-  if xorriso -outdev "${DISK_DRIVE}" -eject all >/dev/null 2>&1; then
+  if disk_drive_eject; then
     DISK_APP_STATUS="The tray of ${DISK_DRIVE} is open."
     return 0
   fi

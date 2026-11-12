@@ -59,7 +59,7 @@ disk_queue_confirm() {
   while [ "${disk_qc_index}" -le "${disk_qc_total}" ]; do
     disk_qc_drive="$(sed -n "${disk_qc_index}p" "$2")"
     disk_qc_index=$((disk_qc_index + 1))
-    disk_qc_name="${disk_qc_drive##*/}"
+    disk_qc_name="$(disk_drive_word "${disk_qc_drive}")"
     disk_qc_count="$(cut -f 3 "$1" | grep -cxF -- "${disk_qc_drive}")"
     disk_qc_noun="$(disk_queue_plural "${disk_qc_count}" image)"
     printf 'Type %s to write %s to %s, or anything else to stop: ' "${disk_qc_name}" "${disk_qc_noun}" "${disk_qc_drive}" >&2

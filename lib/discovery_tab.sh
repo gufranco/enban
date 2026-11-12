@@ -37,7 +37,7 @@ disk_discovery_tab_start() {
     DISK_APP_STATUS="There is no drive to test."
     return 0
   fi
-  disk_dt_name="${DISK_DRIVE##*/}"
+  disk_dt_name="$(disk_drive_word "${DISK_DRIVE}")"
   disk_app_ask "Type ${disk_dt_name} to fill the disc with test data, or anything else to stop" "${disk_dt_name}"
   if [ "${DISK_APP_ANSWER}" != "${disk_dt_name}" ]; then
     DISK_APP_STATUS="Nothing was written."

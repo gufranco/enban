@@ -26,7 +26,7 @@ disk_raw_device() {
 }
 
 disk_raw_typed() {
-  disk_rt_name="${DISK_DRIVE##*/}"
+  disk_rt_name="$(disk_drive_word "${DISK_DRIVE}")"
   printf 'Type %s to %s, or anything else to stop: ' "${disk_rt_name}" "$1" >&2
   disk_rt_answer=""
   IFS= read -r disk_rt_answer || disk_rt_answer=""
