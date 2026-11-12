@@ -27,7 +27,7 @@ send_when_drawn() {
 send_in_steps() {
   disk_test_wait_for "${WORK}/out" 'What would you like to do' 100 || return 0
   printf '%b' "$1"
-  disk_test_wait_for "${WORK}/out" "$2" 100 || return 0
+  disk_test_wait_for "${STEP_FILE:-${WORK}/out}" "$2" 100 || return 0
   printf '%b' "$3"
 }
 

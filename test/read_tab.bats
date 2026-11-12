@@ -68,7 +68,11 @@ written_dvd() {
 }
 
 slow_half_read() {
-  disk_test_shim dd "case \" \$* \" in *\" of=\"*) head -c 4096 /dev/zero >'${OUT}'; sleep 30 ;; esac; exec \"\${REAL}\" \"\$@\""
+  disk_test_shim dd "case \" \$* \" in *\" of=\"*) head -c 4096 /dev/zero >'${OUT}'; printf 'half\n' >'${WORK}/half'; sleep 30 ;; esac; exec \"\${REAL}\" \"\$@\""
+}
+
+cancel_after_half_read() {
+  STEP_FILE="${WORK}/half" on_terminal_in_steps '2\nr' 'half' 'cq' --drive "stdio:${DISC}"
 }
 
 @test "cancelling a read deletes the half-written image" {
@@ -78,7 +82,7 @@ slow_half_read() {
   answers "${OUT}" y
 
   # Act
-  run on_terminal_in_steps '2\nr' 'Press c to cancel' 'cq' --drive "stdio:${DISC}"
+  run cancel_after_half_read
 
   # Assert
   local final
@@ -97,7 +101,7 @@ slow_half_read() {
   printf 'event_clean=no\n' >"${ENBAN_CONFIG}/settings"
 
   # Act
-  run on_terminal_in_steps '2\nr' 'Press c to cancel' 'cq' --drive "stdio:${DISC}"
+  run cancel_after_half_read
 
   # Assert
   local final
