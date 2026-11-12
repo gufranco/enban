@@ -63,6 +63,7 @@ disk_read_drop() {
     return 0
   fi
   rm -f "${DISK_READ_OUT}"
+  [ "${DISK_READ_CCD}" = n ] || rm -f "${DISK_READ_OUT%.*}.sub"
   disk_say "Deleted the half-read ${DISK_READ_OUT}."
 }
 
@@ -96,6 +97,7 @@ disk_read_done() {
   [ "${DISK_READ_VERIFY}" != y ] || [ "${DISK_READ_BAD}" -gt 0 ] || disk_rd_text="${disk_rd_text} and verified"
   disk_rd_line="Done. ${DISK_DRIVE} is ${disk_rd_text}."
   printf 'Sectors  %s\nMD5      %s\nSHA-256  %s\n' "${DISK_DRIVE_READABLE}" "${disk_rd_md5}" "${disk_rd_digest}"
+  [ "${DISK_READ_CCD}" = n ] || printf 'CloneCD  %s.ccd and %s.sub\n' "${DISK_READ_OUT%.*}" "${DISK_READ_OUT%.*}"
   if disk_ui_out; then
     disk_ui_done "${disk_rd_line}"
     return 0
@@ -105,12 +107,30 @@ disk_read_done() {
 
 disk_read_run() {
   disk_read_check || return 1
+  disk_read_ccd_ready || return 1
   disk_read_speed || return 1
-  disk_job_note "${DISK_READ_OUT}"
-  disk_read_copy || return 1
+  disk_read_image || return 1
   disk_read_cue
+  [ "${DISK_READ_CCD}" = n ] || disk_read_ccd_layout || return 1
   if [ "${DISK_READ_VERIFY}" = y ] && [ "${DISK_READ_BAD}" -eq 0 ]; then
-    disk_read_verify || return 1
+    disk_read_compare || return 1
   fi
   disk_read_done
+}
+
+disk_read_image() {
+  if [ "${DISK_READ_CCD}" = y ]; then
+    disk_read_ccd_copy
+    return
+  fi
+  disk_job_note "${DISK_READ_OUT}"
+  disk_read_copy
+}
+
+disk_read_compare() {
+  if [ "${DISK_READ_CCD}" = y ]; then
+    disk_read_ccd_verify
+    return
+  fi
+  disk_read_verify
 }

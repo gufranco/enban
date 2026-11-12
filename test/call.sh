@@ -22,6 +22,8 @@ DISK_LIB="$(cd "$(dirname "$0")/../lib" && pwd)" || exit 1
 . "${DISK_LIB}/write_convert.sh"
 # shellcheck source=SCRIPTDIR/../lib/read.sh
 . "${DISK_LIB}/read.sh"
+# shellcheck source=SCRIPTDIR/../lib/read_ccd.sh
+. "${DISK_LIB}/read_ccd.sh"
 # shellcheck source=SCRIPTDIR/../lib/verify.sh
 . "${DISK_LIB}/verify.sh"
 # shellcheck source=SCRIPTDIR/../lib/build.sh

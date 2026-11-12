@@ -6,7 +6,7 @@
 disk_settings_tab_items() {
   case "$1" in
   0) printf '%s\n' write_verify write_eject write_speed write_mode write_finalize write_opc ;;
-  1) printf '%s\n' read_verify read_retries read_ignore read_cue ;;
+  1) printf '%s\n' read_verify read_retries read_ignore read_cue read_ccd ;;
   2) printf '%s\n' build_fs ;;
   3) printf '%s\n' queue_wait ;;
   4) printf '%s\n' event_bell event_confirm event_clean ;;

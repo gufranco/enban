@@ -23,7 +23,7 @@ disk_settings_load() {
 disk_settings_apply() {
   case "$2" in
   write_verify | write_eject | write_finalize | write_opc) disk_settings_switch "$@" ;;
-  read_verify | read_ignore | read_cue) disk_settings_switch "$@" ;;
+  read_verify | read_ignore | read_cue | read_ccd) disk_settings_switch "$@" ;;
   event_bell | event_confirm | event_clean) disk_settings_switch "$@" ;;
   write_speed) disk_settings_speed "$@" ;;
   write_mode) disk_settings_mode "$@" ;;
@@ -56,6 +56,7 @@ disk_settings_set() {
   read_verify) DISK_READ_VERIFY="$2" ;;
   read_ignore) DISK_READ_IGNORE="$2" ;;
   read_cue) DISK_READ_CUE="$2" ;;
+  read_ccd) DISK_READ_CCD="$2" ;;
   event_bell) DISK_EVENT_BELL="$2" ;;
   event_confirm) DISK_EVENT_CONFIRM="$2" ;;
   *) DISK_EVENT_CLEAN="$2" ;;
@@ -71,6 +72,7 @@ disk_settings_get() {
   read_verify) printf '%s\n' "${DISK_READ_VERIFY}" ;;
   read_ignore) printf '%s\n' "${DISK_READ_IGNORE}" ;;
   read_cue) printf '%s\n' "${DISK_READ_CUE}" ;;
+  read_ccd) printf '%s\n' "${DISK_READ_CCD}" ;;
   event_bell) printf '%s\n' "${DISK_EVENT_BELL}" ;;
   event_confirm) printf '%s\n' "${DISK_EVENT_CONFIRM}" ;;
   *) printf '%s\n' "${DISK_EVENT_CLEAN}" ;;

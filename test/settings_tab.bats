@@ -215,14 +215,14 @@ page() {
   [[ "${shown}" == *"The retries must be a whole number from 0 to 99."* ]]
 }
 
-@test "space turns on skipping bad sectors and the CUE sheet of read" {
+@test "space turns on skipping bad sectors, the CUE sheet and the CloneCD copy of read" {
   # Arrange
   local keys
-  local read_page skip cue
+  local read_page skip next
   read_page="$(page 1)"
   skip="$(down 2)"
-  cue="$(down 1)"
-  keys="9${read_page}${skip} ${cue} q"
+  next="$(down 1)"
+  keys="9${read_page}${skip} ${next} ${next} q"
 
   # Act
   run on_terminal "${keys}"
@@ -230,6 +230,7 @@ page() {
   # Assert
   saved "read_ignore=yes"
   saved "read_cue=yes"
+  saved "read_ccd=yes"
 }
 
 @test "Enter on Type steps through the file systems build writes" {

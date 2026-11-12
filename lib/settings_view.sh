@@ -26,6 +26,7 @@ disk_settings_view_label() {
   read_retries) printf 'Retries\n' ;;
   read_ignore) printf 'Skip bad\n' ;;
   read_cue) printf 'CUE sheet\n' ;;
+  read_ccd) printf 'CloneCD\n' ;;
   build_fs) printf 'Type\n' ;;
   queue_wait) printf 'Wait\n' ;;
   event_bell) printf 'Bell\n' ;;
@@ -87,6 +88,7 @@ disk_settings_view_hint() {
   read_retries) printf 'How many times a read tries again after an error.\n' ;;
   read_ignore) printf 'Write zeros for sectors that will not read instead of stopping.\n' ;;
   read_cue) printf 'Write a CUE sheet beside each image read.\n' ;;
+  read_ccd) printf 'Read a CD raw into an .img with its CloneCD .sub and .ccd files.\n' ;;
   build_fs) printf 'The file systems a build writes.\n' ;;
   queue_wait) printf 'How long the queue waits for the next blank disc.\n' ;;
   event_bell) printf 'Ring the terminal bell when a job ends.\n' ;;

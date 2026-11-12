@@ -91,13 +91,36 @@ a4)
   ;;
 be)
   lba=$(((0x$3 << 24) + (0x$4 << 16) + (0x$5 << 8) + 0x$6))
-  {
-    printf '\000\377\377\377\377\377\377\377\377\377\377\000'
-    printf '\000\002\000\001'
-    dd if="${device}" bs=2048 skip="${lba}" count=1 2>/dev/null
-    head -c 288 /dev/zero
-    [ "${request}" -ne 2448 ] || subchannel "${lba}"
-  } >"${out}"
+  count=$(((0x$7 << 16) + (0x$8 << 8) + 0x$9))
+  main="${10}"
+  sub="${11}"
+  bad="$(value bad_lba)"
+  index=0
+  : >"${out}"
+  while [ "${index}" -lt "${count}" ]; do
+    at=$((lba + index))
+    index=$((index + 1))
+    if [ "${at}" = "${bad}" ]; then
+      printf 'sg_raw: SCSI Status: Check Condition\n' >&2
+      exit 5
+    fi
+    if [ "${main}" != 00 ]; then
+      {
+        printf '\000\377\377\377\377\377\377\377\377\377\377\000\000\002\000\001'
+        dd if="${device}" bs=2048 skip="${at}" count=1 2>/dev/null
+        head -c 288 /dev/zero
+      } >>"${out}"
+    fi
+    [ "${sub}" != 01 ] || subchannel "${at}" >>"${out}"
+  done
+  flip="$(value flip_after)"
+  calls="$(wc -l <"${log}")"
+  if [ -n "${flip}" ] && [ "${main}" != 00 ] && [ "${calls}" -gt "${flip}" ]; then
+    byte="$(od -An -c -j 20 -N 1 "${out}" | tr -d ' ')"
+    mark=X
+    [ "${byte}" != X ] || mark=Y
+    printf '%s' "${mark}" | dd of="${out}" bs=1 seek=20 conv=notrunc 2>/dev/null
+  fi
   [ "${request}" -gt 0 ] || exit 1
   ;;
 *) : ;;

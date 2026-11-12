@@ -86,6 +86,7 @@ _enban() {
     '--retries[read or verify again after a failed read]:retries:' \
     '--ignore-errors[read past unreadable sectors as zeros]' \
     '--cue[write a CUE sheet beside the image]' \
+    '--ccd[copy a CD raw with its CloneCD .sub and .ccd files]' \
     '--ignore-miscompares[verify warns on sectors that differ]' \
     '--set[the region to set]:region:(1 2 3 4 5 6 7 8)' \
     '*:image:_files' \

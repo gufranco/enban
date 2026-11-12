@@ -329,3 +329,154 @@ half_reads() {
   [[ "${output}" == "enban: --retries must be a whole number from 0 to 99, got: abc" ]]
   [[ "${other}" == "enban: option '--cue' works only with read. run 'enban help' for usage." ]]
 }
+
+written_cd() {
+  local search_path
+  disk_test_drive 0009 "CD-R" 359844 7056
+  search_path="$(disk_test_path)"
+  PATH="${search_path}" xorriso -as cdrecord dev="${DRIVE}" -dao "${IMAGE}" >/dev/null 2>&1
+  disk_test_raw
+}
+
+@test "enban read --ccd copies a CD raw with its subchannel and a CloneCD layout" {
+  # Arrange
+  written_cd
+  local raw="${WORK}/copy.img"
+
+  # Act
+  run disk_test_run enban read --drive "${DRIVE}" "${raw}" --ccd </dev/null
+
+  # Assert
+  local main_size sub_size layout
+  main_size="$(wc -c <"${raw}")"
+  sub_size="$(wc -c <"${WORK}/copy.sub")"
+  layout="$(<"${WORK}/copy.ccd")"
+  dd if="${raw}" bs=1 skip=$((5 * 2352 + 16)) count=2048 2>/dev/null >"${WORK}/user.bin"
+  dd if="${IMAGE}" bs=2048 skip=5 count=1 2>/dev/null >"${WORK}/want.bin"
+  [[ "${status}" -eq 0 ]]
+  [[ "${main_size//[[:space:]]/}" == "1557024" ]]
+  [[ "${sub_size//[[:space:]]/}" == "63552" ]]
+  cmp -s "${WORK}/user.bin" "${WORK}/want.bin"
+  [[ "${layout}" == $'[CloneCD]\r\nVersion=3\r\n'* ]]
+  [[ "${layout}" == *$'Point=0xa2\r\nADR=0x01\r\nControl=0x04\r\nTrackNo=0\r\nAMin=0\r\nASec=0\r\nAFrame=0\r\nALBA=-150\r\nZero=0\r\nPMin=0\r\nPSec=10\r\nPFrame=62\r\nPLBA=662\r\n'* ]]
+  [[ "${layout}" == *$'[TRACK 1]\r\nMODE=1\r\nINDEX 1=0\r' ]]
+  [[ "${output}" == *"CloneCD  ${WORK}/copy.ccd and ${WORK}/copy.sub"* ]]
+  [[ "${output}" == *"Done. ${DRIVE} is read into ${raw} and verified." ]]
+}
+
+@test "enban read --ccd needs an image name ending in .img" {
+  # Arrange
+  written_cd
+
+  # Act
+  run disk_test_run enban read --drive "${DRIVE}" "${OUT}" --ccd </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: --ccd writes a raw CloneCD image, so its name ends in .img, got: ${OUT}" ]]
+}
+
+@test "enban read --ccd and --cue do not go together" {
+  # Arrange
+  written_cd
+
+  # Act
+  run disk_test_run enban read --drive "${DRIVE}" "${WORK}/copy.img" --ccd --cue </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: --ccd and --cue each write the layout file of the image; choose one." ]]
+}
+
+@test "enban read --ccd reads only a CD" {
+  # Arrange
+  written_dvd
+
+  # Act
+  run disk_test_run enban read --drive "${DRIVE}" "${WORK}/copy.img" --ccd </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: --ccd reads a CD, and the disc in ${DRIVE} is DVD-R sequential recording." ]]
+}
+
+@test "enban read --ccd stops when the layout file already exists" {
+  # Arrange
+  written_cd
+  printf 'mine\n' >"${WORK}/copy.ccd"
+
+  # Act
+  run disk_test_run enban read --drive "${DRIVE}" "${WORK}/copy.img" --ccd </dev/null
+
+  # Assert
+  local kept
+  kept="$(<"${WORK}/copy.ccd")"
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: stopped: ${WORK}/copy.ccd already exists." ]]
+  [[ "${kept}" == "mine" ]]
+}
+
+@test "enban read --ccd needs sg_raw" {
+  # Arrange
+  written_cd
+  local farm
+  farm="$(disk_test_farm sg_raw)"
+
+  # Act
+  run disk_test_run_path "${farm}" enban read --drive "${DRIVE}" "${WORK}/copy.img" --ccd </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: --ccd needs sg_raw from sg3-utils to read raw sectors. install it and try again." ]]
+}
+
+@test "enban read --ccd tries a bad stretch again, then stops and deletes the half copy" {
+  # Arrange
+  written_cd
+  printf 'bad_lba=20\n' >>"${WORK}/drive.state"
+
+  # Act
+  run disk_test_run enban read --drive "${DRIVE}" "${WORK}/copy.img" --ccd --retries 1 </dev/null
+
+  # Assert
+  local tries
+  tries="$(grep -c "be 00 00 00 00 10 00 00 10 f8 00 00" "${WORK}/sg_raw.log" || true)"
+  [[ "${status}" -eq 1 ]]
+  [[ "${tries}" == "2" ]]
+  [[ "${output}" == *"enban: unable to read sectors 16 to 31 of ${DRIVE} into ${WORK}/copy.img." ]]
+  [[ ! -e "${WORK}/copy.img" ]]
+  [[ ! -e "${WORK}/copy.sub" ]]
+}
+
+@test "enban read --ccd --ignore-errors writes zeros for a stretch that will not read" {
+  # Arrange
+  written_cd
+  printf 'bad_lba=20\n' >>"${WORK}/drive.state"
+
+  # Act
+  run disk_test_run enban read --drive "${DRIVE}" "${WORK}/copy.img" --ccd --ignore-errors </dev/null
+
+  # Assert
+  local main_size left
+  main_size="$(wc -c <"${WORK}/copy.img")"
+  dd if="${WORK}/copy.img" bs=2352 skip=16 count=16 2>/dev/null >"${WORK}/stretch.bin"
+  left="$(LC_ALL=C tr -d '\000' <"${WORK}/stretch.bin")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${main_size//[[:space:]]/}" == "1557024" ]]
+  [[ -z "${left}" ]]
+  [[ "${output}" == *"enban: warning: sectors 16 to 31 of ${DRIVE} could not be read and are zeros in ${WORK}/copy.img."* ]]
+  [[ "${output}" == *"Done. ${DRIVE} is read into ${WORK}/copy.img." ]]
+}
+
+@test "enban read --ccd reports a raw copy that does not match the disc" {
+  # Arrange
+  written_cd
+  printf 'flip_after=84\n' >>"${WORK}/drive.state"
+
+  # Act
+  run disk_test_run enban read --drive "${DRIVE}" "${WORK}/copy.img" --ccd </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: the copy in ${WORK}/copy.img does not match the disc in ${DRIVE}." ]]
+}

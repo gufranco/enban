@@ -656,6 +656,12 @@ counting them; the copy is not compared with the disc then.
 .B \-\-cue
 Write a CUE sheet beside the image read, naming it as one MODE1/2048 track.
 .TP
+.B \-\-ccd
+Copy a CD raw, 2352 bytes a sector through READ CD, into the image, whose name
+ends in .img, the 96-byte subchannel of each sector into .sub beside it, and a
+CloneCD layout into .ccd. Needs sg_raw; not with
+.BR \-\-cue .
+.TP
 .B \-\-ignore\-miscompares
 Let verify report sectors that differ from the image as a warning instead of a
 failure.
@@ -735,9 +741,10 @@ per line:
 .BR write_finalize ,
 .BR write_opc ,
 .BR read_verify ,
-.B read_ignore
-and
+.BR read_ignore ,
 .B read_cue
+and
+.B read_ccd
 take yes or no,
 .B write_speed
 auto or a number,
