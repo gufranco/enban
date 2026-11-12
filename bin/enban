@@ -59,6 +59,8 @@ DISK_PROG=enban
 . "${DISK_LIB}/sector.sh"
 # shellcheck source=SCRIPTDIR/../lib/cue.sh
 . "${DISK_LIB}/cue.sh"
+# shellcheck source=SCRIPTDIR/../lib/cue_decode.sh
+. "${DISK_LIB}/cue_decode.sh"
 # shellcheck source=SCRIPTDIR/../lib/raw.sh
 . "${DISK_LIB}/raw.sh"
 # shellcheck source=SCRIPTDIR/../lib/tray.sh
@@ -144,7 +146,8 @@ usage:
   enban discovery --drive DRIVE       fill a blank disc with test data, read it
   enban sector IMAGE [--lba N]        show one sector as hex and text
   enban sector --drive DRIVE          the same for the disc in the drive
-  enban cue CUE TRACK.wav...          write a CUE sheet for an audio CD
+  enban cue CUE TRACK...              write a CUE sheet for an audio CD from
+                                      WAV, FLAC, MP3, OGG, M4A and others
   enban close --drive DRIVE           close the open session, --track or --finalize
   enban tray --drive DRIVE ACTION     load, lock or unlock the tray
   enban rezero --drive DRIVE          move the drive's head back to the start

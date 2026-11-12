@@ -39,6 +39,80 @@ wav() {
   head -c "${bytes}" /dev/zero >>"${file}"
 }
 
+tone() {
+  ffmpeg -nostdin -v error -f lavfi -i "sine=frequency=440:duration=$2" -ar 22050 -ac 1 "$1" 2>/dev/null
+}
+
+wav_shape() {
+  local header
+  header="$(od -An -tu1 -j 22 -N 14 "$1")"
+  awk '{ printf "%d %d %d", $3 + $4 * 256 + $5 * 65536 + $6 * 16777216, $13 + $14 * 256, $1 + $2 * 256 }' <<<"${header}"
+}
+
+@test "enban cue decodes FLAC and MP3 tracks into CD audio beside the sheet" {
+  # Arrange
+  tone "${WORK}/Opening.flac" 2
+  tone "${WORK}/Closing.mp3" 1
+  wav "${WORK}/Middle.wav" 44100 16 2 1
+
+  # Act
+  run disk_test_run enban cue "${CUE}" "${WORK}/Opening.flac" "${WORK}/Middle.wav" "${WORK}/Closing.mp3" </dev/null
+
+  # Assert
+  local sheet first last
+  sheet="$(<"${CUE}")"
+  first="$(wav_shape "${WORK}/album tracks/01 Opening.wav")"
+  last="$(wav_shape "${WORK}/album tracks/03 Closing.wav")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${lines[0]}" == "Decoding the compressed tracks into ${WORK}/album tracks with ffmpeg." ]]
+  [[ "${first}" == "44100 16 2" ]]
+  [[ "${last}" == "44100 16 2" ]]
+  [[ "${sheet}" == *"FILE \"${WORK}/album tracks/01 Opening.wav\" WAVE"*"FILE \"Middle.wav\" WAVE"*"FILE \"${WORK}/album tracks/03 Closing.wav\" WAVE"* ]]
+}
+
+@test "enban cue needs ffmpeg for a compressed track" {
+  # Arrange
+  local farm
+  tone "${WORK}/Opening.flac" 1
+  farm="$(disk_test_farm ffmpeg)"
+
+  # Act
+  run disk_test_run_path "${farm}" enban cue "${CUE}" "${WORK}/Opening.flac" </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: cue needs ffmpeg to turn FLAC, MP3, OGG, M4A and the like into CD audio. install it and try again." ]]
+  [[ ! -e "${WORK}/album tracks" ]]
+}
+
+@test "enban cue never decodes into a folder that already exists" {
+  # Arrange
+  tone "${WORK}/Opening.flac" 1
+  mkdir "${WORK}/album tracks"
+
+  # Act
+  run disk_test_run enban cue "${CUE}" "${WORK}/Opening.flac" </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: stopped: ${WORK}/album tracks already exists." ]]
+}
+
+@test "enban cue removes what it decoded when a track will not decode" {
+  # Arrange
+  tone "${WORK}/Opening.flac" 1
+  printf 'not audio' >"${WORK}/Broken.mp3"
+
+  # Act
+  run disk_test_run enban cue "${CUE}" "${WORK}/Opening.flac" "${WORK}/Broken.mp3" </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == *"enban: ffmpeg could not decode ${WORK}/Broken.mp3." ]]
+  [[ ! -e "${WORK}/album tracks" ]]
+  [[ ! -e "${CUE}" ]]
+}
+
 @test "enban cue writes a CUE sheet with a track for each WAV file" {
   # Arrange
   wav "${WORK}/01 Opening.wav" 44100 16 2 3
@@ -92,14 +166,14 @@ wav() {
 
 @test "enban cue refuses a file that is not WAV" {
   # Arrange
-  printf 'ID3 not a wave' >"${WORK}/song.mp3"
+  printf 'not a wave' >"${WORK}/song.txt"
 
   # Act
-  run disk_test_run enban cue "${CUE}" "${WORK}/song.mp3" </dev/null
+  run disk_test_run enban cue "${CUE}" "${WORK}/song.txt" </dev/null
 
   # Assert
   [[ "${status}" -eq 1 ]]
-  [[ "${output}" == "enban: ${WORK}/song.mp3 is not a WAV file." ]]
+  [[ "${output}" == "enban: ${WORK}/song.txt is not a WAV file." ]]
 }
 
 @test "enban cue refuses a WAV file with no audio data" {

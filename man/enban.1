@@ -323,10 +323,16 @@ names another, and decode a primary volume descriptor.
 .B cue
 Write a CUE sheet for an audio CD to
 .IR cue ,
-one track for each WAV
+one track for each
 .IR track ,
-with CD-TEXT titles from the file names. Every track must be CD audio, 44100 Hz,
-16-bit and stereo, and the album must fit the 80 minutes of a CD-R.
+with CD-TEXT titles from the file names. A WAV track must be CD audio, 44100 Hz,
+16-bit and stereo. A FLAC, MP3, OGG, Opus, M4A, AAC, WMA, APE, WavPack, AIFF
+or Musepack track is decoded to CD audio by
+.B ffmpeg
+into a
+.IR cue " tracks"
+folder beside the sheet, which never replaces a folder that exists. The album
+must fit the 80 minutes of a CD-R.
 .TP
 .B close
 Close the open session of the disc in the drive, with

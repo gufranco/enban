@@ -139,6 +139,7 @@ disk_doctor_platform() {
   disk_doctor_optional dvd+rw-booktype "dvd+rw-tools package, needed for the book type"
   disk_doctor_optional bchunk "bchunk package, needed to convert BIN/CUE images"
   disk_doctor_optional iat "iat package, needed to convert NRG, MDF, CDI and IMG images"
+  disk_doctor_optional ffmpeg "ffmpeg, needed only for audio CDs from FLAC, MP3, OGG and the like"
   return "${disk_dp_status}"
 }
 

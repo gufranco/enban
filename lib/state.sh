@@ -120,6 +120,7 @@ export LC_ALL
 : "${DISK_LAYER_MDS:=n}"
 : "${DISK_LAYER_OPTION:=}"
 : "${DISK_WRITE_SOURCE:=}"
+: "${DISK_CUE_DECODED:=}"
 : "${DISK_MOUNT_IMAGE:=}"
 : "${DISK_MOUNT_POINT:=}"
 : "${DISK_SECTOR_OPTION:=}"

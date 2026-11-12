@@ -65,7 +65,10 @@ disk_cue_check() {
     disk_error "--pregap must be a whole number of seconds, got: ${DISK_CUE_PREGAP}"
     return 1
     ;;
-  *) disk_cue_measure ;;
+  *)
+    disk_cue_decode || return 1
+    disk_cue_measure
+    ;;
   esac
 }
 
@@ -122,7 +125,9 @@ disk_cue_done() {
 }
 
 disk_cue_run() {
-  disk_cue_check || return 1
-  disk_cue_sheet >"${DISK_CUE_OUT}" || return 1
+  if ! disk_cue_check || ! disk_cue_sheet >"${DISK_CUE_OUT}"; then
+    disk_cue_undo
+    return 1
+  fi
   disk_cue_done
 }
