@@ -70,9 +70,11 @@ disk_job_ask_cancel() {
 }
 
 disk_job_cancel() {
-  disk_jc_tree="$(disk_job_tree "${DISK_APP_JOB_PID}")"
+  disk_jc_tree="$(disk_job_frozen "${DISK_APP_JOB_PID}")"
   # shellcheck disable=SC2086
   kill ${disk_jc_tree} 2>/dev/null || true
+  # shellcheck disable=SC2086
+  kill -CONT ${disk_jc_tree} 2>/dev/null || true
   wait "${DISK_APP_JOB_PID}" 2>/dev/null || true
   DISK_APP_STATUS="$(disk_job_drop_part)"
   rm -rf "${DISK_APP_JOB_DIR}"
@@ -114,6 +116,20 @@ disk_job_drop_part() {
 disk_job_note() {
   [ -n "${DISK_JOB_NOTE}" ] || return 0
   printf '%s\n' "$@" >"${DISK_JOB_NOTE}"
+}
+
+disk_job_frozen() {
+  disk_jf_tree=""
+  disk_jf_round=0
+  while [ "${disk_jf_round}" -lt "${DISK_JOB_DEPTH}" ]; do
+    disk_jf_next="$(disk_job_tree "$1")"
+    # shellcheck disable=SC2086
+    kill -STOP ${disk_jf_next} 2>/dev/null || true
+    [ "${disk_jf_next}" != "${disk_jf_tree}" ] || break
+    disk_jf_tree="${disk_jf_next}"
+    disk_jf_round=$((disk_jf_round + 1))
+  done
+  printf '%s\n' "${disk_jf_tree}"
 }
 
 disk_job_tree() {
