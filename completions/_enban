@@ -70,6 +70,7 @@ _enban() {
     '--performer[the performer cue writes]:performer:' \
     '--pregap[the gap before each track]:seconds:' \
     '--raw[show raw 2352-byte sectors]' \
+    '--subchannel[add the 96-byte subchannel to a raw sector]' \
     '--finalize[close the whole disc]' \
     '--track[close the last track]' \
     '--test[simulate the burn and write nothing]' \

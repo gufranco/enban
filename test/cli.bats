@@ -310,12 +310,12 @@ options_everywhere() {
   done
 }
 
-@test "enban help, man page and completions list --track" {
+@test "enban help, man page and completions list --track and --subchannel" {
   # Arrange
   local option=track
 
   # Act
-  run options_everywhere "${option}"
+  run options_everywhere "${option}" subchannel
 
   # Assert
   [[ "${status}" -eq 0 ]]

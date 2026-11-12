@@ -539,6 +539,12 @@ The gap cue puts before every track after the first; 2 by default.
 .B \-\-raw
 Show raw 2352-byte sectors: of a BIN image, or of the disc through READ CD.
 .TP
+.B \-\-subchannel
+Add the 96-byte P-W subchannel to a raw sector and decode its Q channel: the
+track, the index and both times. From the disc it comes with the sector
+through READ CD, and from an image out of the SUB file a CloneCD image keeps
+beside it.
+.TP
 .B \-\-finalize
 Close the whole disc instead of only the session.
 .TP

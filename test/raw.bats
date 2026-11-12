@@ -376,6 +376,49 @@ sent() {
   [[ "${lines[2]}" == "0000    00 ff ff ff ff ff ff ff  ff ff ff 00 00 02 00 01  ................" ]]
 }
 
+@test "enban sector --subchannel reads the P-W subchannel and decodes its Q channel" {
+  # Arrange
+  drive_with 0009 "CD-R" written
+
+  # Act
+  run disk_test_run enban sector --drive "${DRIVE}" --subchannel --lba 16 </dev/null
+
+  # Assert
+  local command
+  command="$(sent 1)"
+  [[ "${status}" -eq 0 ]]
+  [[ "${command}" == "-r 2448 -o "*" ${DISC} be 00 00 00 00 10 00 00 01 f8 01 00" ]]
+  [[ "${output}" == *"Subchannel P-W, 96 bytes"* ]]
+  [[ "${lines[${#lines[@]} - 1]}" == "Q channel    track 01, index 01, 00:00:16 in the track, 00:02:16 on the disc" ]]
+}
+
+@test "enban sector --subchannel reads a CloneCD image's SUB file" {
+  # Arrange
+  dd if=/dev/zero of="${WORK}/disc.img" bs=2352 count=4 2>/dev/null
+  head -c 384 /dev/zero >"${WORK}/disc.sub"
+  printf '\377\377\377\377' | dd of="${WORK}/disc.sub" bs=1 seek=192 conv=notrunc 2>/dev/null
+
+  # Act
+  run disk_test_run enban sector "${WORK}/disc.img" --subchannel --lba 2 </dev/null
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+  [[ "${output}" == *"0000    ff ff ff ff 00 00 00 00  00 00 00 00 00 00 00 00  ...."* ]]
+  [[ "${lines[${#lines[@]} - 1]}" == "Q channel    mode 0" ]]
+}
+
+@test "enban sector --subchannel needs the image's SUB file" {
+  # Arrange
+  dd if=/dev/zero of="${WORK}/disc.img" bs=2352 count=4 2>/dev/null
+
+  # Act
+  run disk_test_run enban sector "${WORK}/disc.img" --subchannel --lba 2 </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: no subchannel file at ${WORK}/disc.sub, where a CloneCD image keeps it." ]]
+}
+
 @test "enban sector --raw reads a 2352-byte sector of a BIN image" {
   # Arrange
   dd if=/dev/zero of="${WORK}/disc.bin" bs=2352 count=4 2>/dev/null

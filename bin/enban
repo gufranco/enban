@@ -193,6 +193,7 @@ options:
   --performer TEXT    the performer cue writes as CD-TEXT
   --pregap SECONDS    the gap cue puts before each track after the first; 2
   --raw               sector shows raw 2352-byte sectors
+  --subchannel        sector adds the 96-byte P-W subchannel and its Q channel
   --finalize          close finalizes the whole disc, not only the session
   --track             close closes the last track, not the session
   --test              write and discovery simulate the burn and write nothing
@@ -328,6 +329,10 @@ disk_option_flag() {
   --finalize) DISK_CLOSE_FINALIZE=y ;;
   --track) DISK_CLOSE_TRACK=y ;;
   --raw) DISK_SECTOR_RAW=y ;;
+  --subchannel)
+    DISK_SECTOR_RAW=y
+    DISK_SECTOR_SUB=y
+    ;;
   --test) DISK_WRITE_TEST=y ;;
   --delete-image) DISK_WRITE_DELETE=y ;;
   --no-finalize) DISK_WRITE_FINALIZE=n ;;
@@ -393,7 +398,7 @@ disk_option_seen() {
     ;;
   --full) DISK_ERASE_OPTION="$1" ;;
   --sectors | --csv) DISK_DISCOVERY_OPTION="${DISK_DISCOVERY_OPTION:-$1}" ;;
-  --lba | --raw) DISK_SECTOR_OPTION="${DISK_SECTOR_OPTION:-$1}" ;;
+  --lba | --raw | --subchannel) DISK_SECTOR_OPTION="${DISK_SECTOR_OPTION:-$1}" ;;
   --finalize | --track) DISK_RAW_OPTION="$1:close" ;;
   --test) DISK_TEST_OPTION="$1" ;;
   --ignore-errors | --cue) DISK_READ_OPTION="${DISK_READ_OPTION:-$1}" ;;

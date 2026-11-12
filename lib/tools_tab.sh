@@ -98,6 +98,12 @@ disk_tools_tab_sector_key() {
   down) [ "${DISK_APP_T_PAGE}" -ge "${disk_tk_last}" ] || DISK_APP_T_PAGE=$((DISK_APP_T_PAGE + 1)) ;;
   m)
     DISK_APP_T_RAW="$(disk_job_flip "${DISK_APP_T_RAW}")"
+    DISK_APP_T_SUB=n
+    DISK_APP_T_PAGE=0
+    ;;
+  s)
+    DISK_APP_T_SUB="$(disk_job_flip "${DISK_APP_T_SUB}")"
+    [ "${DISK_APP_T_SUB}" = n ] || DISK_APP_T_RAW=y
     DISK_APP_T_PAGE=0
     ;;
   g) disk_tools_tab_sector_go ;;
@@ -121,6 +127,7 @@ disk_frame_tools_sector() {
   DISK_SECTOR_IMAGE="${DISK_APP_T_IMAGE}"
   DISK_SECTOR_LBA="${DISK_APP_T_LBA}"
   DISK_SECTOR_RAW="${DISK_APP_T_RAW}"
+  DISK_SECTOR_SUB="${DISK_APP_T_SUB}"
   disk_fx_shown="$(disk_sector_run 2>&1)" || :
   disk_fx_first="$(printf '%s\n' "${disk_fx_shown}" | sed -n '1p')"
   case "${disk_fx_first}" in
@@ -134,7 +141,7 @@ disk_frame_tools_sector() {
   printf 'Sector viewer   %s\n\n' "${disk_fx_first}"
   printf '%s\n' "${disk_fx_shown}" | sed -n "2p;$((DISK_APP_T_PAGE * 16 + 3)),$((DISK_APP_T_PAGE * 16 + 18))p"
   printf '%s\n' "${disk_fx_shown}" | sed -n '/^Decoded$/,$p'
-  printf '\n%s\n' "left/right sector   up/down page   g go to LBA   m raw   esc back"
+  printf '\n%s\n' "left/right sector   up/down page   g go to LBA   m raw   s subchannel   esc back"
 }
 
 disk_tools_sentence() {

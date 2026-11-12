@@ -762,6 +762,25 @@ iso_session() {
   [[ "${shown}" == *"0920    "* ]]
 }
 
+@test "s adds the subchannel and its Q channel to the Sector viewer" {
+  # Arrange
+  dd if=/dev/zero of="${WORK}/disc.img" bs=2352 count=3 2>/dev/null
+  head -c 288 /dev/zero >"${WORK}/disc.sub"
+  answers "${WORK}/disc.img"
+  local keys
+  keys="$(sector_keys 's\033[B\033[B\033[B\033[B\033[B\033[B\033[B\033[B\033[B\033[Bq')"
+
+  # Act
+  run on_terminal "${keys}"
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"LBA 0 of ${WORK}/disc.img, raw 2352 bytes"* ]]
+  [[ "${shown}" == *"Subchannel P-W, 96 bytes"* ]]
+  [[ "${shown}" == *"Q channel    mode 0"* ]]
+}
+
 @test "c cancels a convert" {
   # Arrange
   disk_test_shim iat "sleep 47"
