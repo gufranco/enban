@@ -16,8 +16,11 @@ subchannel() {
     function msf(n, at) { q[at] = bcd(int(n / 4500)); q[at + 1] = bcd(int(n / 75) % 60); q[at + 2] = bcd(n % 75) }
     BEGIN {
       q[0] = 65; q[1] = 1; q[2] = 1; msf(lba, 3); q[6] = 0; msf(lba + 150, 7); q[10] = 0; q[11] = 0
-      for (k = 0; k < 12; k++)
-        for (j = 7; j >= 0; j--) printf "\\0%03o", int(q[k] / 2 ^ j) % 2 * 64
+      for (k = 0; k < 12; k++) {
+        v = q[k]
+        for (j = 0; j < 8; j++) { bit[j] = v % 2; v = int(v / 2) }
+        for (j = 7; j >= 0; j--) printf "\\0%03o", bit[j] * 64
+      }
     }')"
   printf '%b' "${escapes}"
 }

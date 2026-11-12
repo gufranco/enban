@@ -55,12 +55,16 @@ on_terminal_in_steps() {
   return "${status}"
 }
 
+plain() {
+  LC_ALL=C sed "s/"$'\033'"\\[[0-9;?]*[A-Za-z]//g"
+}
+
 screen() {
-  LC_ALL=C sed 's/\x1b\[[0-9;?]*[A-Za-z]//g' "${WORK}/out"
+  plain <"${WORK}/out"
 }
 
 last_frame() {
   local all
   all="$(cat "${WORK}/out")"
-  printf '%s\n' "${all##*$'\033[H\033[2J'}" | LC_ALL=C sed 's/\x1b\[[0-9;?]*[A-Za-z]//g'
+  printf '%s\n' "${all##*$'\033[H\033[2J'}" | plain
 }
