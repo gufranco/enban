@@ -30,36 +30,6 @@ disk_build_ids_level() {
   esac
 }
 
-disk_build_mac_option() {
-  for disk_bp_pair in "--boot:${DISK_BUILD_BOOT}" "--system-id:${DISK_BUILD_SYSTEM}" "--volume-set:${DISK_BUILD_VOLSET}" "--date:${DISK_BUILD_DATE}" "--iso-level:${DISK_BUILD_LEVEL}"; do
-    [ -z "${disk_bp_pair#*:}" ] && continue
-    printf '%s\n' "${disk_bp_pair%%:*}"
-    return 0
-  done
-}
-
-disk_build_mac_tool() {
-  DISK_BUILD_MKISOFS=n
-  disk_bq_os="$(disk_os)"
-  [ "${disk_bq_os}" = Darwin ] || return 0
-  if [ "${DISK_BUILD_DVD}" = y ]; then
-    disk_build_video_mac
-    return
-  fi
-  disk_bq_option="$(disk_build_mac_option)"
-  [ -n "${disk_bq_option}" ] || return 0
-  if [ "${DISK_BUILD_UDF}" = y ]; then
-    disk_error "${disk_bq_option} on macOS is built with xorriso, which writes no UDF. leave udf out of --fs."
-    return 1
-  fi
-  if command -v xorriso >/dev/null 2>&1; then
-    DISK_BUILD_MKISOFS=y
-    return 0
-  fi
-  disk_error "${disk_bq_option} on macOS needs xorriso, since hdiutil makehybrid has no such field. install it with brew install xorriso."
-  return 1
-}
-
 disk_build_ids_udf() {
   [ "${DISK_BUILD_UDF}" = y ] && [ -n "${DISK_BUILD_DATE}" ] || return 0
   disk_error "--date needs xorriso, and a UDF image is built with genisoimage or mkisofs, which cannot set it. leave udf out of --fs or leave out --date."

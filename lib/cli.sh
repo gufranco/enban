@@ -119,12 +119,12 @@ disk_doctor_platform() {
   disk_dp_status=0
   case "$(uname -s)" in
   Darwin)
-    disk_doctor_tool hdiutil "builds and mounts images" || disk_dp_status=1
+    disk_doctor_tool hdiutil "mounts images" || disk_dp_status=1
     disk_doctor_tool xorriso "builds images and reads the drive" || disk_dp_status=1
     disk_doctor_tool shasum "prints the checksum of a disc read" || disk_dp_status=1
     disk_doctor_optional cdrecord "cdrtools package, needed for real drives and audio CDs"
     disk_doctor_optional readcd "cdrtools package, needed to read real drives"
-    disk_doctor_optional mkisofs "cdrtools package, needed only for DVD Video images"
+    disk_doctor_optional mkisofs "cdrtools package, needed for UDF and DVD Video images"
     ;;
   *)
     disk_doctor_tool xorriso "builds images and reads the drive" || disk_dp_status=1

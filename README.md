@@ -60,11 +60,10 @@ ffmpeg             ok       /opt/homebrew/bin/ffmpeg
 |:-----|:----|:--------|
 | [`gum`](https://github.com/charmbracelet/gum) | The family look for doctor, version and help | `brew install gum` |
 | POSIX `sh`, `stty`, `dd`, `od`, `awk` | The app and its key reading | Preinstalled on macOS and Linux |
-| `hdiutil` | Images on macOS | Preinstalled |
-| `xorriso` | Image targets, bootable images and the image fields hdiutil cannot write on macOS, and everything on Linux | `brew install xorriso` |
-| `cdrecord` and `readcd` from cdrtools, optional on macOS | Real drives and audio CDs on macOS | `brew install cdrtools` |
+| `hdiutil` | Mounting images on macOS | Preinstalled |
+| `xorriso` | Images, image targets, and the drive on Linux | `brew install xorriso` |
+| `cdrecord`, `readcd` and `mkisofs` from cdrtools, on macOS | Real drives, audio CDs, and UDF and DVD Video images on macOS | `brew install cdrtools` |
 | `cdrdao`, `dvd+rw-tools`, `bchunk` and `iat`, optional on macOS | Raw CD reads, the book type and image conversion, as on Linux | `brew install cdrdao dvd+rw-tools bchunk iat` |
-| `mkisofs`, optional on macOS | DVD Video images, whose files hdiutil writes out of order | `brew install cdrtools` |
 | `ffmpeg`, optional | Audio CDs from FLAC, MP3, OGG, M4A and the like | `brew install ffmpeg` or `apt install ffmpeg` |
 | `xorriso` and `cdrskin`, optionally `cdrdao`, `genisoimage`, `sg3-utils`, `dvd+rw-tools`, `bchunk`, `iat` and `udisks2` | The drive and images on Linux; genisoimage for UDF images, sg3-utils for close, speed, region and raw sectors, dvd+rw-tools for the book type, bchunk and iat to convert images, udisks2 to mount them | `apt install xorriso cdrskin cdrdao genisoimage sg3-utils dvd+rw-tools bchunk iat udisks2` |
 
@@ -99,7 +98,7 @@ make install
 
 enban also converts and relabels images, writes CUE sheets and audio CDs, closes sessions, shows sectors and layer breaks, and reads a drive's region, book type and features. `man enban` describes every command, option and key, and `enban help` prints the same summary.
 
-On macOS a real drive is named like `IODVDServices/0` or `IOCompactDiscServices/0` and reached through `cdrecord` and `readcd` from cdrtools, and an image file stands in for a drive anywhere as `--drive stdio:disc.iso`. Closing a session, the `tray`, `speed`, `region` and `booktype` commands and raw sectors still need Linux.
+On macOS a real drive is named like `IODVDServices/0` or `IOCompactDiscServices/0` and reached through `cdrecord` and `readcd` from cdrtools, and an image file stands in for a drive anywhere as `--drive stdio:disc.iso`. Only `region` and `close --track` still need Linux, since no macOS command reaches them.
 
 ### The app
 

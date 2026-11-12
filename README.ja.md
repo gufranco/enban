@@ -60,11 +60,10 @@ ffmpeg             ok       /opt/homebrew/bin/ffmpeg
 |:-----|:----|:--------|
 | [`gum`](https://github.com/charmbracelet/gum) | doctor、version、help のファミリー共通の見た目 | `brew install gum` |
 | POSIX `sh`、`stty`、`dd`、`od`、`awk` | アプリとキー入力の読み取り | macOS と Linux に標準搭載 |
-| `hdiutil` | macOS でのイメージ | 標準搭載 |
-| `xorriso` | macOS ではイメージをドライブ代わりに使う場合、起動可能なイメージ、hdiutil が書けないイメージ項目、Linux ではすべて | `brew install xorriso` |
-| cdrtools の `cdrecord` と `readcd`、macOS では任意 | macOS での実ドライブと音楽 CD | `brew install cdrtools` |
+| `hdiutil` | macOS でのイメージのマウント | 標準搭載 |
+| `xorriso` | イメージ、ドライブ代わりのイメージ、Linux でのドライブ | `brew install xorriso` |
+| cdrtools の `cdrecord`、`readcd`、`mkisofs`、macOS で使用 | macOS での実ドライブ、音楽 CD、UDF と DVD Video のイメージ | `brew install cdrtools` |
 | `cdrdao`、`dvd+rw-tools`、`bchunk`、`iat`、macOS では任意 | Linux と同じく、CD の生読み、ブックタイプ、イメージ変換 | `brew install cdrdao dvd+rw-tools bchunk iat` |
-| `mkisofs`、macOS では任意 | DVD Video のイメージ。hdiutil はそのファイルを順不同に書くため | `brew install cdrtools` |
 | `ffmpeg`、任意 | FLAC、MP3、OGG、M4A などからの音楽 CD | `brew install ffmpeg` または `apt install ffmpeg` |
 | `xorriso` と `cdrskin`、任意で `cdrdao`、`genisoimage`、`sg3-utils`、`dvd+rw-tools`、`bchunk`、`iat`、`udisks2` | Linux でのドライブとイメージ。genisoimage は UDF イメージ、sg3-utils はクローズ、速度、リージョン、生セクター、dvd+rw-tools はブックタイプ、bchunk と iat はイメージ変換、udisks2 はマウント用 | `apt install xorriso cdrskin cdrdao genisoimage sg3-utils dvd+rw-tools bchunk iat udisks2` |
 
@@ -99,7 +98,7 @@ make install
 
 enban はほかに、イメージの変換とラベル変更、CUE シートと音楽 CD の書き込み、セッションのクローズ、セクターとレイヤーブレークの表示、ドライブのリージョン、ブックタイプ、機能の読み取りもします。すべてのコマンド、オプション、キーは `man enban` に、同じ概要は `enban help` にあります。
 
-macOS では実ドライブを `IODVDServices/0` や `IOCompactDiscServices/0` のように指定し、cdrtools の `cdrecord` と `readcd` を通して扱います。どこでもイメージファイルを `--drive stdio:disc.iso` としてドライブの代わりに使えます。セッションのクローズ、`tray`、`speed`、`region`、`booktype` コマンド、生セクターはまだ Linux が必要です。
+macOS では実ドライブを `IODVDServices/0` や `IOCompactDiscServices/0` のように指定し、cdrtools の `cdrecord` と `readcd` を通して扱います。どこでもイメージファイルを `--drive stdio:disc.iso` としてドライブの代わりに使えます。`region` と `close --track` だけは、macOS に届くコマンドがないため、まだ Linux が必要です。
 
 ### アプリ
 

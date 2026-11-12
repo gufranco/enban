@@ -31,7 +31,8 @@ disk_read_retries_ok() {
 disk_read_speed() {
   [ -n "${DISK_SPEED_OPTION}" ] || return 0
   if disk_mac_drive "${DISK_DRIVE}"; then
-    DISK_MAC_SPEED="${DISK_WRITE_SPEED}"
+    DISK_SPEED_WANTED="${DISK_WRITE_SPEED}"
+    DISK_MAC_SPEED="$(disk_mac_cd_speed)"
     return 0
   fi
   DISK_SPEED_WANTED="${DISK_WRITE_SPEED}"

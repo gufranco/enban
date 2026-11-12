@@ -9,9 +9,9 @@ disk_features_read() {
 }
 
 disk_features_list() {
-  od -An -tu1 -v "$1" 2>/dev/null | awk '
+  od -An -tu1 -v "$1" 2>/dev/null | awk -v names="${DISK_FEATURE_NAMES}" '
     BEGIN {
-      split("0000 Profile list|0001 Core|0002 Morphing|0003 Removable medium|0004 Write protect|0010 Random readable|001d Multi-read|001e CD read|001f DVD read|0020 Random writable|0021 Incremental streaming writable|0022 Sector erasable|0023 Formattable|0024 Hardware defect management|0025 Write once|0026 Restricted overwrite|0027 CD-RW CAV write|0028 MRW|0029 Enhanced defect reporting|002a DVD+RW|002b DVD+R|002c Rigid restricted overwrite|002d CD track at once|002e CD mastering|002f DVD-R and DVD-RW write|0033 Layer jump recording|0034 Layer jump rigid restricted overwrite|0035 Stop long operation|0037 CD-RW media write support|0038 BD-R pseudo-overwrite|003a DVD+RW dual layer|003b DVD+R dual layer|0040 BD read|0041 BD write|0042 Timely safe recording|0050 HD DVD read|0051 HD DVD write|0080 Hybrid disc|0100 Power management|0101 SMART|0102 Embedded changer|0103 CD audio external play|0104 Microcode upgrade|0105 Timeout|0106 DVD CSS|0107 Real time streaming|0108 Drive serial number|0109 Media serial number|010a Disc control blocks|010b DVD CPRM|010c Firmware information|010d AACS|010e DVD CSS managed recording|0110 VCPS|0113 SecurDisc|0142 OSSC", known, "|")
+      split(names, known, "|")
       for (i in known) name[substr(known[i], 1, 4)] = substr(known[i], 6)
     }
     { for (i = 1; i <= NF; i++) b[n++] = $i }
@@ -50,6 +50,10 @@ disk_features_show() {
 }
 
 disk_features_text() {
+  if disk_mac_drive "${DISK_DRIVE}"; then
+    disk_mac_features
+    return
+  fi
   disk_gt_file="$(mktemp "${TMPDIR:-/tmp}/enban-features.XXXXXX")" || return 1
   if ! disk_features_read "${disk_gt_file}"; then
     rm -f "${disk_gt_file}"

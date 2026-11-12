@@ -161,6 +161,7 @@ disk_write_check() {
 
 disk_write_opc_ready() {
   [ "${DISK_WRITE_OPC}" = y ] || return 0
+  disk_mac_drive "${DISK_DRIVE}" && return 0
   command -v sg_raw >/dev/null 2>&1 && return 0
   disk_error "--opc needs sg_raw from sg3-utils to calibrate the laser. install it and try again."
   return 1
@@ -168,6 +169,10 @@ disk_write_opc_ready() {
 
 disk_write_opc() {
   [ "${DISK_WRITE_OPC}" = y ] || return 0
+  if disk_mac_drive "${DISK_DRIVE}"; then
+    disk_say "cdrecord calibrates the laser power of ${DISK_DRIVE} itself before the write."
+    return 0
+  fi
   disk_say "Calibrating the laser power of ${DISK_DRIVE}."
   disk_wq_device="$(disk_raw_device)"
   disk_raw_send "${disk_wq_device}" 54 01 00 00 00 00 00 00 00 00

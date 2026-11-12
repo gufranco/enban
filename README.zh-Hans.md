@@ -60,11 +60,10 @@ ffmpeg             ok       /opt/homebrew/bin/ffmpeg
 |:-----|:----|:--------|
 | [`gum`](https://github.com/charmbracelet/gum) | doctor、version 和 help 的家族统一外观 | `brew install gum` |
 | POSIX `sh`、`stty`、`dd`、`od`、`awk` | 应用本身和按键读取 | macOS 和 Linux 自带 |
-| `hdiutil` | macOS 上的镜像 | 自带 |
-| `xorriso` | 在 macOS 上用于以镜像代替光驱、可启动镜像和 hdiutil 写不了的镜像字段，在 Linux 上用于全部工作 | `brew install xorriso` |
-| cdrtools 的 `cdrecord` 和 `readcd`，macOS 上可选 | macOS 上的实体光驱和音乐 CD | `brew install cdrtools` |
+| `hdiutil` | 在 macOS 上挂载镜像 | 自带 |
+| `xorriso` | 镜像、代替光驱的镜像，以及 Linux 上的光驱 | `brew install xorriso` |
+| cdrtools 的 `cdrecord`、`readcd` 和 `mkisofs`，用于 macOS | macOS 上的实体光驱、音乐 CD 以及 UDF 和 DVD Video 镜像 | `brew install cdrtools` |
 | `cdrdao`、`dvd+rw-tools`、`bchunk` 和 `iat`，macOS 上可选 | 与 Linux 一样，用于 CD 原始读取、书本类型和镜像转换 | `brew install cdrdao dvd+rw-tools bchunk iat` |
-| `mkisofs`，macOS 上可选 | DVD Video 镜像，因为 hdiutil 写入其文件的顺序不对 | `brew install cdrtools` |
 | `ffmpeg`，可选 | 用 FLAC、MP3、OGG、M4A 等制作音乐 CD | `brew install ffmpeg` 或 `apt install ffmpeg` |
 | `xorriso` 和 `cdrskin`，可选 `cdrdao`、`genisoimage`、`sg3-utils`、`dvd+rw-tools`、`bchunk`、`iat` 和 `udisks2` | Linux 上的光驱和镜像；genisoimage 用于 UDF 镜像，sg3-utils 用于封盘、速度、区码和原始扇区，dvd+rw-tools 用于书本类型，bchunk 和 iat 用于转换镜像，udisks2 用于挂载 | `apt install xorriso cdrskin cdrdao genisoimage sg3-utils dvd+rw-tools bchunk iat udisks2` |
 
@@ -99,7 +98,7 @@ make install
 
 enban 还能转换镜像并修改卷标、写 CUE 表和音乐 CD、封闭会话、显示扇区和层切换点，以及读取光驱的区码、书本类型和功能。`man enban` 说明每个命令、选项和按键，`enban help` 显示同样的概要。
 
-在 macOS 上，实体光驱写成 `IODVDServices/0` 或 `IOCompactDiscServices/0` 这样的名称，通过 cdrtools 的 `cdrecord` 和 `readcd` 访问；在任何系统上都可以用 `--drive stdio:disc.iso` 让镜像文件代替光驱。封闭会话、`tray`、`speed`、`region` 和 `booktype` 命令以及原始扇区仍然需要 Linux。
+在 macOS 上，实体光驱写成 `IODVDServices/0` 或 `IOCompactDiscServices/0` 这样的名称，通过 cdrtools 的 `cdrecord` 和 `readcd` 访问；在任何系统上都可以用 `--drive stdio:disc.iso` 让镜像文件代替光驱。只有 `region` 和 `close --track` 仍然需要 Linux，因为 macOS 上没有能执行它们的命令。
 
 ### 应用
 

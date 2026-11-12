@@ -54,15 +54,18 @@ disk_sector_plain() {
 
 disk_sector_raw_read() {
   disk_sw_lba="$(printf '%08x' "${DISK_SECTOR_LBA}" | sed 's/../& /g')"
-  if [ "${DISK_SECTOR_SUB}" = n ]; then
+  if disk_mac_drive "${DISK_DRIVE}"; then
+    disk_mac_sector "$1" || return 1
+  elif [ "${DISK_SECTOR_SUB}" = n ]; then
     # shellcheck disable=SC2086
     disk_raw_send -r 2352 -o "$1" "${DISK_SECTOR_FROM}" be 00 ${disk_sw_lba} 00 00 01 f8 00 00
     return
+  else
+    # shellcheck disable=SC2086
+    disk_raw_send -r 2448 -o "$1.both" "${DISK_SECTOR_FROM}" be 00 ${disk_sw_lba} 00 00 01 f8 01 00 || return 1
   fi
-  # shellcheck disable=SC2086
-  disk_raw_send -r 2448 -o "$1.both" "${DISK_SECTOR_FROM}" be 00 ${disk_sw_lba} 00 00 01 f8 01 00 || return 1
   dd if="$1.both" of="$1" bs=2352 count=1 2>/dev/null
-  dd if="$1.both" of="$1.sub" bs=1 skip=2352 count=96 2>/dev/null
+  [ "${DISK_SECTOR_SUB}" = n ] || dd if="$1.both" of="$1.sub" bs=1 skip=2352 count=96 2>/dev/null
   rm -f "$1.both"
 }
 

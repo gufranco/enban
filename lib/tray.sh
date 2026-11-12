@@ -5,6 +5,10 @@
 
 disk_tray_run() {
   disk_raw_ready tray || return 1
+  if disk_mac_drive "${DISK_DRIVE}"; then
+    disk_mac_tray
+    return
+  fi
   disk_ty_device="$(disk_raw_device)"
   case "${DISK_TRAY_ACTION}" in
   load)
@@ -25,15 +29,23 @@ disk_tray_run() {
 
 disk_rezero_run() {
   disk_raw_ready rezero || return 1
-  disk_rz_device="$(disk_raw_device)"
-  disk_raw_send "${disk_rz_device}" 01 00 00 00 00 00 || return 1
+  if disk_mac_drive "${DISK_DRIVE}"; then
+    disk_mac_cdrecord -load || return 1
+  else
+    disk_rz_device="$(disk_raw_device)"
+    disk_raw_send "${disk_rz_device}" 01 00 00 00 00 00 || return 1
+  fi
   disk_raw_done "Done. ${DISK_DRIVE} moved its head back to the start of the disc."
 }
 
 disk_sync_run() {
   disk_raw_ready sync || return 1
-  disk_sy_device="$(disk_raw_device)"
-  disk_raw_send "${disk_sy_device}" 35 00 00 00 00 00 00 00 00 00 || return 1
+  if disk_mac_drive "${DISK_DRIVE}"; then
+    disk_mac_cdrecord -abort || return 1
+  else
+    disk_sy_device="$(disk_raw_device)"
+    disk_raw_send "${disk_sy_device}" 35 00 00 00 00 00 00 00 00 00 || return 1
+  fi
   disk_raw_done "Done. ${DISK_DRIVE} wrote its cache to the disc."
 }
 

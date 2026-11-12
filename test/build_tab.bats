@@ -243,7 +243,7 @@ answers() {
 
 @test "c cancels a build and leaves no partial image behind" {
   # Arrange
-  disk_test_shim hdiutil "sleep 41"
+  disk_test_shim mkisofs "sleep 41"
   disk_test_shim genisoimage "sleep 41"
   answers "${SRC}" "${OUT}" y
 

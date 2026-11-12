@@ -27,15 +27,6 @@ disk_build_video_check() {
   return 1
 }
 
-disk_build_video_mac() {
-  if command -v mkisofs >/dev/null 2>&1; then
-    DISK_BUILD_MKISOFS=y
-    return 0
-  fi
-  disk_error "--dvd-video on macOS needs mkisofs, since hdiutil makehybrid writes the VIDEO_TS files out of order. install it with brew install cdrtools."
-  return 1
-}
-
 disk_build_video_grafts() {
   if [ "${DISK_BUILD_DVD}" = n ] || [ -z "${DISK_BUILD_LAYOUT}" ]; then
     disk_build_grafts

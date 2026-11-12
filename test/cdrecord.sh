@@ -38,6 +38,9 @@ fail_minfo="$(value fail_minfo)"
 fail_blank="$(value fail_blank)"
 fail_write="$(value fail_write)"
 fail_eject="$(value fail_eject)"
+fail_load="$(value fail_load)"
+fail_fix="$(value fail_fix)"
+features="$(value features)"
 total=$((leadout + free))
 
 profile_lines() {
@@ -63,6 +66,29 @@ capabilities() {
   done
   printf '\nSupported profiles according to MMC-4 feature list:\n'
   profile_lines
+  case " $* " in
+  *" -x "*) feature_lines ;;
+  *) : ;;
+  esac
+}
+
+feature_lines() {
+  printf '\nSupported features according to MMC-4 feature list:\n'
+  for pair in ${features}; do
+    if [ "${pair#*:}" = 1 ]; then
+      printf "Feature: 0x%s 'Some feature' (current) \n" "${pair%:*}"
+    else
+      printf "Feature: 0x%s 'Some feature'  \n" "${pair%:*}"
+    fi
+  done
+}
+
+fixate() {
+  [ "${fail_fix}" != 1 ] || refuse 'Cannot fixate disk.'
+  case " $* " in
+  *" -multi "*) put sessions $((sessions + 1)) ;;
+  *) put status complete ;;
+  esac
 }
 
 media() {
@@ -117,7 +143,9 @@ burn() {
 }
 
 case " $* " in
-*" -prcap "*) capabilities ;;
+*" -prcap "*) capabilities "$@" ;;
+*" -fix "*) fixate "$@" ;;
+*" -load "* | *" -lock "* | *" -abort "*) [ "${fail_load}" != 1 ] || refuse 'Cannot load media.' ;;
 *" -minfo "*) media ;;
 *" -dao "* | *" -tao "*) burn "$@" ;;
 *" -eject "*) [ "${fail_eject}" != 1 ] || refuse 'Cannot eject.' ;;

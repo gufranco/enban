@@ -140,11 +140,10 @@ volume_id() {
   [[ "${lines[2]}" == "File systems  ISO9660" ]]
 }
 
-@test "enban build without UDF needs no genisoimage on Linux" {
+@test "enban build without UDF needs neither genisoimage nor mkisofs" {
   # Arrange
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS builds with hdiutil"
   local farm
-  farm="$(disk_test_farm genisoimage)"
+  farm="$(disk_test_farm genisoimage mkisofs)"
 
   # Act
   run disk_test_run_path "${farm}" enban build "${SRC}" "${OUT}" --fs iso9660,joliet </dev/null
@@ -158,7 +157,7 @@ volume_id() {
 
 @test "enban build says UDF on Linux needs genisoimage" {
   # Arrange
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS builds with hdiutil"
+  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS builds UDF with mkisofs"
   local farm
   farm="$(disk_test_farm genisoimage)"
 
@@ -173,9 +172,9 @@ volume_id() {
 
 @test "enban build reports a tool that fails and leaves no image" {
   # Arrange
-  disk_test_shim hdiutil "exit 1"
   disk_test_shim xorriso "exit 1"
   disk_test_shim genisoimage "exit 1"
+  disk_test_shim mkisofs "exit 1"
 
   # Act
   run disk_test_run enban build "${SRC}" "${OUT}" </dev/null
@@ -357,38 +356,37 @@ pvd_field() {
   [[ "${lines[3]}" == "Publisher     FRANCO" ]]
 }
 
-@test "enban build on macOS needs xorriso for a field hdiutil cannot write" {
-  # Arrange
-  [[ "${ENBAN_TEST_OS}" == "Darwin" ]] || skip "Linux always builds with xorriso"
-  local farm
-  farm="$(disk_test_farm xorriso)"
-
-  # Act
-  run disk_test_run_path "${farm}" enban build "${SRC}" "${OUT}" --fs iso9660,joliet --system-id MACOS </dev/null
-
-  # Assert
-  [[ "${status}" -eq 1 ]]
-  [[ "${output}" == "enban: --system-id on macOS needs xorriso, since hdiutil makehybrid has no such field. install it with brew install xorriso." ]]
-  [[ ! -e "${OUT}" ]]
-}
-
-@test "enban build on macOS refuses UDF with a field only xorriso writes" {
+@test "enban build on macOS needs mkisofs from cdrtools for UDF" {
   # Arrange
   [[ "${ENBAN_TEST_OS}" == "Darwin" ]] || skip "Linux builds UDF with genisoimage"
-  local option=--iso-level
+  local farm
+  farm="$(disk_test_farm mkisofs)"
 
   # Act
-  run disk_test_run enban build "${SRC}" "${OUT}" "${option}" 2 </dev/null
+  run disk_test_run_path "${farm}" enban build "${SRC}" "${OUT}" </dev/null
 
   # Assert
   [[ "${status}" -eq 1 ]]
-  [[ "${output}" == "enban: --iso-level on macOS is built with xorriso, which writes no UDF. leave udf out of --fs." ]]
+  [[ "${output}" == "enban: UDF on macOS needs mkisofs from cdrtools. install it with brew install cdrtools, or leave udf out of --fs." ]]
   [[ ! -e "${OUT}" ]]
 }
 
-@test "enban build on Linux refuses a date with UDF" {
+@test "enban build keeps long names through Rock Ridge on every system" {
   # Arrange
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS builds --date with xorriso, which refuses UDF"
+  head -c 100 /dev/urandom >"${SRC}/a-rather-long-file-name.jpeg"
+
+  # Act
+  run disk_test_run enban build "${SRC}" "${OUT}" --fs iso9660 </dev/null
+
+  # Assert
+  local listed
+  listed="$(image_files "${OUT}")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${listed}" == *"a-rather-long-file-name.jpeg 100"* ]]
+}
+
+@test "enban build refuses a date with UDF" {
+  # Arrange
   local option=--date
 
   # Act
@@ -814,7 +812,7 @@ player_order() {
   [[ "${order}" == "${wanted}" ]]
 }
 
-@test "enban build --dvd-video on macOS needs mkisofs" {
+@test "enban build --dvd-video on macOS needs mkisofs for its UDF" {
   # Arrange
   [[ "${ENBAN_TEST_OS}" == "Darwin" ]] || skip "Linux builds DVD Video with genisoimage"
   local farm
@@ -826,7 +824,7 @@ player_order() {
 
   # Assert
   [[ "${status}" -eq 1 ]]
-  [[ "${output}" == "enban: --dvd-video on macOS needs mkisofs, since hdiutil makehybrid writes the VIDEO_TS files out of order. install it with brew install cdrtools." ]]
+  [[ "${output}" == "enban: UDF on macOS needs mkisofs from cdrtools. install it with brew install cdrtools, or leave udf out of --fs." ]]
 }
 
 @test "enban build --dvd-video reports a mkisofs that fails and leaves no image" {
@@ -1133,9 +1131,8 @@ leftovers() {
   [[ -z "${left}" ]]
 }
 
-@test "enban build --udf-version 1.02 builds through genisoimage on Linux" {
+@test "enban build --udf-version 1.02 writes UDF 1.02 beside ISO9660" {
   # Arrange
-  [[ "${ENBAN_TEST_OS}" == "Linux" ]] || skip "macOS builds through hdiutil"
   local version=1.02
 
   # Act

@@ -5,6 +5,7 @@
 
 disk_raw_ready() {
   disk_drive_read "${DISK_DRIVE}" "$1" || return 1
+  disk_mac_drive "${DISK_DRIVE}" && return 0
   command -v sg_raw >/dev/null 2>&1 && return 0
   disk_error "$1 needs sg_raw from sg3-utils. install it and try again."
   return 1
@@ -57,6 +58,10 @@ disk_close_check() {
 }
 
 disk_close_go() {
+  if disk_mac_drive "${DISK_DRIVE}"; then
+    disk_mac_close
+    return
+  fi
   if [ "${DISK_CLOSE_TRACK}" = y ]; then
     disk_close_track
     return
@@ -80,6 +85,10 @@ disk_speed_unit() {
 
 disk_speed_run() {
   disk_raw_ready speed || return 1
+  if disk_mac_drive "${DISK_DRIVE}"; then
+    disk_mac_speed
+    return
+  fi
   disk_sp_rate=65535
   if [ "${DISK_SPEED_WANTED}" != max ]; then
     disk_sp_unit="$(disk_speed_unit)"
@@ -121,6 +130,10 @@ disk_region_show() {
 
 disk_region_run() {
   disk_raw_ready region || return 1
+  if disk_mac_drive "${DISK_DRIVE}"; then
+    disk_error "region needs sg_raw; no macOS command reads or sets a drive's DVD region."
+    return 1
+  fi
   disk_region_state || return 1
   if [ -z "${DISK_REGION_SET}" ]; then
     disk_region_show

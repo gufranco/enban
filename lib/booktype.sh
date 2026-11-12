@@ -18,7 +18,7 @@ disk_booktype_ready() {
     return 1
   fi
   disk_br_user="$(id -u)"
-  if [ "${disk_br_user}" != 0 ]; then
+  if [ "${disk_br_user}" != 0 ] && ! disk_mac_drive "${DISK_DRIVE}"; then
     disk_error "the book type needs root. run the same command again with sudo."
     return 1
   fi
@@ -31,9 +31,17 @@ disk_booktype_ready() {
   return 1
 }
 
+disk_booktype_device() {
+  if disk_mac_drive "${DISK_DRIVE}"; then
+    disk_mac_disc_node
+    return
+  fi
+  disk_raw_device
+}
+
 disk_booktype_run() {
   disk_booktype_ready || return 1
-  disk_bt_device="$(disk_raw_device)"
+  disk_bt_device="$(disk_booktype_device)" || return 1
   if [ -z "${DISK_BOOKTYPE}" ]; then
     dvd+rw-booktype -inq "${disk_bt_device}"
     return
@@ -43,7 +51,7 @@ disk_booktype_run() {
 }
 
 disk_booktype_go() {
-  disk_bt_device="$(disk_raw_device)"
+  disk_bt_device="$(disk_booktype_device)" || return 1
   disk_bt_spec="$(disk_booktype_spec "${DISK_BOOKTYPE}")"
   disk_bt_errors="$(mktemp "${TMPDIR:-/tmp}/enban-book.XXXXXX")" || return 1
   disk_bt_status=0

@@ -27,6 +27,8 @@ DISK_PROG=enban
 . "${DISK_LIB}/drive.sh"
 # shellcheck source=SCRIPTDIR/../lib/mac_drive.sh
 . "${DISK_LIB}/mac_drive.sh"
+# shellcheck source=SCRIPTDIR/../lib/mac_tools.sh
+. "${DISK_LIB}/mac_tools.sh"
 # shellcheck source=SCRIPTDIR/../lib/write.sh
 . "${DISK_LIB}/write.sh"
 # shellcheck source=SCRIPTDIR/../lib/write_convert.sh
@@ -244,8 +246,9 @@ options:
 
 notes:
   info, write, read, verify, erase and the app reach the drive through
-  xorriso. On macOS a drive must be an image target, stdio:FILE, until
-  real drives are supported there.
+  xorriso on Linux. On macOS a drive is named like IODVDServices/0 and
+  reached through cdrecord and readcd from cdrtools; an image target,
+  stdio:FILE, works on both. region and close --track need Linux.
 
   write burns only a blank disc, asks for the drive's name before it starts,
   then reads the disc back and compares it with the image. read copies the
@@ -254,7 +257,8 @@ notes:
   of a disc that holds data, compares it with the image when one is given,
   and names the first sector that differs or cannot be read. build makes a new
   image from a folder on macOS and Linux, with ISO9660 always and Joliet and
-  UDF unless --fs leaves them out. UDF on Linux needs genisoimage. erase
+  UDF unless --fs leaves them out. UDF needs genisoimage on Linux and
+  mkisofs from cdrtools on macOS. erase
   blanks a rewritable disc that holds data, only after you type the drive's
   name; --full overwrites every sector and takes much longer. checksum reads
   an image or the disc once and prints its MD5, SHA-1 and SHA-256.

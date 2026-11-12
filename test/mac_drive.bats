@@ -224,7 +224,7 @@ sent() {
   local first
   first="$(sent 1 readcd)"
   [[ "${status}" -eq 0 ]]
-  [[ "${first}" == "dev=${DRIVE} f=${OUT} sectors=0-40 speed=4" ]]
+  [[ "${first}" == "dev=${DRIVE} f=${OUT} sectors=0-40 speed=32" ]]
   [[ "${output}" == *"Done. ${DRIVE} is read into ${OUT} and verified." ]]
   cmp -s "${IMAGE}" "${OUT}"
 }
@@ -343,4 +343,388 @@ sent() {
   # Assert
   [[ "${status}" -eq 0 ]]
   [[ "${output}" == $'16+0 records in\n16+0 records out\n32768 bytes copied, 0.250 s' ]]
+}
+
+written_cd() {
+  cp -f "${IMAGE}" "${WORK}/mac.disc"
+  disk_test_mac_drive CD "CD-R" complete 40 0
+}
+
+appendable_dvd() {
+  cp -f "${IMAGE}" "${WORK}/mac.disc"
+  disk_test_mac_drive DVD "DVD+R" incomplete/appendable 40 2295000
+  disk_test_mac_set sessions 2
+}
+
+@test "enban tray load, lock and unlock run cdrecord on a macOS drive" {
+  # Arrange
+  blank_dvd
+
+  # Act
+  run disk_test_run enban tray --drive "${DRIVE}" lock </dev/null
+
+  # Assert
+  local sent_last
+  sent_last="$(sed -n '$p' "${WORK}/cdrecord.log")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${sent_last}" == "dev=${DRIVE} -lock" ]]
+  [[ "${output}" == "Done. the tray of ${DRIVE} is locked until it is unlocked or the drive restarts." ]]
+}
+
+@test "enban tray unlock loads through cdrecord, which frees the tray" {
+  # Arrange
+  blank_dvd
+
+  # Act
+  run disk_test_run enban tray --drive "${DRIVE}" unlock </dev/null
+
+  # Assert
+  local sent_last
+  sent_last="$(sed -n '$p' "${WORK}/cdrecord.log")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${sent_last}" == "dev=${DRIVE} -load" ]]
+  [[ "${output}" == "Done. the tray of ${DRIVE} is unlocked." ]]
+}
+
+@test "enban tray load closes a macOS drive's tray" {
+  # Arrange
+  blank_dvd
+
+  # Act
+  run disk_test_run enban tray --drive "${DRIVE}" load </dev/null
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+  [[ "${output}" == "Done. the tray of ${DRIVE} is closed and its disc loaded." ]]
+}
+
+@test "enban tray names cdrecord's refusal on a macOS drive" {
+  # Arrange
+  blank_dvd
+  disk_test_mac_set fail_load 1
+
+  # Act
+  run disk_test_run enban tray --drive "${DRIVE}" load </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: the drive refused the command: Cannot load media." ]]
+}
+
+@test "enban rezero and sync reach a macOS drive through cdrecord" {
+  # Arrange
+  blank_dvd
+  disk_test_run enban rezero --drive "${DRIVE}" </dev/null >"${WORK}/rezero.out"
+
+  # Act
+  run disk_test_run enban sync --drive "${DRIVE}" </dev/null
+
+  # Assert
+  local rezero sent
+  rezero="$(<"${WORK}/rezero.out")"
+  sent="$(grep -c -- '-load\|-abort' "${WORK}/cdrecord.log")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${rezero}" == "Done. ${DRIVE} moved its head back to the start of the disc." ]]
+  [[ "${output}" == "Done. ${DRIVE} wrote its cache to the disc." ]]
+  [[ "${sent}" == "2" ]]
+}
+
+@test "enban close fixates the session of a macOS disc and keeps it open" {
+  # Arrange
+  appendable_dvd
+
+  # Act
+  run disk_test_run enban close --drive "${DRIVE}" <<<"${DRIVE}"
+
+  # Assert
+  local sent_last
+  sent_last="$(sed -n '$p' "${WORK}/cdrecord.log")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${sent_last}" == "dev=${DRIVE} -fix -tao -multi" ]]
+  [[ "${output}" == *"Done. the session on ${DRIVE} is closed." ]]
+}
+
+@test "enban close --finalize fixates a macOS disc for good" {
+  # Arrange
+  appendable_dvd
+
+  # Act
+  run disk_test_run enban close --drive "${DRIVE}" --finalize <<<"${DRIVE}"
+
+  # Assert
+  local sent_last
+  sent_last="$(sed -n '$p' "${WORK}/cdrecord.log")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${sent_last}" == "dev=${DRIVE} -fix -tao" ]]
+  [[ "${output}" == *"Done. the disc in ${DRIVE} is finalized." ]]
+}
+
+@test "enban close --track says cdrecord cannot close one track on macOS" {
+  # Arrange
+  appendable_dvd
+
+  # Act
+  run disk_test_run enban close --drive "${DRIVE}" --track <<<"${DRIVE}"
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == *"enban: close --track needs sg_raw; on macOS cdrecord closes a session or the disc, never one track alone." ]]
+}
+
+@test "enban close names cdrecord's refusal on a macOS drive" {
+  # Arrange
+  appendable_dvd
+  disk_test_mac_set fail_fix 1
+
+  # Act
+  run disk_test_run enban close --drive "${DRIVE}" <<<"${DRIVE}"
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == *"enban: the drive refused the command: Cannot fixate disk." ]]
+}
+
+@test "enban features lists a macOS drive's features from cdrecord" {
+  # Arrange
+  blank_dvd
+  disk_test_mac_set features "002b:1 0040:0 9999:0"
+
+  # Act
+  run disk_test_run enban features --drive "${DRIVE}" </dev/null
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+  [[ "${lines[0]}" == "0x002b  DVD+R                                    current" ]]
+  [[ "${lines[1]}" == "0x0040  BD read                                  supported" ]]
+  [[ "${lines[2]}" == "0x9999  unknown feature                          supported" ]]
+}
+
+@test "enban features names cdrecord's refusal on a macOS drive" {
+  # Arrange
+  blank_dvd
+  disk_test_run enban info --drive "${DRIVE}" </dev/null >/dev/null
+  disk_test_shim cdrecord "case \" \$* \" in *\" -x \"*) exit 255 ;; esac; exec sh '${ENBAN_TESTS_DIR}/cdrecord.sh' '${WORK}/mac.state' \"\$@\""
+
+  # Act
+  run disk_test_run enban features --drive "${DRIVE}" </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: the drive refused the command: cdrecord could not read the feature list." ]]
+}
+
+@test "enban speed sets a macOS drive's read speed through readcd in CD units" {
+  # Arrange
+  written_dvd
+
+  # Act
+  run disk_test_run enban speed --drive "${DRIVE}" 4 </dev/null
+
+  # Assert
+  local sent
+  sent="$(<"${WORK}/readcd.log")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${sent}" == "dev=${DRIVE} speed=32 sectors=0-0 f=/dev/null" ]]
+  [[ "${output}" == "Done. ${DRIVE} reads at 4x." ]]
+}
+
+@test "enban speed max asks readcd for the fastest speed" {
+  # Arrange
+  written_dvd
+
+  # Act
+  run disk_test_run enban speed --drive "${DRIVE}" max </dev/null
+
+  # Assert
+  local sent
+  sent="$(<"${WORK}/readcd.log")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${sent}" == "dev=${DRIVE} speed=400 sectors=0-0 f=/dev/null" ]]
+  [[ "${output}" == "Done. ${DRIVE} reads at its fastest." ]]
+}
+
+@test "enban speed names readcd's refusal on a macOS drive" {
+  # Arrange
+  written_dvd
+  disk_test_mac_set fail_read 1
+
+  # Act
+  run disk_test_run enban speed --drive "${DRIVE}" 4 </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: the drive refused the command: Cannot open SCSI driver." ]]
+}
+
+@test "enban region says no macOS command reaches the region" {
+  # Arrange
+  written_dvd
+
+  # Act
+  run disk_test_run enban region --drive "${DRIVE}" </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: region needs sg_raw; no macOS command reads or sets a drive's DVD region." ]]
+}
+
+@test "enban write --opc leaves the calibration to cdrecord on macOS" {
+  # Arrange
+  blank_dvd
+
+  # Act
+  run disk_test_run enban write "${IMAGE}" --drive "${DRIVE}" --opc <<<"${DRIVE}"
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+  [[ "${output}" == *"cdrecord calibrates the laser power of ${DRIVE} itself before the write."* ]]
+}
+
+@test "enban sector --subchannel reads one raw sector of a macOS CD through readcd" {
+  # Arrange
+  written_cd
+
+  # Act
+  run disk_test_run enban sector --drive "${DRIVE}" --subchannel --lba 16 </dev/null
+
+  # Assert
+  local sent
+  sent="$(<"${WORK}/readcd.log")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${sent}" == "dev=${DRIVE} -clone sectors=16-17 f="*" retries=0" ]]
+  [[ "${lines[${#lines[@]} - 1]}" == "Q channel    track 01, index 01, 00:00:16 in the track, 00:02:16 on the disc" ]]
+}
+
+@test "enban sector --raw shows a macOS CD sector without its subchannel" {
+  # Arrange
+  written_cd
+
+  # Act
+  run disk_test_run enban sector --drive "${DRIVE}" --raw --lba 3 </dev/null
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+  [[ "${output}" == *"raw 2352"* ]]
+  [[ "${output}" != *"Q channel"* ]]
+}
+
+@test "enban sector --raw names readcd's refusal on a macOS drive" {
+  # Arrange
+  written_cd
+  disk_test_mac_set fail_after 0
+
+  # Act
+  run disk_test_run enban sector --drive "${DRIVE}" --raw --lba 3 </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: the drive refused the command: readcd could not read sector 3." ]]
+}
+
+@test "enban read --ccd copies a macOS CD through readcd -clone" {
+  # Arrange
+  written_cd
+  local raw="${WORK}/copy.img"
+
+  # Act
+  run disk_test_run enban read --drive "${DRIVE}" "${raw}" --ccd </dev/null
+
+  # Assert
+  local main_size sub_size clones
+  main_size="$(wc -c <"${raw}")"
+  sub_size="$(wc -c <"${WORK}/copy.sub")"
+  clones="$(grep -c -- '-clone sectors=0-40' "${WORK}/readcd.log")"
+  dd if="${raw}" bs=1 skip=$((5 * 2352 + 16)) count=2048 2>/dev/null >"${WORK}/user.bin"
+  dd if="${IMAGE}" bs=2048 skip=5 count=1 2>/dev/null >"${WORK}/want.bin"
+  [[ "${status}" -eq 0 ]]
+  [[ "${main_size//[[:space:]]/}" == "94080" ]]
+  [[ "${sub_size//[[:space:]]/}" == "3840" ]]
+  [[ "${clones}" == "2" ]]
+  cmp -s "${WORK}/user.bin" "${WORK}/want.bin"
+  [[ -s "${WORK}/copy.ccd" ]]
+  [[ "${output}" == *"Done. ${DRIVE} is read into ${raw} and verified." ]]
+}
+
+@test "enban read --ccd stops at a sector readcd could not read on macOS" {
+  # Arrange
+  written_cd
+  disk_test_mac_set bad 7
+
+  # Act
+  run disk_test_run enban read --drive "${DRIVE}" "${WORK}/copy.img" --ccd </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: 1 sectors of ${DRIVE} could not be read; --ignore-errors keeps them as zeros." ]]
+}
+
+@test "enban read --ccd --ignore-errors keeps an unreadable macOS sector as zeros" {
+  # Arrange
+  written_cd
+  disk_test_mac_set bad 7
+
+  # Act
+  run disk_test_run enban read --drive "${DRIVE}" "${WORK}/copy.img" --ccd --ignore-errors </dev/null
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+  [[ "${output}" == *"enban: warning: 1 sectors of ${DRIVE} could not be read and are zeros in ${WORK}/copy.img."* ]]
+  [[ "${output}" == *"Done. ${DRIVE} is read into ${WORK}/copy.img." ]]
+}
+
+@test "enban read --ccd says when readcd cannot read a macOS CD" {
+  # Arrange
+  written_cd
+  disk_test_mac_set fail_after 0
+
+  # Act
+  run disk_test_run enban read --drive "${DRIVE}" "${WORK}/copy.img" --ccd </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: unable to read ${DRIVE} into ${WORK}/copy.img." ]]
+}
+
+@test "enban read --ccd reports a macOS copy it cannot read back" {
+  # Arrange
+  written_cd
+  disk_test_mac_set fail_after 1
+
+  # Act
+  run disk_test_run enban read --drive "${DRIVE}" "${WORK}/copy.img" --ccd </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: the copy in ${WORK}/copy.img does not match the disc in ${DRIVE}." ]]
+}
+
+@test "enban booktype reaches a macOS disc through the node drutil names" {
+  # Arrange
+  appendable_dvd
+  disk_test_shim drutil "printf '           Type: DVD+R           Name: /dev/disk4\\n'"
+  disk_test_shim dvd+rw-booktype "printf '%s\\n' \"\$*\" >>'${WORK}/booktype.log'; printf 'Book type: DVD+R\\n'"
+
+  # Act
+  run disk_test_run enban booktype --drive "${DRIVE}" </dev/null
+
+  # Assert
+  local sent
+  sent="$(<"${WORK}/booktype.log")"
+  [[ "${status}" -eq 0 ]]
+  [[ "${sent}" == "-inq /dev/disk4" ]]
+  [[ "${output}" == "Book type: DVD+R" ]]
+}
+
+@test "enban booktype says when drutil names no disc on macOS" {
+  # Arrange
+  appendable_dvd
+  disk_test_shim drutil "exit 1"
+  disk_test_shim dvd+rw-booktype "exit 0"
+
+  # Act
+  run disk_test_run enban booktype --drive "${DRIVE}" dvd-rom <<<"${DRIVE}"
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${output}" == "enban: drutil names no disc device for ${DRIVE}, so its book type cannot be reached." ]]
 }

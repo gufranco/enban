@@ -248,12 +248,15 @@ handles. On Linux it reads the drive
 through
 .BR xorriso .
 On macOS a drive is named like IODVDServices/0, IOCompactDiscServices/0 or
-IOBDServices/0, and info, write, read, verify, erase, checksum, discovery,
-sector and queue reach it through
+IOBDServices/0, and every command reaches it through
 .B cdrecord
 and
 .B readcd
-from cdrtools; an image target such as stdio:disc.iso works on both.
+from cdrtools: close fixates with cdrecord, tray, rezero and sync load,
+lock and flush the drive through cdrecord, features reads cdrecord's feature
+list, speed and raw sectors go through readcd, and booktype finds the disc
+through drutil. region and close \-\-track have no macOS route. An image
+target such as stdio:disc.iso works on both.
 .TP
 .B write
 Burn
@@ -287,14 +290,13 @@ from the files in
 .IR folder ,
 with ISO9660 always and Joliet and UDF unless
 .B \-\-fs
-leaves them out. macOS builds with hdiutil; Linux builds with xorriso, and
-with genisoimage when UDF is asked for. The volume name is the folder's, or
+leaves them out. It builds with xorriso, and with genisoimage on Linux or
+mkisofs from cdrtools on macOS when UDF is asked for, with Rock Ridge names
+on both. The volume name is the folder's, or
 .BR \-\-label ,
 in the letters ISO9660 allows. It never overwrites a file.
 The publisher, preparer, application and system are recorded in capitals,
-as ISO9660 asks. hdiutil has no field for the system, volume set, dates,
-ISO level or boot image, so macOS builds with xorriso when one of those is
-asked for, and then writes no UDF.
+as ISO9660 asks.
 .IP
 With
 .BR \-\-boot ,
@@ -539,8 +541,8 @@ The volume set build records, up to 128 characters.
 .TP
 .BI \-\-date " stamp"
 The creation and modification dates build records, as YYYYMMDDhhmmss in
-UTC. The time the image is built by default. Not with UDF, which
-genisoimage builds on Linux and xorriso cannot write on macOS.
+UTC. The time the image is built by default. Not with UDF, since
+genisoimage and mkisofs cannot set it.
 .TP
 .BI \-\-iso\-level " n"
 The ISO9660 level build follows, 1 to 4.
@@ -573,7 +575,7 @@ default.
 .B \-\-dvd\-video
 Lay out the VIDEO_TS folder at the root in the order a DVD player reads it,
 with UDF, which a player needs. Linux builds it with genisoimage and macOS
-with mkisofs from cdrtools, since hdiutil writes the files out of order. A
+with mkisofs from cdrtools. A
 build past one DVD layer names its layer break, the first cell start between
 the middle and the end of layer 0, as layerbreak does.
 .TP
@@ -583,7 +585,7 @@ needs. It takes a label and none of the other build fields.
 .TP
 .BI \-\-udf\-version " v"
 The UDF revision build writes: 1.02, 1.50, 2.00, 2.01, 2.50 or 2.60. 1.02 sits
-beside ISO9660, built by hdiutil on macOS and genisoimage on Linux. 1.50 and
+beside ISO9660, built by mkisofs on macOS and genisoimage on Linux. 1.50 and
 later are written by enban itself as UDF alone, the same on both systems, with
 a label and none of the other build fields; 2.50 and 2.60 keep their metadata
 in a metadata partition, as Blu-ray players expect.

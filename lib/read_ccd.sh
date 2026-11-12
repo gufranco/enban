@@ -32,6 +32,7 @@ disk_read_ccd_ready() {
     ;;
   esac
   disk_read_ccd_free || return 1
+  disk_mac_drive "${DISK_DRIVE}" && return 0
   command -v sg_raw >/dev/null 2>&1 && return 0
   disk_error "--ccd needs sg_raw from sg3-utils to read raw sectors. install it and try again."
   return 1
@@ -48,6 +49,10 @@ disk_read_ccd_free() {
 }
 
 disk_read_ccd_copy() {
+  if disk_mac_drive "${DISK_DRIVE}"; then
+    disk_mac_ccd_copy
+    return
+  fi
   disk_rc_sub="$(disk_read_ccd_sub)"
   disk_job_note "${DISK_READ_OUT}" "${disk_rc_sub}"
   : >"${DISK_READ_OUT}" || return 1
@@ -115,6 +120,10 @@ disk_read_ccd_send() {
 }
 
 disk_read_ccd_verify() {
+  if disk_mac_drive "${DISK_DRIVE}"; then
+    disk_mac_ccd_verify
+    return
+  fi
   disk_cv_part="$(mktemp "${TMPDIR:-/tmp}/enban-ccd.XXXXXX")" || return 1
   disk_cv_lba=0
   disk_cv_status=0

@@ -16,7 +16,6 @@ disk_build_check() {
   disk_build_ids_check || return 1
   disk_build_boot_check || return 1
   disk_build_video_check || return 1
-  disk_build_mac_tool || return 1
   disk_build_ids_udf || return 1
   disk_build_boot_tool || return 1
   disk_build_tools
@@ -76,10 +75,13 @@ disk_build_label() {
 }
 
 disk_build_tools() {
-  disk_bt_os="$(disk_os)"
-  [ "${disk_bt_os}" != Darwin ] && [ "${DISK_BUILD_UDF}" = y ] || return 0
-  command -v genisoimage >/dev/null 2>&1 && return 0
-  disk_error "UDF on Linux needs genisoimage. install it, or leave udf out of --fs."
+  [ "${DISK_BUILD_UDF}" = y ] && [ "${DISK_BUILD_ALONE}" = n ] || return 0
+  disk_bt_tool="$(disk_build_udf_tool)"
+  command -v "${disk_bt_tool}" >/dev/null 2>&1 && return 0
+  case "${disk_bt_tool}" in
+  mkisofs) disk_error "UDF on macOS needs mkisofs from cdrtools. install it with brew install cdrtools, or leave udf out of --fs." ;;
+  *) disk_error "UDF on Linux needs genisoimage. install it, or leave udf out of --fs." ;;
+  esac
   return 1
 }
 
@@ -88,9 +90,8 @@ disk_build_make() {
   disk_job_note "${disk_bm_part}" "${disk_bm_part}.iso" "${disk_bm_part}.stage" "${disk_bm_part}.grafts" \
     "${disk_bm_part}.boot" "${disk_bm_part}.tree" "${disk_bm_part}.plan" "${disk_bm_part}.sector"
   disk_bm_status=0
-  case "$(disk_os):${DISK_BUILD_MKISOFS}:${DISK_BUILD_ALONE}" in
-  *:y) disk_build_bdmv "${disk_bm_part}" || disk_bm_status=1 ;;
-  Darwin:n:n) disk_build_hybrid "${disk_bm_part}" || disk_bm_status=1 ;;
+  case "${DISK_BUILD_ALONE}" in
+  y) disk_build_bdmv "${disk_bm_part}" || disk_bm_status=1 ;;
   *) disk_build_mkisofs "${disk_bm_part}" || disk_bm_status=1 ;;
   esac
   if [ "${disk_bm_status}" -eq 0 ] && mv "${disk_bm_part}" "${DISK_BUILD_OUT}"; then
@@ -100,29 +101,6 @@ disk_build_make() {
   disk_bm_from="${DISK_BUILD_SOURCE:-the layout}"
   disk_error "unable to build ${DISK_BUILD_OUT} from ${disk_bm_from}."
   return 1
-}
-
-disk_build_hybrid() {
-  disk_bh_part="$1"
-  disk_bh_from="${DISK_BUILD_SOURCE}"
-  if [ -n "${DISK_BUILD_LAYOUT}" ]; then
-    disk_bh_from="${disk_bh_part}.stage"
-    disk_build_stage "${disk_bh_from}" || return 1
-  fi
-  set -- -default-volume-name "${DISK_BUILD_VOLUME}"
-  [ "${DISK_BUILD_ISO}" = n ] || set -- "$@" -iso
-  [ "${DISK_BUILD_JOLIET}" = n ] || set -- "$@" -joliet
-  [ "${DISK_BUILD_UDF}" = n ] || set -- "$@" -udf
-  [ -z "${DISK_BUILD_PUBLISHER}" ] || set -- "$@" -publisher "${DISK_BUILD_PUBLISHER}"
-  [ -z "${DISK_BUILD_PREPARER}" ] || set -- "$@" -preparer "${DISK_BUILD_PREPARER}"
-  [ -z "${DISK_BUILD_APPLICATION}" ] || set -- "$@" -application "${DISK_BUILD_APPLICATION}"
-  [ -z "${DISK_BUILD_UDF_VERSION}" ] || set -- "$@" -udf-version "${DISK_BUILD_UDF_VERSION}"
-  rm -f "${disk_bh_part}"
-  disk_bh_status=0
-  hdiutil makehybrid "$@" -o "${disk_bh_part}.iso" "${disk_bh_from}" >/dev/null 2>&1 || disk_bh_status=1
-  [ -z "${DISK_BUILD_LAYOUT}" ] || rm -rf "${disk_bh_from}"
-  [ "${disk_bh_status}" -eq 0 ] || return 1
-  mv "${disk_bh_part}.iso" "${disk_bh_part}"
 }
 
 disk_build_stage() {

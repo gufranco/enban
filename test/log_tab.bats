@@ -132,7 +132,7 @@ build_keys() {
 
 @test "the log records why a job failed" {
   # Arrange
-  disk_test_shim hdiutil "exit 1"
+  disk_test_shim mkisofs "exit 1"
   disk_test_shim genisoimage "exit 1"
   local keys
   keys="$(build_keys)"
@@ -149,7 +149,7 @@ build_keys() {
 
 @test "the log records a cancelled job" {
   # Arrange
-  disk_test_shim hdiutil "sleep 45"
+  disk_test_shim mkisofs "sleep 45"
   disk_test_shim genisoimage "sleep 45"
   local keys
   keys="$(build_keys)"
