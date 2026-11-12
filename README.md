@@ -15,7 +15,7 @@
 
 </div>
 
-`enban`, 円盤, is Japanese for a disc. It aims at the jobs a disc burner does: write an image, write files, read a disc to an image, build an image, verify a disc against an image, and stress-test a drive. Today it ships the app, with its Write, Read, Build, Verify, Discovery, Queue, Tools, Log and Settings tabs, and the plain commands `info`, `write`, `read`, `verify`, `build`, `erase`, `checksum`, `queue`, `discovery`, `sector`, `cue`, `close`, `speed`, `region`, `booktype`, `convert`, `label`, `layerbreak`, `mount`, `unmount` and `speeds` for scripts. Work on a drive runs on Linux; building an image and checking an image's checksums also run on macOS.
+`enban`, 円盤, is Japanese for a disc. It aims at the jobs a disc burner does: write an image, write files, read a disc to an image, build an image, verify a disc against an image, and stress-test a drive. Today it ships the app, with its Write, Read, Build, Verify, Discovery, Queue, Tools, Log and Settings tabs, and the plain commands `info`, `write`, `read`, `verify`, `build`, `erase`, `checksum`, `queue`, `discovery`, `sector`, `cue`, `close`, `speed`, `region`, `booktype`, `convert`, `label`, `layerbreak`, `mount`, `unmount`, `speeds`, `tray`, `rezero`, `sync` and `features` for scripts. Work on a drive runs on Linux; building an image and checking an image's checksums also run on macOS.
 
 ---
 
@@ -115,9 +115,9 @@ make install
 | `o`, `s` | Save the queue to a file, or start it after you type each drive's name, on Queue |
 | `t` | Start a discovery test after you type the drive's name, on Discovery |
 | `f`, `/`, `s` | Filter by level, search, or save a copy of the log, on Log |
-| Space, Enter on Settings | Change a default; it is saved to the settings file at once |
+| Left, Right, Space, Enter on Settings | Switch between the Write, Read, Build, Queue, Events and Look pages, and change a default; it is saved to the settings file at once |
 | `b` | Build the layout into the chosen image file, or burn it to the disc when Target says so, after you type the drive's name |
-| `c` | Cancel the running job |
+| `c` | Cancel the running job, after you answer `y` unless the Events page turns the question off |
 | Esc | Leave a tool's panel for the tool list on Tools |
 | Left, Right, `g`, `m` | Step to the previous or next sector, go to an LBA, or switch to raw 2352-byte sectors, in the Sector viewer |
 | Tab | Next tab |
@@ -127,7 +127,7 @@ make install
 
 `--theme <name>` picks the colours; `ENBAN_THEME`, then `KODOUGU_THEME`, set the same, and `NO_COLOR` turns colour off.
 
-Defaults can live in a settings file, `~/.config/enban/settings` or `ENBAN_CONFIG/settings`, one `name=value` per line: `write_verify`, `write_eject` and `read_verify` take `yes` or `no`, `write_speed` takes `auto` or a number, `build_fs` a list such as `iso9660,joliet`, `queue_wait` seconds, and `theme` a theme name. An option, then an `ENBAN_` variable, wins over the file, and `--verify` or `--eject` turn back on what the file turned off. enban follows the shared command-line contract of its family, described in [FAMILY.md](FAMILY.md).
+Defaults can live in a settings file, `~/.config/enban/settings` or `ENBAN_CONFIG/settings`, one `name=value` per line: `write_verify`, `write_eject`, `write_finalize`, `write_opc`, `read_verify`, `read_ignore` and `read_cue` take `yes` or `no`, `write_speed` takes `auto` or a number, `write_mode` `dao` or `tao`, `read_retries` 0 to 99, `build_fs` a list such as `iso9660,joliet`, `queue_wait` seconds, and `theme` a theme name. The events `event_bell`, which rings the terminal bell when a job in the app ends, `event_confirm`, which asks before `c` cancels a job, and `event_clean`, which deletes what a cancelled build or read and a failed read left half written, take `yes` or `no` and start at `yes`. An option, then an `ENBAN_` variable, wins over the file, and `--verify` or `--eject` turn back on what the file turned off. enban follows the shared command-line contract of its family, described in [FAMILY.md](FAMILY.md).
 
 <a id="how-it-works"></a>
 

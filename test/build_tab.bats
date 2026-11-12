@@ -245,7 +245,7 @@ answers() {
   # Arrange
   disk_test_shim hdiutil "sleep 41"
   disk_test_shim genisoimage "sleep 41"
-  answers "${SRC}" "${OUT}"
+  answers "${SRC}" "${OUT}" y
 
   # Act
   run on_terminal_in_steps '3f\033[B\033[B\033[B\nb' 'Press c to cancel' 'cq'
@@ -389,6 +389,24 @@ answers() {
   listed="$(disc_files "${WORK}/disc.iso")"
   [[ "${shown}" == *"Result"*"Done. stdio:${WORK}/disc.iso is written, verified and ejected."* ]]
   [[ "${listed}" == *"/photos/trip/kyoto-temple.jpg"* ]]
+}
+
+@test "b to the disc follows the write defaults of the settings file" {
+  # Arrange
+  disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160 11080
+  : >"${WORK}/disc.iso"
+  answers "${SRC}" disc.iso
+  export ENBAN_CONFIG="${WORK}/config"
+  mkdir -p "${ENBAN_CONFIG}"
+  printf 'write_eject=no\n' >"${ENBAN_CONFIG}/settings"
+
+  # Act
+  run on_terminal_in_steps '3f\033[B\033[B\033[B\033[B\nb' 'is written and verified' 'q' --drive "stdio:${WORK}/disc.iso"
+
+  # Assert
+  local shown
+  shown="$(last_frame)"
+  [[ "${shown}" == *"Done. stdio:${WORK}/disc.iso is written and verified."* ]]
 }
 
 @test "the Target field shows the drive it writes to" {

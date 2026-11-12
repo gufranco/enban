@@ -80,6 +80,7 @@ written_dvd() {
 @test "the Verify tab cancels a verify on c" {
   # Arrange
   written_dvd
+  answers y
   disk_test_shim dd "case \" \$* \" in *\" if=\"*) sleep 37 ;; esac; exec \"\${REAL}\" \"\$@\""
 
   # Act

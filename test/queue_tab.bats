@@ -268,16 +268,17 @@ answers() {
   # Arrange
   disk_test_drive 0011 "DVD-R sequential recording" 2298496 22160
   disk_test_drive_flag slow
-  answers "${ONE}" disc.iso
+  answers "${ONE}" disc.iso y
 
   # Act
-  run on_terminal_in_steps '6as' 'writing' 'cq' --drive "stdio:${DISC}"
+  run on_terminal_in_steps '6as' 'writing' 'pcq' --drive "stdio:${DISC}"
 
   # Assert
   local shown final
   shown="$(screen)"
   final="$(last_frame)"
   [[ "${shown}" == *"1  one.iso"*"writing"* ]]
+  [[ "${shown}" == *"The queue pauses before its next image. Press p to go on."* ]]
   [[ "${final}" == *"Cancelled while writing the queue. A disc in a drive may be unusable."* ]]
 }
 

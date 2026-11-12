@@ -220,8 +220,13 @@ searches and
 .B s
 saves a copy; the session log is kept in
 .I ENBAN_DATA/logs
-when enban quits. On Settings, space and Enter change a default and save the
-settings file at once.
+when enban quits. On Settings, left and right switch between the Write, Read,
+Build, Queue, Events and Look pages, and space and Enter change a default and
+save the settings file at once.
+.B c
+cancels the running job after you answer y, unless
+.B event_confirm
+is no.
 Without a terminal the app never opens.
 .SH COMMANDS
 .TP
@@ -707,18 +712,34 @@ Defaults, one
 .I name=value
 per line:
 .BR write_verify ,
-.B write_eject
+.BR write_eject ,
+.BR write_finalize ,
+.BR write_opc ,
+.BR read_verify ,
+.B read_ignore
 and
-.B read_verify
+.B read_cue
 take yes or no,
 .B write_speed
 auto or a number,
+.B write_mode
+dao or tao,
+.B read_retries
+0 to 99,
 .B build_fs
 a list such as iso9660,joliet,
 .B queue_wait
 seconds and
 .B theme
-a theme name. Lines starting with # are skipped, and a line enban cannot use
+a theme name.
+.B event_bell
+rings the terminal bell when a job in the app ends,
+.B event_confirm
+asks before c cancels a job, and
+.B event_clean
+deletes what a cancelled build or read and a failed read left half written;
+each takes yes or no and starts at yes.
+Lines starting with # are skipped, and a line enban cannot use
 is named in a warning. Options, then ENBAN_ variables, win over the file.
 .SH EXIT STATUS
 0 on success, 1 on any failure or refusal.

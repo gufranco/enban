@@ -46,6 +46,25 @@ disk_job_poll() {
   DISK_APP_STATUS="The ${DISK_APP_JOB_KIND} failed; the result says why."
   [ "${disk_jp_status}" -ne 0 ] || DISK_APP_STATUS="$(printf '%s\n' "${DISK_APP_JOB_RESULT}" | sed -n '$p')"
   disk_log_job_end "${disk_jp_status}"
+  disk_job_bell
+}
+
+disk_job_bell() {
+  [ "${DISK_EVENT_BELL}" = y ] || return 0
+  printf '\a'
+}
+
+disk_job_ask_cancel() {
+  [ "${DISK_EVENT_CONFIRM}" = y ] || {
+    disk_job_cancel
+    return
+  }
+  disk_app_ask "Cancel the ${DISK_APP_JOB_KIND}? Type y to cancel, anything else to go on" "y"
+  if [ "${DISK_APP_ANSWER}" = y ]; then
+    disk_job_cancel
+    return
+  fi
+  DISK_APP_STATUS="The ${DISK_APP_JOB_KIND} goes on. Press c to cancel."
 }
 
 disk_job_cancel() {
@@ -53,11 +72,10 @@ disk_job_cancel() {
   # shellcheck disable=SC2086
   kill ${disk_jc_tree} 2>/dev/null || true
   wait "${DISK_APP_JOB_PID}" 2>/dev/null || true
-  disk_job_drop_part
+  DISK_APP_STATUS="$(disk_job_drop_part)"
   rm -rf "${DISK_APP_JOB_DIR}"
   DISK_APP_JOB=finished
   DISK_APP_JOB_RESULT="$(disk_job_cancelled)"
-  DISK_APP_STATUS="Cancelled."
   disk_log_add WARN "Cancelled ${DISK_APP_JOB_KIND}: ${DISK_APP_JOB_WHAT}"
 }
 
@@ -76,9 +94,24 @@ disk_job_cancelled() {
 }
 
 disk_job_drop_part() {
-  [ -f "${DISK_JOB_NOTE}" ] || return 0
-  disk_jd_part="$(cat "${DISK_JOB_NOTE}")"
-  rm -rf "${disk_jd_part}" "${disk_jd_part}.iso" "${disk_jd_part}.stage" "${disk_jd_part}.grafts" "${disk_jd_part}.boot" "${disk_jd_part}.tree" "${disk_jd_part}.plan" "${disk_jd_part}.sector"
+  if [ ! -f "${DISK_JOB_NOTE}" ]; then
+    printf 'Cancelled.\n'
+    return 0
+  fi
+  if [ "${DISK_EVENT_CLEAN}" = n ]; then
+    disk_jd_first="$(sed -n '1p' "${DISK_JOB_NOTE}")"
+    printf 'Cancelled. The half-written %s is kept.\n' "${disk_jd_first}"
+    return 0
+  fi
+  while IFS= read -r disk_jd_part; do
+    rm -rf "${disk_jd_part}"
+  done <"${DISK_JOB_NOTE}"
+  printf 'Cancelled. The half-written files are deleted.\n'
+}
+
+disk_job_note() {
+  [ -n "${DISK_JOB_NOTE}" ] || return 0
+  printf '%s\n' "$@" >"${DISK_JOB_NOTE}"
 }
 
 disk_job_tree() {
@@ -134,7 +167,7 @@ disk_job_typed() {
 disk_job_key() {
   [ "${DISK_APP_JOB}" != idle ] && [ "${DISK_APP_JOB_KIND}" = "$1" ] || return 1
   case "${DISK_APP_JOB}:$2" in
-  running:c) disk_job_cancel ;;
+  running:c) disk_job_ask_cancel ;;
   finished:enter) DISK_APP_JOB=idle ;;
   *) return 0 ;;
   esac

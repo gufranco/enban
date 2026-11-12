@@ -105,7 +105,14 @@ prefix_of() {
 @test "enban read reports a copy that does not match the disc" {
   # Arrange
   written_dvd
-  disk_test_shim dd "case \" \$* \" in *\" of=\"*) \"\${REAL}\" \"\$@\" && printf X | \"\${REAL}\" of='${OUT}' bs=1 seek=100 conv=notrunc 2>/dev/null ;; *) exec \"\${REAL}\" \"\$@\" ;; esac"
+  disk_test_shim dd "case \" \$* \" in *\" of=\"*)
+  \"\${REAL}\" \"\$@\" || exit 1
+  flip=X
+  [ \"\$(od -An -c -j 100 -N 1 '${OUT}' | tr -d ' ')\" != X ] || flip=Y
+  printf '%s' \"\${flip}\" | \"\${REAL}\" of='${OUT}' bs=1 seek=100 conv=notrunc 2>/dev/null
+  ;;
+*) exec \"\${REAL}\" \"\$@\" ;;
+esac"
 
   # Act
   run disk_test_run enban read --drive "${DRIVE}" "${OUT}" </dev/null
@@ -228,6 +235,42 @@ exec \"\${REAL}\" \"\$@\""
   [[ "${status}" -eq 0 ]]
   [[ "${output}" == *"Reading ${DRIVE} again, try 3 of 3."* ]]
   [[ "${output}" == *"Done. ${DRIVE} is read into ${OUT} and verified." ]]
+}
+
+half_reads() {
+  disk_test_shim dd "case \" \$* \" in *\" if=${DISC} of=${OUT} \"*) head -c 4096 /dev/zero >'${OUT}'; exit 1 ;; esac; exec \"\${REAL}\" \"\$@\""
+}
+
+@test "enban read deletes the half-read image when it fails" {
+  # Arrange
+  written_dvd
+  half_reads
+
+  # Act
+  run disk_test_run enban read --drive "${DRIVE}" "${OUT}" </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${lines[0]}" == "Deleted the half-read ${OUT}." ]]
+  [[ "${lines[1]}" == "enban: unable to read ${DRIVE} into ${OUT}." ]]
+  [[ ! -e "${OUT}" ]]
+}
+
+@test "enban read keeps the half-read image when the settings say so" {
+  # Arrange
+  written_dvd
+  half_reads
+  export ENBAN_CONFIG="${WORK}/config"
+  mkdir -p "${ENBAN_CONFIG}"
+  printf 'event_clean=no\n' >"${ENBAN_CONFIG}/settings"
+
+  # Act
+  run disk_test_run enban read --drive "${DRIVE}" "${OUT}" </dev/null
+
+  # Assert
+  [[ "${status}" -eq 1 ]]
+  [[ "${lines[0]}" == "The half-read ${OUT} is kept." ]]
+  [[ -s "${OUT}" ]]
 }
 
 @test "enban read stops once its retries run out" {

@@ -247,9 +247,6 @@ disk_build_tab_to_disc() {
     return 0
   fi
   disk_job_typed || return 0
-  DISK_WRITE_SPEED=""
-  DISK_WRITE_VERIFY=y
-  DISK_WRITE_EJECT=y
   disk_job_launch disk_build_tab_disc_steps build "the layout to ${DISK_DRIVE}"
 }
 

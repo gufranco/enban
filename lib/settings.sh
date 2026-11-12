@@ -22,8 +22,12 @@ disk_settings_load() {
 
 disk_settings_apply() {
   case "$2" in
-  write_verify | write_eject | read_verify) disk_settings_switch "$@" ;;
+  write_verify | write_eject | write_finalize | write_opc) disk_settings_switch "$@" ;;
+  read_verify | read_ignore | read_cue) disk_settings_switch "$@" ;;
+  event_bell | event_confirm | event_clean) disk_settings_switch "$@" ;;
   write_speed) disk_settings_speed "$@" ;;
+  write_mode) disk_settings_mode "$@" ;;
+  read_retries) disk_settings_retries "$@" ;;
   build_fs) disk_settings_fs "$@" ;;
   queue_wait) disk_settings_wait "$@" ;;
   theme) disk_settings_theme "$3" ;;
@@ -40,10 +44,36 @@ disk_settings_switch() {
     return 0
     ;;
   esac
-  case "$2" in
-  write_verify) DISK_WRITE_VERIFY="${disk_sw_value}" ;;
-  write_eject) DISK_WRITE_EJECT="${disk_sw_value}" ;;
-  *) DISK_READ_VERIFY="${disk_sw_value}" ;;
+  disk_settings_set "$2" "${disk_sw_value}"
+}
+
+disk_settings_set() {
+  case "$1" in
+  write_verify) DISK_WRITE_VERIFY="$2" ;;
+  write_eject) DISK_WRITE_EJECT="$2" ;;
+  write_finalize) DISK_WRITE_FINALIZE="$2" ;;
+  write_opc) DISK_WRITE_OPC="$2" ;;
+  read_verify) DISK_READ_VERIFY="$2" ;;
+  read_ignore) DISK_READ_IGNORE="$2" ;;
+  read_cue) DISK_READ_CUE="$2" ;;
+  event_bell) DISK_EVENT_BELL="$2" ;;
+  event_confirm) DISK_EVENT_CONFIRM="$2" ;;
+  *) DISK_EVENT_CLEAN="$2" ;;
+  esac
+}
+
+disk_settings_get() {
+  case "$1" in
+  write_verify) printf '%s\n' "${DISK_WRITE_VERIFY}" ;;
+  write_eject) printf '%s\n' "${DISK_WRITE_EJECT}" ;;
+  write_finalize) printf '%s\n' "${DISK_WRITE_FINALIZE}" ;;
+  write_opc) printf '%s\n' "${DISK_WRITE_OPC}" ;;
+  read_verify) printf '%s\n' "${DISK_READ_VERIFY}" ;;
+  read_ignore) printf '%s\n' "${DISK_READ_IGNORE}" ;;
+  read_cue) printf '%s\n' "${DISK_READ_CUE}" ;;
+  event_bell) printf '%s\n' "${DISK_EVENT_BELL}" ;;
+  event_confirm) printf '%s\n' "${DISK_EVENT_CONFIRM}" ;;
+  *) printf '%s\n' "${DISK_EVENT_CLEAN}" ;;
   esac
 }
 
@@ -52,6 +82,20 @@ disk_settings_speed() {
   auto) DISK_WRITE_SPEED="" ;;
   '' | *[!0-9]*) disk_warning "settings line $1: write_speed must be auto or a whole number, got: $3" ;;
   *) DISK_WRITE_SPEED="$3" ;;
+  esac
+}
+
+disk_settings_mode() {
+  case "$3" in
+  dao | tao) DISK_WRITE_MODE="$3" ;;
+  *) disk_warning "settings line $1: write_mode must be dao or tao, got: $3" ;;
+  esac
+}
+
+disk_settings_retries() {
+  case "$3" in
+  [0-9] | [0-9][0-9]) DISK_READ_RETRIES="$3" ;;
+  *) disk_warning "settings line $1: read_retries must be a whole number from 0 to 99, got: $3" ;;
   esac
 }
 

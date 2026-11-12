@@ -66,11 +66,85 @@ written_dvd() {
   [[ "${shown}" == *"> Image      ${OUT}"* ]]
 }
 
+slow_half_read() {
+  disk_test_shim dd "case \" \$* \" in *\" of=\"*) head -c 4096 /dev/zero >'${OUT}'; sleep 30 ;; esac; exec \"\${REAL}\" \"\$@\""
+}
+
+@test "cancelling a read deletes the half-written image" {
+  # Arrange
+  written_dvd
+  slow_half_read
+  answers "${OUT}" y
+
+  # Act
+  run on_terminal_in_steps '2\nr' 'Press c to cancel' 'cq' --drive "stdio:${DISC}"
+
+  # Assert
+  local final
+  final="$(last_frame)"
+  [[ "${final}" == *"Cancelled. The half-written files are deleted."* ]]
+  [[ ! -e "${OUT}" ]]
+}
+
+@test "cancelling a read keeps the half-written image when clean-up is off" {
+  # Arrange
+  written_dvd
+  slow_half_read
+  answers "${OUT}" y
+  export ENBAN_CONFIG="${WORK}/config"
+  mkdir -p "${ENBAN_CONFIG}"
+  printf 'event_clean=no\n' >"${ENBAN_CONFIG}/settings"
+
+  # Act
+  run on_terminal_in_steps '2\nr' 'Press c to cancel' 'cq' --drive "stdio:${DISC}"
+
+  # Assert
+  local final
+  final="$(last_frame)"
+  [[ "${final}" == *"Cancelled. The half-written ${OUT} is kept."* ]]
+  [[ -s "${OUT}" ]]
+}
+
+@test "c asks first and any answer but y lets the read go on" {
+  # Arrange
+  written_dvd
+  slow_half_read
+  answers "${OUT}" n y
+
+  # Act
+  run on_terminal_in_steps '2\nr' 'Press c to cancel' 'ccq' --drive "stdio:${DISC}"
+
+  # Assert
+  local shown final
+  shown="$(screen)"
+  final="$(last_frame)"
+  [[ "${shown}" == *"The read goes on. Press c to cancel."* ]]
+  [[ "${final}" == *"Cancelled while reading. The image is incomplete."* ]]
+}
+
+@test "c cancels at once when the cancel question is off" {
+  # Arrange
+  written_dvd
+  slow_half_read
+  answers "${OUT}"
+  export ENBAN_CONFIG="${WORK}/config"
+  mkdir -p "${ENBAN_CONFIG}"
+  printf 'event_confirm=no\n' >"${ENBAN_CONFIG}/settings"
+
+  # Act
+  run on_terminal_in_steps '2\nr' 'Press c to cancel' 'cq' --drive "stdio:${DISC}"
+
+  # Assert
+  local final
+  final="$(last_frame)"
+  [[ "${final}" == *"Cancelled while reading. The image is incomplete."* ]]
+}
+
 @test "the Read tab cancels a read on c" {
   # Arrange
   written_dvd
   disk_test_shim dd "case \" \$* \" in *\" of=\"*) sleep 30 ;; esac; exec \"\${REAL}\" \"\$@\""
-  answers "${OUT}"
+  answers "${OUT}" y
 
   # Act
   run on_terminal_in_steps '2\nr' 'Press c to cancel' 'qcq' --drive "stdio:${DISC}"

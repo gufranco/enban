@@ -88,7 +88,7 @@ image_on_disc() {
   # Arrange
   blank_dvd
   disk_test_drive_flag slow
-  answers "${IMAGE}" disc.iso
+  answers "${IMAGE}" disc.iso y
 
   # Act
   run on_terminal_in_steps '1\nw' 'Press c to cancel' 'xqcq' --drive "stdio:${DISC}"
@@ -100,6 +100,37 @@ image_on_disc() {
   [[ "${status}" -eq 0 ]]
   [[ "${shown}" == *"A write is running. Press c to cancel it first."* ]]
   [[ "${final}" == *"Cancelled while writing. The disc may be unusable."* ]]
+}
+
+@test "the app rings the terminal bell when a job ends" {
+  # Arrange
+  blank_dvd
+  answers "${IMAGE}" disc.iso
+
+  # Act
+  run on_terminal_in_steps '1\nw' 'Press Enter for the form' 'q' --drive "stdio:${DISC}"
+
+  # Assert
+  local rings
+  rings="$(LC_ALL=C tr -cd '\007' <"${WORK}/out")"
+  [[ "${rings}" == $'\a' ]]
+}
+
+@test "the app stays quiet when the bell is off" {
+  # Arrange
+  blank_dvd
+  answers "${IMAGE}" disc.iso
+  export ENBAN_CONFIG="${WORK}/config"
+  mkdir -p "${ENBAN_CONFIG}"
+  printf 'event_bell=no\n' >"${ENBAN_CONFIG}/settings"
+
+  # Act
+  run on_terminal_in_steps '1\nw' 'Press Enter for the form' 'q' --drive "stdio:${DISC}"
+
+  # Assert
+  local rings
+  rings="$(LC_ALL=C tr -cd '\007' <"${WORK}/out")"
+  [[ -z "${rings}" ]]
 }
 
 @test "Enter on a result brings the form back" {

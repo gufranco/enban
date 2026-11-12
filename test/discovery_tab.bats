@@ -172,7 +172,7 @@ past_runs() {
   # Arrange
   disk_test_drive 0011 "DVD-R sequential recording" 64 22160
   disk_test_drive_flag slow
-  answers disc.iso
+  answers disc.iso y
 
   # Act
   run on_terminal_in_steps '5t' 'Press c to cancel' 'cq' --drive "stdio:${DISC}"

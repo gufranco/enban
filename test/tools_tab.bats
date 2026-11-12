@@ -150,7 +150,7 @@ written() {
   # Arrange
   written 0013 "DVD-RW restricted overwrite"
   disk_test_drive_flag slow
-  answers disc.iso
+  answers disc.iso y
 
   # Act
   run on_terminal_in_steps '7\n\n' 'Press c to cancel' 'cq' --drive "stdio:${DISC}"
@@ -165,7 +165,7 @@ written() {
   # Arrange
   disk_test_shim shasum "sleep 43; exec \"\${REAL}\" \"\$@\""
   disk_test_shim sha256sum "sleep 43; exec \"\${REAL}\" \"\$@\""
-  answers "${IMAGE}"
+  answers "${IMAGE}" y
 
   # Act
   run on_terminal_in_steps "7$(printf '\\033[B%.0s' {1..12})\\n" 'Press c to cancel' 'cq'
@@ -800,7 +800,7 @@ iso_session() {
   # Arrange
   disk_test_shim iat "sleep 47"
   printf 'not an iso' >"${WORK}/disc.nrg"
-  answers "${WORK}/disc.nrg" "${WORK}/out.iso"
+  answers "${WORK}/disc.nrg" "${WORK}/out.iso" y
   local keys
   keys="$(tool_keys 10 '')"
 

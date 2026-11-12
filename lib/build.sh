@@ -85,7 +85,8 @@ disk_build_tools() {
 
 disk_build_make() {
   disk_bm_part="$(mktemp "$(dirname "${DISK_BUILD_OUT}")/.enban-build.XXXXXX")" || return 1
-  [ -z "${DISK_JOB_NOTE}" ] || printf '%s\n' "${disk_bm_part}" >"${DISK_JOB_NOTE}"
+  disk_job_note "${disk_bm_part}" "${disk_bm_part}.iso" "${disk_bm_part}.stage" "${disk_bm_part}.grafts" \
+    "${disk_bm_part}.boot" "${disk_bm_part}.tree" "${disk_bm_part}.plan" "${disk_bm_part}.sector"
   disk_bm_status=0
   case "$(disk_os):${DISK_BUILD_MKISOFS}:${DISK_BUILD_ALONE}" in
   *:y) disk_build_bdmv "${disk_bm_part}" || disk_bm_status=1 ;;

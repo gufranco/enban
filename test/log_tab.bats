@@ -153,7 +153,7 @@ build_keys() {
   disk_test_shim genisoimage "sleep 45"
   local keys
   keys="$(build_keys)"
-  answers "${SRC}" "${OUT}"
+  answers "${SRC}" "${OUT}" y
 
   # Act
   run on_terminal_in_steps "${keys}" 'Press c to cancel' 'c8q'

@@ -48,11 +48,22 @@ disk_read_copy() {
         disk_read_salvage
         return
       }
+      disk_read_drop
       disk_error "unable to read ${DISK_DRIVE} into ${DISK_READ_OUT}."
       return 1
     fi
     disk_say "Reading ${DISK_DRIVE} again, try $((disk_ry_try + 1)) of $((DISK_READ_RETRIES + 1))."
   done
+}
+
+disk_read_drop() {
+  [ -e "${DISK_READ_OUT}" ] || return 0
+  if [ "${DISK_EVENT_CLEAN}" = n ]; then
+    disk_say "The half-read ${DISK_READ_OUT} is kept."
+    return 0
+  fi
+  rm -f "${DISK_READ_OUT}"
+  disk_say "Deleted the half-read ${DISK_READ_OUT}."
 }
 
 disk_read_salvage() {
@@ -95,6 +106,7 @@ disk_read_done() {
 disk_read_run() {
   disk_read_check || return 1
   disk_read_speed || return 1
+  disk_job_note "${DISK_READ_OUT}"
   disk_read_copy || return 1
   disk_read_cue
   if [ "${DISK_READ_VERIFY}" = y ] && [ "${DISK_READ_BAD}" -eq 0 ]; then

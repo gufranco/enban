@@ -74,6 +74,8 @@ DISK_LIB="$(cd "$(dirname "$0")/../lib" && pwd)" || exit 1
 . "${DISK_LIB}/settings.sh"
 # shellcheck source=SCRIPTDIR/../lib/settings_tab.sh
 . "${DISK_LIB}/settings_tab.sh"
+# shellcheck source=SCRIPTDIR/../lib/settings_view.sh
+. "${DISK_LIB}/settings_view.sh"
 # shellcheck source=SCRIPTDIR/../lib/log.sh
 . "${DISK_LIB}/log.sh"
 # shellcheck source=SCRIPTDIR/../lib/log_tab.sh

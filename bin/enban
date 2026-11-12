@@ -93,6 +93,8 @@ DISK_PROG=enban
 . "${DISK_LIB}/settings.sh"
 # shellcheck source=SCRIPTDIR/../lib/settings_tab.sh
 . "${DISK_LIB}/settings_tab.sh"
+# shellcheck source=SCRIPTDIR/../lib/settings_view.sh
+. "${DISK_LIB}/settings_view.sh"
 # shellcheck source=SCRIPTDIR/../lib/log.sh
 . "${DISK_LIB}/log.sh"
 # shellcheck source=SCRIPTDIR/../lib/log_tab.sh
@@ -295,8 +297,10 @@ notes:
   and s starts it after you type each drive's name. On Discovery, Enter sets
   the sectors or the speed and t starts the test after you type the drive's
   name. On Log, f filters by level, / searches and s saves a copy; the
-  session log is kept in ENBAN_DATA/logs when enban quits. On Settings, space
-  and Enter change a default and save the settings file at once.
+  session log is kept in ENBAN_DATA/logs when enban quits. On Settings, left
+  and right switch between the Write, Read, Build, Queue, Events and Look
+  pages, and space and Enter change a default and save the settings file at
+  once. c asks before it cancels a job unless event_confirm is no.
 
   --theme, else ENBAN_THEME, else KODOUGU_THEME picks the colours: kodougu,
   catppuccin-mocha, catppuccin-latte, dracula, nord, gruvbox, tokyo-night or
@@ -304,10 +308,14 @@ notes:
   colour off.
 
   Defaults can live in ENBAN_CONFIG/settings, ~/.config/enban/settings by
-  default, one name=value per line: write_verify, write_eject and read_verify
-  take yes or no, write_speed auto or a number, build_fs a list such as
-  iso9660,joliet, queue_wait seconds and theme a theme name. Options, then
-  ENBAN_ variables, win over the file.
+  default, one name=value per line: write_verify, write_eject,
+  write_finalize, write_opc, read_verify, read_ignore and read_cue take yes or
+  no, write_speed auto or a number, write_mode dao or tao, read_retries 0 to
+  99, build_fs a list such as iso9660,joliet, queue_wait seconds and theme a
+  theme name. event_bell rings the terminal bell when a job in the app ends,
+  event_confirm asks before c cancels a job, and event_clean deletes what a
+  cancelled build or read and a failed read left half written; each takes yes
+  or no and starts at yes. Options, then ENBAN_ variables, win over the file.
 
 examples:
   enban --drive /dev/sr0

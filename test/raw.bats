@@ -262,6 +262,20 @@ sent() {
   [[ "${lines[3]}" == "0x9999  unknown feature                          supported" ]]
 }
 
+@test "enban features draws a table with gum" {
+  # Arrange
+  drive_with 0011 "DVD-R sequential recording"
+  printf 'features=002b:1\n' >>"${WORK}/drive.state"
+
+  # Act
+  ENBAN_TEST_GUM=1 ENBAN_TEST_GUM_LOG="${WORK}/gum.log" run disk_test_run enban features --drive "${DRIVE}" </dev/null
+
+  # Assert
+  [[ "${status}" -eq 0 ]]
+  [[ "${output}" == *"Code"*"Feature"*"State"* ]]
+  [[ "${output}" == *"0x002b"*"DVD+R"*"current"* ]]
+}
+
 @test "enban features --json prints one object" {
   # Arrange
   drive_with 0011 "DVD-R sequential recording"
