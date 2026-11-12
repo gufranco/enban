@@ -73,6 +73,5 @@ Guidance for anyone, human or agent, changing enban. What enban is and how to us
 
 ## Gaps against FAMILY.md
 
-- The README is in English only; the Japanese, Simplified Chinese and Hong Kong Traditional Chinese READMEs are not written yet (as of 2026-11-10).
 - A real drive on macOS, named like `IODVDServices/0`, goes through cdrtools: `cdrecord -prcap` and `-minfo` for info, `cdrecord` for write, erase, eject and discovery, `readcd` behind a dd-shaped adapter for read, verify, checksum and sector, since Homebrew's xorriso has no macOS drive adapter. The formats come from the cdrtools source, both test legs drive the stand-ins `test/cdrecord.sh` and `test/readcd.sh`, and no run on a real drive has checked it yet; the owner's drive is due after 2026-11-11. `sg_raw` has no macOS build, so close, tray load and lock, rezero, sync, features, the speed command, region, OPC, raw sectors and `read --ccd` need another route there (as of 2026-11-12).
 - macOS images carry no Rock Ridge, since hdiutil makehybrid cannot write it, so an ISO9660-only build shows 8.3 names on macOS where Linux keeps the full names (as of 2026-11-11).
