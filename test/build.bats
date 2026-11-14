@@ -306,7 +306,7 @@ pvd_field() {
 
 @test "enban build records every identifier and the date, the names in capitals" {
   # Arrange
-  local -a ids=(--publisher "Franco Family" --preparer Gustavo --application enban
+  local -a ids=(--publisher "Lovelace Family" --preparer Ada --application enban
     --system-id Linux --volume-set "Family 2009" --date 20091224180000 --iso-level 3)
 
   # Act
@@ -321,14 +321,14 @@ pvd_field() {
   volset="$(pvd_field "${OUT}" 190 128)"
   created="$(pvd_field "${OUT}" 813 14)"
   [[ "${status}" -eq 0 ]]
-  [[ "${publisher}" == "FRANCO FAMILY" ]]
-  [[ "${preparer}" == "GUSTAVO" ]]
+  [[ "${publisher}" == "LOVELACE FAMILY" ]]
+  [[ "${preparer}" == "ADA" ]]
   [[ "${application}" == "ENBAN" ]]
   [[ "${system}" == "LINUX" ]]
   [[ "${volset}" == "Family 2009" ]]
   [[ "${created}" == "20091224180000" ]]
-  [[ "${lines[3]}" == "Publisher     FRANCO FAMILY" ]]
-  [[ "${lines[4]}" == "Preparer      GUSTAVO" ]]
+  [[ "${lines[3]}" == "Publisher     LOVELACE FAMILY" ]]
+  [[ "${lines[4]}" == "Preparer      ADA" ]]
   [[ "${lines[5]}" == "Application   ENBAN" ]]
   [[ "${lines[6]}" == "System        LINUX" ]]
   [[ "${lines[7]}" == "Volume set    Family 2009" ]]
@@ -339,7 +339,7 @@ pvd_field() {
 @test "enban build records the publisher, preparer and application on macOS, in capitals" {
   # Arrange
   [[ "${ENBAN_TEST_OS}" == "Darwin" ]] || skip "Linux records every field"
-  local -a ids=(--publisher Franco --preparer Gustavo --application enban)
+  local -a ids=(--publisher Lovelace --preparer Ada --application enban)
 
   # Act
   run disk_test_run enban build "${SRC}" "${OUT}" "${ids[@]}" </dev/null
@@ -350,10 +350,10 @@ pvd_field() {
   preparer="$(pvd_field "${OUT}" 446 128)"
   application="$(pvd_field "${OUT}" 574 128)"
   [[ "${status}" -eq 0 ]]
-  [[ "${publisher}" == "FRANCO" ]]
-  [[ "${preparer}" == "GUSTAVO" ]]
+  [[ "${publisher}" == "LOVELACE" ]]
+  [[ "${preparer}" == "ADA" ]]
   [[ "${application}" == "ENBAN" ]]
-  [[ "${lines[3]}" == "Publisher     FRANCO" ]]
+  [[ "${lines[3]}" == "Publisher     LOVELACE" ]]
 }
 
 @test "enban build on macOS needs mkisofs from cdrtools for UDF" {
@@ -440,7 +440,7 @@ pvd_field() {
   local option=--publisher
 
   # Act
-  run disk_test_run enban write "${OUT}" --drive /dev/sr0 "${option}" Franco </dev/null
+  run disk_test_run enban write "${OUT}" --drive /dev/sr0 "${option}" Lovelace </dev/null
 
   # Assert
   [[ "${status}" -eq 1 ]]
@@ -1057,7 +1057,7 @@ leftovers() {
   local version=2.60
 
   # Act
-  run disk_test_run enban build "${SRC}" "${OUT}" --udf-version "${version}" --preparer Gustavo </dev/null
+  run disk_test_run enban build "${SRC}" "${OUT}" --udf-version "${version}" --preparer Ada </dev/null
 
   # Assert
   [[ "${status}" -eq 1 ]]
